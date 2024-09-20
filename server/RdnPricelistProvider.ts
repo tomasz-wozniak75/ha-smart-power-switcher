@@ -4,16 +4,20 @@ import puppeteer from "puppeteer";
 
 
 export class RdnPricelistProvider {
-    private priceListCache: { [id: number]: PricelistItem[]; }
+    private priceListCache: { [forDay: number]: PricelistItem[]; } = {};
 
-    public getPriceList(forDay: number): Promise<PricelistItem[]> {
+    public async getPriceList(forDay: number): Promise<PricelistItem[]> {
         const requestedDate = DateTimeUtils.cutOffTime(forDay);
 
         if (this.priceListCache[requestedDate]) {
-            return Promise.resolve(this.priceListCache[requestedDate]);
+            return this.priceListCache[requestedDate];
         }
-        return Promise.resolve([]);
-
+        const priceses = await this.fetchPriceList(requestedDate);
+        const priceslist = priceses
+            .map((price) => price <= 5 ? 500 : price * 100)
+            .map((price, index) => new PricelistItem(new Date(requestedDate).setHours(index), 60 * 60 * 1000, price));
+        this.priceListCache[requestedDate] = priceslist;
+        return priceslist;
     }
 
     getRdnUrl(requestedDate: number): string {
@@ -34,7 +38,7 @@ export class RdnPricelistProvider {
         }
     }
    
-    async fetchPriceList(requestedDate: number): Promise<PricelistItem[]> {
+    async fetchPriceList(requestedDate: number): Promise<number[]> {
         
         const browser = await puppeteer.launch({
             headless: true,
@@ -47,30 +51,26 @@ export class RdnPricelistProvider {
     
           
           const parsingResult = await page.evaluate(() => {
-              const result = {};
-              result['contractDateText'] = document.getElementsByClassName("kontrakt-date")?.item(0)?.innerText;
-              if (result['contractDateText']) {
-                const pricelistArray: PricelistItem[] = [];
-                const table = document.getElementById("footable_kontrakty_godzinowe") as HTMLTableElement
-                const rows: HTMLCollectionOf<HTMLTableRowElement> = table.rows
-                for(let r=2;  r < 2 + 24; r++ ){
-                    const row = rows.item(r)
-                    const priceText = row?.cells.item(1)?.innerText as string
-                    let price = Number(priceText.replace(",", ""))
-                    price = price <= 5 ? 0.005 : price 
-        
-                    pricelistArray.push(price)
+                const result = {};
+                result['contractDateText'] = document.getElementsByClassName("kontrakt-date")?.item(0)?.innerText;
+                if (result['contractDateText']) {
+                    const pricelistArray: number[] = [];
+                    const table = document.getElementById("footable_kontrakty_godzinowe") as HTMLTableElement
+                    const rows: HTMLCollectionOf<HTMLTableRowElement> = table.rows
+                    for(let r=2;  r < 2 + 24; r++ ){
+                        const row = rows.item(r)
+                        const priceText = row?.cells.item(1)?.innerText as string
+                        const price = Number(priceText.replace(",", ""))
+                        pricelistArray.push(price);
+                    result['pricelistArray'] = pricelistArray;
                 }
-                console.log("rows: " + pricelistArray);
-                result['pricelistArray'] = pricelistArray;
+                return result;
+                }
             }
-            return result;
-        }
         );
     
         await browser.close();
         this.validatePriceListDate(requestedDate, parsingResult['contractDateText']);
-        console.log(parsingResult['pricelistArray']);
         return parsingResult['pricelistArray'];
     }
 
