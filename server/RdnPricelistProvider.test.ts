@@ -28,11 +28,17 @@ test("should check date handling", () => {
     expect(expectedUrlWithNoPadding).toEqual("https://tge.pl/energia-elektryczna-rdn?dateShow=10-10-2024&dateAction=prev")
   });
 
-  test("check rdn page fetching", async () => {
+  test("check price list fetching", async () => {
     const rdnPricelistProvider = new  RdnPricelistProvider()
 
     await expect(rdnPricelistProvider.fetchPriceList(Date.now())).resolves.not.toBeNull()
-
   });
+
+  test("price list vaidation should work", async () => {
+    const rdnPricelistProvider = new  RdnPricelistProvider()
+
+    await expect(rdnPricelistProvider.fetchPriceList(new Date(2023, 1, 1).getTime())).rejects.toThrow("Missing price list for date:");
+
+});
 
 
