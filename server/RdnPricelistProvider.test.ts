@@ -1,9 +1,7 @@
 import { RdnPricelistProvider } from "./RdnPricelistProvider";
-import puppeteer from "puppeteer";
-
 
 test("should check date handling", () => {
-    const cuurentTimestamp = Date.now()
+    const cuurentTimestamp = new Date (2023, 11, 31).getTime()
     console.log("now: " + cuurentTimestamp);
 
     const now = new Date(cuurentTimestamp)
@@ -11,8 +9,24 @@ test("should check date handling", () => {
     console.log("now ISO: " + now.toISOString());
     console.log("now get time: " + now.getTime());
     console.log("now get hours: " + now.getHours());
+    console.log("now get day: " + now.getDate());
+    console.log("now get month: " + now.getMonth());
   });
 
+
+
+  test("check getRdnUrl", async () => {
+    const rdnPricelistProvider = new  RdnPricelistProvider()
+
+    const expectedUrl = rdnPricelistProvider.getRdnUrl(new Date(2024,0,1).getTime())
+    expect(expectedUrl).toEqual("https://tge.pl/energia-elektryczna-rdn?dateShow=31-12-2023&dateAction=prev")
+
+    const expectedUrlWithPadding = rdnPricelistProvider.getRdnUrl(new Date(2024,0,2).getTime())
+    expect(expectedUrlWithPadding).toEqual("https://tge.pl/energia-elektryczna-rdn?dateShow=01-01-2024&dateAction=prev")
+
+    const expectedUrlWithNoPadding = rdnPricelistProvider.getRdnUrl(new Date(2024,9,11).getTime())
+    expect(expectedUrlWithNoPadding).toEqual("https://tge.pl/energia-elektryczna-rdn?dateShow=10-10-2024&dateAction=prev")
+  });
 
   test("check rdn page fetching", async () => {
     const rdnPricelistProvider = new  RdnPricelistProvider()
@@ -22,46 +36,3 @@ test("should check date handling", () => {
   });
 
 
-  test("puppeteer test", async () => {
-    const getQuotes = async () => {
-      const browser = await puppeteer.launch({
-        headless: false,
-        defaultViewport: null,
-      });
-    
-      const page = await browser.newPage();
-    
-      await page.goto("https://tge.pl/energia-elektryczna-rdn?dateShow=18-09-2024&dateAction=prev", {
-        waitUntil: "domcontentloaded",
-      });
-
-      
-      const pricelistArray = await page.evaluate(() => {
-          const pricelistArray = [];
-          const table = document.getElementById("footable_kontrakty_godzinowe") as HTMLTableElement
-          const rows: HTMLCollectionOf<HTMLTableRowElement> = table.rows
-          for(let r=2;  r < 2 + 24; r++ ){
-            const row = rows.item(r)
-            const priceText = row?.cells.item(1)?.innerText as string
-            let price = Number(priceText.replace(",", ""))
-            price = price <= 5 ? 0.005 : price 
-
-            pricelistArray.push(price)
-          }
-          console.log("rows: " + pricelistArray);
-          return { text: pricelistArray }
-      });
-
-      // Display the quotes
-      console.log(pricelistArray);
-
-      // Close the browser
-      await browser.close();
-
-    };
-
-
-    
-    await expect(getQuotes()).resolves.not.toBeNull()
-
-  });

@@ -19,3 +19,8 @@ test("DateTimeUtils.addDays minus 1", () => {
     expect(DateTimeUtils.addDays(new Date (2024, 9, 18, 17, 5).getTime(), -1)).toEqual(new Date (2024, 9, 17, 17, 5).getTime());
 });
 
+
+test("DateTimeUtils.addDays minus 1", () => {
+    expect(DateTimeUtils.addDays(new Date (2024, 1, 1).getTime(), -1)).toEqual(new Date (2023, 12, 31).getTime());
+});
+
