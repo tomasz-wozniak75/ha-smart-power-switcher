@@ -1,9 +1,9 @@
 
-import { NotFoundError } from './server/NotFoundError';
-import { RdnPricelistProvider } from './server/RdnPricelistProvider';
-import { TariffSelectorPricelist } from './server/TariffSelectorPricelist'
+import { NotFoundError } from './services/NotFoundError';
+import { RdnPricelistProvider } from './services/RdnPricelistProvider';
+import { TariffSelectorPricelist } from './services/TariffSelectorPricelist'
 import express from 'express';
-import { W12PricelistProvider } from './server/W12PricelistProvider';
+import { W12PricelistProvider } from './services/W12PricelistProvider';
 
 const webServer = express();
 const singleDayPricelistService = new TariffSelectorPricelist( new W12PricelistProvider());
