@@ -1,12 +1,12 @@
 
 import { NotFoundError } from './server/NotFoundError';
+import { RdnPricelistProvider } from './server/RdnPricelistProvider';
 import { TariffSelectorPricelist } from './server/TariffSelectorPricelist'
 import express from 'express';
+import { W12PricelistProvider } from './server/W12PricelistProvider';
 
 const webServer = express();
-const PORT = 3000;
-
-const singleDayPricelistService = new TariffSelectorPricelist();
+const singleDayPricelistService = new TariffSelectorPricelist( new W12PricelistProvider());
 
 webServer.get('/', (req, res)=>{
     res.status(200);
@@ -42,10 +42,8 @@ webServer.get(/^\/pricelist\/\d\d-\d\d-\d\d\d\d$/, async (req, res)=>{
     }
 });
 
-webServer.listen(PORT, (error) => {
-    if(!error)
-        console.log("Server is Successfully Running, and App is listening on port "+ PORT)
-    else 
-        console.log("Error occurred, server can't start", error);
-    }
-);
+const PORT = process.env.PORT || 3000;
+webServer.listen(PORT, () => {
+    console.log(`App listening on port ${PORT}`);
+    console.log('Press Ctrl+C to quit.');
+});
