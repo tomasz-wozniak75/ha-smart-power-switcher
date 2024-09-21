@@ -1,0 +1,1 @@
+https://github.com/edwinhern/express-typescript-2024

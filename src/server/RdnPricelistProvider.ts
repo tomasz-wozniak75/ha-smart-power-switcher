@@ -53,7 +53,7 @@ export class RdnPricelistProvider {
           const parsingResult = await page.evaluate(() => {
                 const result = {};
                 result['contractDateText'] = document.getElementsByClassName("kontrakt-date")?.item(0)?.innerText;
-                if (result['contractDateText']) {
+                if (result['contractDateText'] && document.getElementById("footable_kontrakty_godzinowe")) {
                     const pricelistArray: number[] = [];
                     const table = document.getElementById("footable_kontrakty_godzinowe") as HTMLTableElement
                     const rows: HTMLCollectionOf<HTMLTableRowElement> = table.rows
@@ -62,7 +62,7 @@ export class RdnPricelistProvider {
                         const priceText = row?.cells.item(1)?.innerText as string
                         const price = Number(priceText.replace(",", ""))
                         pricelistArray.push(price);
-                    result['pricelistArray'] = pricelistArray;
+                        result['pricelistArray'] = pricelistArray;
                 }
                 return result;
                 }
