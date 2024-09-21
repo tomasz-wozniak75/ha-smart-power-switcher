@@ -1,13 +1,17 @@
 import { PricelistItem } from "./PricelistItem";
-import { RdnPricelistProvider } from "./RdnPricelistProvider";
 import { SingleDayPricelist } from "./SingleDayPricelist";
 
 
 export class TariffSelectorPricelist implements SingleDayPricelist {
-    private rdnPricelistProvider = new RdnPricelistProvider()
+    private singleDayPricelist: SingleDayPricelist
+    
+    constructor(singleDayPricelist: SingleDayPricelist) {
+        this.singleDayPricelist = singleDayPricelist
+    }
+
 
     getPriceList(forDay: number): Promise<PricelistItem[]> {
-        return this.rdnPricelistProvider.getPriceList(forDay);
+        return this.singleDayPricelist.getPriceList(forDay);
     }
 
 }
