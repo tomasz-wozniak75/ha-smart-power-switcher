@@ -1,4 +1,4 @@
-import { expect, test} from '@jest/globals';
+import { expect, test, jest} from '@jest/globals';
 import { RdnPricelistProvider } from "./RdnPricelistProvider";
 
 test("should check date handling", () => {
@@ -35,10 +35,17 @@ test("should check date handling", () => {
     await expect(rdnPricelistProvider.fetchPriceList(Date.now())).resolves.not.toBeNull()
   });
 
-  test("price list vaidation should work", async () => {
+  test("price list vaidation should work - past", async () => {
     const rdnPricelistProvider = new  RdnPricelistProvider()
 
     await expect(rdnPricelistProvider.fetchPriceList(new Date(2023, 1, 1).getTime())).rejects.toThrow("Missing price list for date:");
+
+  });
+
+  test("price list vaidation should work - future", async () => {
+    const rdnPricelistProvider = new  RdnPricelistProvider()
+
+    await expect(rdnPricelistProvider.fetchPriceList(new Date(2024, 10, 11).getTime())).rejects.toThrow("Missing price list for date:");
 
   });
 

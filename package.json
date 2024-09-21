@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "tsx watch --clear-screen=false src/WebServer.ts | pino-pretty",
     "build": "tsup",
-    "start": "node dist/WebServer.cjs",
+    "start": "node dist/WebServer.js",
     "clean": "rimraf dist coverage",
     "lint": "biome check src/",
     "lint:fix": "biome check src/ --fix",

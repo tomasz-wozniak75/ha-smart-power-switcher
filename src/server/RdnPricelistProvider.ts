@@ -1,4 +1,5 @@
 import { DateTimeUtils } from "./DateTimeUtils";
+import { NotFoundError } from "./NotFoundError";
 import { PricelistItem } from "./PricelistItem";
 import puppeteer from "puppeteer";
 
@@ -34,7 +35,7 @@ export class RdnPricelistProvider {
         const year = expectedDate.getFullYear();
         
         if ( `Kontrakty godzinowe dla dostawy w dniu ${day}-${month}-${year}` !== contractDateText) {
-            throw new Error("Missing price list for date: " + expectedDate);
+            throw new NotFoundError("Missing price list for date: " + expectedDate);
         }
     }
    
@@ -51,7 +52,7 @@ export class RdnPricelistProvider {
     
           
           const parsingResult = await page.evaluate(() => {
-                const result = {};
+                const result = { "contractDateText": null, };
                 result['contractDateText'] = document.getElementsByClassName("kontrakt-date")?.item(0)?.innerText;
                 if (result['contractDateText'] && document.getElementById("footable_kontrakty_godzinowe")) {
                     const pricelistArray: number[] = [];
@@ -64,8 +65,8 @@ export class RdnPricelistProvider {
                         pricelistArray.push(price);
                         result['pricelistArray'] = pricelistArray;
                 }
-                return result;
                 }
+                return result;
             }
         );
     

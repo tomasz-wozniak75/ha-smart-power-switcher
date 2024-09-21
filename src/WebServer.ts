@@ -1,5 +1,6 @@
 
-import { TariffSelectorPricelist } from './server/TariffSelectorPricelist.ts'
+import { NotFoundError } from './server/NotFoundError';
+import { TariffSelectorPricelist } from './server/TariffSelectorPricelist'
 import express from 'express';
 
 const webServer = express();
@@ -25,9 +26,20 @@ webServer.get(/^\/pricelist\/\d\d-\d\d-\d\d\d\d$/, async (req, res)=>{
         return
     }
 
-    const pricelist = await singleDayPricelistService.getPriceList(requestedDay.getTime());
-    res.status(200);
-    res.send(JSON.stringify(pricelist))
+    try {
+        const pricelist = await singleDayPricelistService.getPriceList(requestedDay.getTime());
+        res.status(200);
+        res.json(pricelist)
+    }catch (error) {
+        if (error instanceof NotFoundError) {
+            res.status(404);
+            res.json({"message": error.message})
+        } else {
+            res.status(500);
+            res.json({"message": error.message})
+        }
+
+    }
 });
 
 webServer.listen(PORT, (error) => {
