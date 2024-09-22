@@ -1,17 +1,14 @@
 
 import { NotFoundError } from './services/NotFoundError';
-import { RdnPricelistProvider } from './services/RdnPricelistProvider';
 import { TariffSelectorPricelist } from './services/TariffSelectorPricelist'
 import express from 'express';
 import { W12PricelistProvider } from './services/W12PricelistProvider';
+import path from 'path';
 
 const webServer = express();
 const singleDayPricelistService = new TariffSelectorPricelist( new W12PricelistProvider());
 
-webServer.get('/', (req, res)=>{
-    res.status(200);
-    res.send("Welcome to root URL of Server");
-});
+webServer.use(express.static(path.join(__dirname, 'webapp')))
 
 webServer.get(/^\/pricelist\/\d\d-\d\d-\d\d\d\d$/, async (req, res)=>{
     const matchingResult = /(\d\d)-(\d\d)-(\d\d\d\d)$/.exec(req.path)
