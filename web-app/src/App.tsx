@@ -1,11 +1,11 @@
 import React from 'react';
 import './App.css';
+import PriceListTable from './PricelistTable';
 
 function App() {
   return (
     <div className="App">
-      <header className="App-header">
-      </header>
+      <PriceListTable></PriceListTable>
     </div>
   );
 }

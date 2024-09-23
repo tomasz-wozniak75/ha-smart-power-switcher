@@ -23,9 +23,7 @@ export class RdnPricelistProvider {
 
     getRdnUrl(requestedDate: number): string {
         const dayBefore = new Date(DateTimeUtils.addDays(requestedDate, -1));
-        const day = String(dayBefore.getDate()).padStart(2, '0');
-        const month = String(dayBefore.getMonth() + 1).padStart(2, '0');
-        return `https://tge.pl/energia-elektryczna-rdn?dateShow=${day}-${month}-${dayBefore.getFullYear()}&dateAction=prev`
+        return `https://tge.pl/energia-elektryczna-rdn?dateShow=${DateTimeUtils.formatDate(dayBefore.getTime())}&dateAction=prev`
     }
 
     validatePriceListDate(requestedDate: number, contractDateText: string): void {
