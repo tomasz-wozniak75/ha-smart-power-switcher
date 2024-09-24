@@ -3,7 +3,7 @@ import { PricelistItem } from "./PricelistItem";
 import { SingleDayPricelist } from "./SingleDayPricelist";
 
 
-export class TimePeriodPricelist {
+export class TimePeriodPricelistService {
     private singleDayPricelist: SingleDayPricelist;
 
     constructor(singleDayPricelist: SingleDayPricelist) {

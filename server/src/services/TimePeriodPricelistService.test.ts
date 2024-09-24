@@ -1,5 +1,5 @@
 import { expect, test, jest} from '@jest/globals';
-import { TimePeriodPricelist as TimePeriodPricelistService } from "./TimePeriodPricelistService";
+import { TimePeriodPricelistService as TimePeriodPricelistService } from "./TimePeriodPricelistService";
 import { W12PricelistProvider } from './W12PricelistProvider';
 
     test("TimePeriodPricelist should return pricelist for request time in one pricelist unit", async () => {
