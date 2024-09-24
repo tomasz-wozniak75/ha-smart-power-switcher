@@ -89,8 +89,15 @@ import { ConsumptionPlanItem, PowerConsumer } from './PowerConsumer';
         console.log(JSON.stringify(switchActions))
         expect(switchActions.length).toEqual(4)
         expect(switchActions[0].switchOn).toEqual(true)
+        expect(switchActions[0].at).toEqual(new Date(2024, 8, 24, 14).getTime())
+        
         expect(switchActions[1].switchOn).toEqual(false)
+        expect(switchActions[1].at).toEqual(new Date(2024, 8, 24, 15, 10).getTime())
+
         expect(switchActions[2].switchOn).toEqual(true)
+        expect(switchActions[2].at).toEqual(new Date(2024, 8, 24, 22).getTime())
+
         expect(switchActions[3].switchOn).toEqual(false)
+        expect(switchActions[3].at).toEqual(new Date(2024, 8, 24, 23).getTime())
     });
 

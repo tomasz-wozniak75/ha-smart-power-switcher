@@ -80,9 +80,20 @@ export class PowerConsumer {
 
     public async createConsumptionPlan(consumptionDuration: number, startFrom: number,  finishAt: number): Promise<ConsumptionPlanItem[]> {
         const sortedConsumptionPlan = await this.selectPriceListItemsForConsumptionPlan(consumptionDuration, startFrom, finishAt);
+        let prevConsumptionPlanItem: ConsumptionPlanItem | null = null;
         let prevItemIsAdjecent = false;
         for(let consumptionItem of sortedConsumptionPlan) {
             const pricelistItem = consumptionItem.pricelistItem;
+
+            if (prevItemIsAdjecent && prevConsumptionPlanItem != null) {
+                const prevPricelistItem = prevConsumptionPlanItem.pricelistItem;
+                if ((prevPricelistItem.startsAt + prevPricelistItem.duration) < pricelistItem.startsAt) {
+                    prevItemIsAdjecent = false;
+                    prevConsumptionPlanItem.switchActions.push(new SwitchAction(prevPricelistItem.startsAt + prevPricelistItem.duration, false));
+                }
+            }
+            prevConsumptionPlanItem = consumptionItem;
+
             if(consumptionItem.duration < pricelistItem.duration) {
                if (prevItemIsAdjecent) {
                 consumptionItem.switchActions.push(new SwitchAction(pricelistItem.startsAt+consumptionItem.duration, false))
