@@ -2,7 +2,7 @@ import { PricelistItem } from "./PricelistItem";
 import { TimePeriodPricelistService } from "./TimePeriodPricelistService";
 
 
-class SwitchAction {
+export class SwitchAction {
     at: number;
     switchOn: boolean;
     constructor(at: number, switchOn: boolean) {
@@ -23,31 +23,46 @@ export class ConsumptionPlanItem {
 }
 
 export class ConsumptionPlan {
+    consumptionDuration: number;
+    finishAt: number;
     consumptionPlanItems: ConsumptionPlanItem[];
     state: string = "processing";
-
-    constructor(consumptionPlanItems: ConsumptionPlanItem[]) {
+    constructor(consumptionDuration: number, finishAt: number, consumptionPlanItems: ConsumptionPlanItem[]) {
+        this.consumptionDuration = consumptionDuration;
+        this.finishAt = finishAt;
         this.consumptionPlanItems = consumptionPlanItems;
+    }
+}
+
+export class PowerConsumerModel {
+    name: string;
+    consumptionPlan: ConsumptionPlan | null = null;
+
+     constructor(name: string, consumptionPlan: ConsumptionPlan | null) {
+        this.name = name;
+        this.consumptionPlan = consumptionPlan;
     }
 }
 
 export class PowerConsumer {
     private haDeviceName: string;
+    private name: string;
     private consumptionPlan: ConsumptionPlan | null = null;
 
     private timePeriodPricelistService: TimePeriodPricelistService; 
 
-    constructor(haDeviceName: string, timePeriodPricelist: TimePeriodPricelistService) {
+    constructor(haDeviceName: string, name: string, timePeriodPricelist: TimePeriodPricelistService) {
         this.haDeviceName = haDeviceName;
+        this.name = name;
         this.timePeriodPricelistService = timePeriodPricelist;
 
     }
 
-    sortConsumptionPlanByTime(consumptionPlan: ConsumptionPlanItem[]): ConsumptionPlanItem[]  {
+    private sortConsumptionPlanByTime(consumptionPlan: ConsumptionPlanItem[]): ConsumptionPlanItem[]  {
         return [...consumptionPlan].sort((a, b) => a.pricelistItem.startsAt - b.pricelistItem.startsAt);
     }
 
-    sortPricelistByPrice(pricelist: PricelistItem[]): PricelistItem[]  {
+    private sortPricelistByPrice(pricelist: PricelistItem[]): PricelistItem[]  {
         return [...pricelist].sort((a, b) => {
                     if (a.price < b.price) return -1;
                     if (a.price > b.price) return 1;
@@ -57,7 +72,7 @@ export class PowerConsumer {
         });        
     }
 
-    public async selectPriceListItemsForConsumptionPlan(consumptionDuration: number, startFrom: number, finishAt: number): Promise<ConsumptionPlanItem[]> {
+    private async selectPriceListItemsForConsumptionPlan(consumptionDuration: number, startFrom: number, finishAt: number): Promise<ConsumptionPlanItem[]> {
         const pricelist = await this.timePeriodPricelistService.getPriceList(startFrom, finishAt);
         const pricelistByPrice = this.sortPricelistByPrice(pricelist);
         let currentConsumptionDuration = 0;
@@ -78,7 +93,7 @@ export class PowerConsumer {
         return sortedConsumptionPlan;
     }
 
-    public async createConsumptionPlan(consumptionDuration: number, startFrom: number,  finishAt: number): Promise<ConsumptionPlanItem[]> {
+    private async createConsumptionPlan(consumptionDuration: number, startFrom: number,  finishAt: number): Promise<ConsumptionPlanItem[]> {
         const sortedConsumptionPlan = await this.selectPriceListItemsForConsumptionPlan(consumptionDuration, startFrom, finishAt);
         let prevConsumptionPlanItem: ConsumptionPlanItem | null = null;
         let prevItemIsAdjecent = false;
@@ -121,13 +136,26 @@ export class PowerConsumer {
     }
 
 
-    public async scheduleConsumptionPlan(consumptionDuration: number, finishAt: number): Promise<ConsumptionPlan> {
+    public async scheduleConsumptionPlan(consumptionDuration: number, finishAt: number): Promise<PowerConsumerModel> {
         if (this.consumptionPlan != null && this.consumptionPlan.state == "processing") {
             throw new Error("Current plan needs to be canceled!");
         }
-        this.consumptionPlan = new ConsumptionPlan(await this.createConsumptionPlan(consumptionDuration, Date.now(), finishAt));
+        this.consumptionPlan = new ConsumptionPlan(consumptionDuration, finishAt, await this.createConsumptionPlan(consumptionDuration, Date.now(), finishAt));
 
-        return this.consumptionPlan;
+        return this.getPowerConsumerModel();
+    }
+
+    public getPowerConsumerModel(): PowerConsumerModel {
+        return new PowerConsumerModel(this.name, this.consumptionPlan);
+    }
+
+    public deleteConsumptionPlan(): PowerConsumerModel | PromiseLike<PowerConsumerModel> {
+        if (this.consumptionPlan) {
+            this.consumptionPlan.state = "deleted"
+            this.consumptionPlan = null;
+        }
+
+        return this.getPowerConsumerModel();
     }
 
 }
