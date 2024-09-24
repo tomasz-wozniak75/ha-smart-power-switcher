@@ -6,7 +6,7 @@ import { PricelistCtrl } from './controlers/PricelistCtrl';
 const webServer = express();
 const pricelistCtrl = new PricelistCtrl()
 
-webServer.use(express.static(path.join(__dirname, 'webapp')))
+webServer.use(express.static(path.join(__dirname, 'web-app')))
 
 webServer.get(/^\/pricelist\/\d\d-\d\d-\d\d\d\d$/, async (req, res)=>{
     await pricelistCtrl.getPricelist(req, res);
