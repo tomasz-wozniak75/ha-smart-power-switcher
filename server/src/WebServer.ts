@@ -2,15 +2,22 @@
 import express from 'express';
 import path from 'path';
 import { PricelistCtrl } from './controlers/PricelistCtrl';
+import { TariffSelectorPricelist } from './services/TariffSelectorPricelist';
+import { W12PricelistProvider } from './services/W12PricelistProvider';
+import { PowerConsumersCtrl } from './controlers/PowerConsumersCtrl';
+import { PowerConsumersService } from './services/PowerConsumersService';
+import { TimePeriodPricelistService } from './services/TimePeriodPricelistService';
 
 const webServer = express();
-const pricelistCtrl = new PricelistCtrl()
+
+const singleDayPricelistService = new TariffSelectorPricelist( new W12PricelistProvider());;
+const pricelistCtrl = new PricelistCtrl(singleDayPricelistService);
+const powerConsumersCtrl = new PowerConsumersCtrl(new PowerConsumersService(new TimePeriodPricelistService(singleDayPricelistService)));
+
+pricelistCtrl.createRoutes(webServer);
+powerConsumersCtrl.createRoutes(webServer);
 
 webServer.use(express.static(path.join(__dirname, 'web-app')))
-
-webServer.get(/^\/pricelist\/\d\d-\d\d-\d\d\d\d$/, async (req, res)=>{
-    await pricelistCtrl.getPricelist(req, res);
-});
 
 const PORT = process.env.PORT || 3000;
 webServer.listen(PORT, () => {

@@ -1,9 +1,22 @@
-import { NotFoundError } from "@/services/NotFoundError";
-import { TariffSelectorPricelist } from "@/services/TariffSelectorPricelist";
-import { W12PricelistProvider } from "@/services/W12PricelistProvider";
 
-export class PricelistCtrl {
-    private  singleDayPricelistService = new TariffSelectorPricelist( new W12PricelistProvider());
+import { SingleDayPricelist } from "@/services/SingleDayPricelist";
+import { Express } from "express-serve-static-core";
+import { BaseCtrl } from "./BaseCtrl";
+
+export class PricelistCtrl extends BaseCtrl {
+ 
+    private  singleDayPricelistService: SingleDayPricelist;
+
+    public constructor(singleDayPricelistService: SingleDayPricelist) {
+        super();
+        this.singleDayPricelistService = singleDayPricelistService;
+    }
+
+    public createRoutes(webServer: Express) {
+        webServer.get(/^\/pricelist\/\d\d-\d\d-\d\d\d\d$/, async (req, res)=>{
+            await this.getPricelist(req, res);
+        });
+    }
     
     public async getPricelist(req, res): Promise<void> {
         const matchingResult = /(\d\d)-(\d\d)-(\d\d\d\d)$/.exec(req.path)
@@ -23,14 +36,8 @@ export class PricelistCtrl {
             res.status(200);
             res.json(pricelist)
         }catch (error) {
-            if (error instanceof NotFoundError) {
-                res.status(404);
-                res.json({"message": error.message})
-            } else {
-                res.status(500);
-                res.json({"message": error.message})
-            }
-
+            this.handleErrors(error, res);
         }
     }
+
 }
