@@ -1,13 +1,14 @@
 import React from 'react';
 import './App.css';
-import PriceListTable from './PricelistTable';
+import { PriceListTable } from './PricelistTable';
+import { PowerConsumersList } from './PowerConsumersList';
 
-function App() {
+
+export function App() {
   return (
     <div className="App">
       <PriceListTable></PriceListTable>
+      <PowerConsumersList></PowerConsumersList>
     </div>
   );
 }
-
-export default App;

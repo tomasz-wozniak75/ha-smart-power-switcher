@@ -1,4 +1,4 @@
-import { DateTimeUtils } from "./DateTimeUtils";
+import { DateTimeUtils } from "smart-power-consumer-api";
 import { PricelistItem } from "./PricelistItem";
 import { SingleDayPricelist } from "./SingleDayPricelist";
 
@@ -15,7 +15,7 @@ export class TimePeriodPricelistService {
         const totheDay = DateTimeUtils.cutOffTime(toTheTime);
 
         const pricelist: PricelistItem[] = [];
-        for(let nextDay = fromTheDay; nextDay <= totheDay; nextDay = DateTimeUtils.addDays(nextDay, 1)) {
+        for(let nextDay = fromTheDay; nextDay <= totheDay; nextDay = DateTimeUtils.addDaysxxxx(nextDay, 1)) {
            const singleDayPricelist = await this.singleDayPricelist.getPriceList(nextDay);
            pricelist.push(...singleDayPricelist.filter(item => (item.startsAt + item.duration) > fromTheTime && item.startsAt < toTheTime));     
         }

@@ -1,4 +1,4 @@
-import { DateTimeUtils } from "./DateTimeUtils";
+import { DateTimeUtils } from "smart-power-consumer-api";
 import { PricelistItem } from "./PricelistItem";
 import { SingleDayPricelist } from "./SingleDayPricelist";
 

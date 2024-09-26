@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { DateTimeUtils } from './DateTimeUtils';
+import { DateTimeUtils } from 'smart-power-consumer-api';
 import { CurrencyUtils } from './CurrencyUtils';
 
-const PriceListTable = () => {
+export const PriceListTable = () => {
   const [date] = useState(Date.now());
   const [pricelist, setPricelist] = useState([]);
   useEffect(() => {
@@ -40,4 +40,3 @@ const PriceListTable = () => {
     </div>
   );
 };
-export default PriceListTable;

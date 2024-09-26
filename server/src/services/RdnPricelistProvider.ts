@@ -1,4 +1,4 @@
-import { DateTimeUtils } from "./DateTimeUtils";
+import { DateTimeUtils } from "smart-power-consumer-api";
 import { NotFoundError } from "./NotFoundError";
 import { PricelistItem } from "./PricelistItem";
 import puppeteer from "puppeteer";
