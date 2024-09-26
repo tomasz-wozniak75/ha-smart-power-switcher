@@ -1,5 +1,6 @@
+import { PowerConsumerModel } from "smart-power-consumer-api";
 import { NotFoundError } from "./NotFoundError";
-import { PowerConsumer, PowerConsumerModel } from "./PowerConsumer";
+import { PowerConsumer } from "./PowerConsumer";
 import { TimePeriodPricelistService } from "./TimePeriodPricelistService";
 
 export class PowerConsumersService {
@@ -14,7 +15,7 @@ export class PowerConsumersService {
         this.powerConsumers["audi-charger"] = new PowerConsumer("audi-charger", "Audi charger", this.timePeriodPricelistService);
     }
 
-    private getPowerConsumer(powerConsumerId: string): PowerConsumer {
+    public getPowerConsumer(powerConsumerId: string): PowerConsumer {
         if (this.powerConsumers[powerConsumerId] === undefined) {
             throw new NotFoundError(`${powerConsumerId} not found`);
         }

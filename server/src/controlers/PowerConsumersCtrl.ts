@@ -24,13 +24,13 @@ export class PowerConsumersCtrl  extends BaseCtrl {
 
     }
 
-    public async getPowerConsumers(req, res): Promise<void> {
+    private async getPowerConsumers(req, res): Promise<void> {
         const powerConsumeModels = await this.powerConsumersService.getPowerConsumeModels()
         res.status(200);
         res.json(powerConsumeModels)
     }
 
-    public async scheduleConsumptionPlan(req, res): Promise<void> {
+    private async scheduleConsumptionPlan(req, res): Promise<void> {
         try{
             const powerConsumerId = /^\/power-consumer\/(.*)\/consumption-plan\/?/.exec(req.path)[1];
             const consumptionDuration = this.getRequestNumericParam(req.query, "consumptionDuration");
@@ -43,11 +43,12 @@ export class PowerConsumersCtrl  extends BaseCtrl {
         }
     }
 
-    public async deleteConsumptionPlan(req: any, res: any) {
+    private async deleteConsumptionPlan(req: any, res: any) {
          try{
             const powerConsumerId = /^\/power-consumer\/(.*)\/consumption-plan\/?/.exec(req.path)[1];
-            await this.powerConsumersService.deleteConsumptionPlan(powerConsumerId);
-            res.status(204);
+            const powerConsumeModel = await this.powerConsumersService.deleteConsumptionPlan(powerConsumerId);
+            res.status(200);
+            res.json(powerConsumeModel)
         }catch (error) {
             this.handleErrors(error, res);
         }
