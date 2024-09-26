@@ -4,7 +4,7 @@ import { CurrencyUtils } from './CurrencyUtils';
 import { PricelistItem } from "smart-power-consumer-api";
 
 export const PriceListTable = () => {
-  const [date] = useState(Date.now());
+  const [date, setDate] = useState(Date.now());
   const [pricelist, setPricelist] = useState<PricelistItem[]>([]);
   useEffect(() => {
     fetch(`/pricelist/${DateTimeUtils.formatDate(date)}`)

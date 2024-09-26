@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { PowerConsumerComponent } from './PowerConsumerComponent';
+import { PowerConsumerModel } from 'smart-power-consumer-api';
 
 export const PowerConsumersList = () => {
-    const [powerConsumersList, setPowerConsumersList] = useState([]);
+    const [powerConsumersList, setPowerConsumersList] = useState<PowerConsumerModel[]>([]);
     useEffect(() => {
         fetch("/power-consumer/")
         .then((res) => {
@@ -12,10 +13,11 @@ export const PowerConsumersList = () => {
             setPowerConsumersList(data);
         });
     }, []);
-    return (
+
+   return (
         <div>
             {powerConsumersList.map((powerConsumer) => (
-                <PowerConsumerComponent powerConsumer={powerConsumer}/>
+                <PowerConsumerComponent {...powerConsumer}/>
               ))}
         </div>
     );

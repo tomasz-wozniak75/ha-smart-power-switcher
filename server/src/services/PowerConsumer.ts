@@ -1,48 +1,6 @@
-import { PricelistItem } from "smart-power-consumer-api";
+import { PricelistItem, ConsumptionPlanItem, ConsumptionPlan, PowerConsumerModel, DateTimeUtils } from "smart-power-consumer-api";
 import { TimePeriodPricelistService } from "./TimePeriodPricelistService";
 
-
-export class SwitchAction {
-    at: number;
-    switchOn: boolean;
-    constructor(at: number, switchOn: boolean) {
-        this.at = at;
-        this.switchOn = switchOn;
-    } 
-}
-
-export class ConsumptionPlanItem {
-    pricelistItem: PricelistItem;
-    duration: number;
-    switchActions: SwitchAction[] = [];
-
-    constructor(pricelistItem: PricelistItem, duration: number) {
-        this.pricelistItem = pricelistItem;
-        this.duration = duration;
-    }
-}
-
-export class ConsumptionPlan {
-    consumptionDuration: number;
-    finishAt: number;
-    consumptionPlanItems: ConsumptionPlanItem[];
-    state: string = "processing";
-    constructor(consumptionDuration: number, finishAt: number, consumptionPlanItems: ConsumptionPlanItem[]) {
-        this.consumptionDuration = consumptionDuration;
-        this.finishAt = finishAt;
-        this.consumptionPlanItems = consumptionPlanItems;
-    }
-}
-
-export class PowerConsumerModel {
-    name: string;
-    consumptionPlan: ConsumptionPlan | null = null;
-
-     constructor(name: string, consumptionPlan: ConsumptionPlan | null) {
-        this.name = name;
-        this.consumptionPlan = consumptionPlan;
-    }
-}
 
 export class PowerConsumer {
     private haDeviceName: string;
@@ -80,11 +38,11 @@ export class PowerConsumer {
         for(let pricelistItem of pricelistByPrice) {
             if (currentConsumptionDuration+pricelistItem.duration<=consumptionDuration) {
                 currentConsumptionDuration+=pricelistItem.duration;
-                consumptionPlan.push(new ConsumptionPlanItem(pricelistItem, pricelistItem.duration));
+                consumptionPlan.push({pricelistItem, duration: pricelistItem.duration, switchActions: [] });
             }else {
                 const delta = consumptionDuration - currentConsumptionDuration;
                 if (delta > 0){
-                    consumptionPlan.push(new ConsumptionPlanItem(pricelistItem, delta));
+                    consumptionPlan.push({ pricelistItem, duration: delta, switchActions: [] });
                 }
                 break;
             }
@@ -104,22 +62,22 @@ export class PowerConsumer {
                 const prevPricelistItem = prevConsumptionPlanItem.pricelistItem;
                 if ((prevPricelistItem.startsAt + prevPricelistItem.duration) < pricelistItem.startsAt) {
                     prevItemIsAdjecent = false;
-                    prevConsumptionPlanItem.switchActions.push(new SwitchAction(prevPricelistItem.startsAt + prevPricelistItem.duration, false));
+                    prevConsumptionPlanItem.switchActions.push({ at: prevPricelistItem.startsAt + prevPricelistItem.duration, switchOn: false});
                 }
             }
             prevConsumptionPlanItem = consumptionItem;
 
             if(consumptionItem.duration < pricelistItem.duration) {
                if (prevItemIsAdjecent) {
-                consumptionItem.switchActions.push(new SwitchAction(pricelistItem.startsAt+consumptionItem.duration, false))
+                consumptionItem.switchActions.push({ at: pricelistItem.startsAt+consumptionItem.duration, switchOn: false});
                 prevItemIsAdjecent = false;
                } else {
-                consumptionItem.switchActions.push(new SwitchAction(pricelistItem.startsAt+(pricelistItem.duration - consumptionItem.duration), true))
+                consumptionItem.switchActions.push({ at: pricelistItem.startsAt+(pricelistItem.duration - consumptionItem.duration), switchOn: true});
                 prevItemIsAdjecent = true;
                }    
             } else {
              if (!prevItemIsAdjecent) {
-                consumptionItem.switchActions.push(new SwitchAction(pricelistItem.startsAt, true))
+                consumptionItem.switchActions.push({ at: pricelistItem.startsAt, switchOn: true});
                 prevItemIsAdjecent = true;
                } 
             }
@@ -128,11 +86,10 @@ export class PowerConsumer {
         const lastConsumptionPlanItem = sortedConsumptionPlan[sortedConsumptionPlan.length-1];
         const lastSwitchActions = lastConsumptionPlanItem.switchActions;
         if (lastSwitchActions.length == 0 || lastSwitchActions[lastSwitchActions.length-1].switchOn ) {
-            lastSwitchActions.push(new SwitchAction(lastConsumptionPlanItem.pricelistItem.startsAt+lastConsumptionPlanItem.pricelistItem.duration, false));
+            lastSwitchActions.push({ at: lastConsumptionPlanItem.pricelistItem.startsAt+lastConsumptionPlanItem.pricelistItem.duration, switchOn: false});
         }
 
         return sortedConsumptionPlan;
-
     }
 
 
@@ -140,18 +97,20 @@ export class PowerConsumer {
         if (this.consumptionPlan != null && this.consumptionPlan.state == "processing") {
             throw new Error("Current plan needs to be canceled!");
         }
-        this.consumptionPlan = new ConsumptionPlan(consumptionDuration, finishAt, await this.createConsumptionPlan(consumptionDuration, Date.now(), finishAt));
+        this.consumptionPlan = { consumptionDuration, finishAt, consumptionPlanItems: await this.createConsumptionPlan(consumptionDuration, Date.now(), finishAt), state: "processing" };
 
         return this.getPowerConsumerModel();
     }
 
     public getPowerConsumerModel(): PowerConsumerModel {
-        return new PowerConsumerModel(this.name, this.consumptionPlan);
+        const now = new Date();
+        const defaultFinishAt = now.getHours() < 16 ? now.getTime() + 2 * 3600 * 1000 : DateTimeUtils.addDays(new Date(now.getFullYear(), now.getDate(), 7).getTime() , 1);
+        return { id: this.haDeviceName, name: this.name, defaultConsumptionDuration: 90, defaultFinishAt,   consumptionPlan: this.consumptionPlan };
     }
 
     public deleteConsumptionPlan(): PowerConsumerModel | PromiseLike<PowerConsumerModel> {
         if (this.consumptionPlan) {
-            this.consumptionPlan.state = "deleted"
+            this.consumptionPlan.state = "canceled"
             this.consumptionPlan = null;
         }
 

@@ -3,19 +3,17 @@ import { UserError } from "@/services/UserError";
 
 export class BaseCtrl {
 
-    protected getRequestNumericParam(path: string, paramName: string, required = true) {
-        let value = null;
-        const paramSplit = new RegExp(`${paramName}=(\d+)`, 'g').exec(path)
-        
-        if (paramSplit == null && required) {
+    protected getRequestNumericParam(query: any, paramName: string, required = true) {
+        const stringValue = query[paramName]        
+        if (stringValue == null && required) {
             throw new UserError("Required param is missing: " + paramName)
         }
 
-        if (paramSplit) {
-            value = Number(paramSplit[1]);
+        if (stringValue) {
+            return  Number(stringValue);
         }
 
-        return value;
+        return null;
     }
     
     protected handleErrors(error: Error, res: any) {
