@@ -30,7 +30,7 @@ export const PriceListTable = () => {
           </thead>
             <tbody>
               {pricelist.map((pricelistItem: PricelistItem) => (
-                  <tr>
+                  <tr key={pricelistItem.startsAt}>
                       <td>{DateTimeUtils.getTime(pricelistItem.startsAt)}</td>
                       <td>{CurrencyUtils.format(pricelistItem.price)}</td>
                   </tr>

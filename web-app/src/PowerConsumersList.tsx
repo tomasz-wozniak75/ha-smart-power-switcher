@@ -17,7 +17,7 @@ export const PowerConsumersList = () => {
    return (
         <div>
             {powerConsumersList.map((powerConsumer) => (
-                <PowerConsumerComponent {...powerConsumer}/>
+                <PowerConsumerComponent key={powerConsumer.id} {...powerConsumer}/>
               ))}
         </div>
     );
