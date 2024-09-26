@@ -7,7 +7,7 @@ import { ConsumptionPlanItem, PowerConsumer } from './PowerConsumer';
 
     test("consumptionPanItems two hours in the night in W12", async () => {
         const timePeriodPricelistService: TimePeriodPricelistService = new TimePeriodPricelistService(new W12PricelistProvider())
-        const powerConsumer = new PowerConsumer("audi-charger", timePeriodPricelistService)
+        const powerConsumer = new PowerConsumer("audi-charger", "Audi charger", timePeriodPricelistService)
 
         const startTime = new Date(2024, 8, 24, 19, 30);
         const endTime = new Date(2024, 8, 25);
@@ -29,7 +29,7 @@ import { ConsumptionPlanItem, PowerConsumer } from './PowerConsumer';
 
     test("consumptionPanItems one hour in the night in W12", async () => {
         const timePeriodPricelistService: TimePeriodPricelistService = new TimePeriodPricelistService(new W12PricelistProvider())
-        const powerConsumer = new PowerConsumer("audi-charger", timePeriodPricelistService)
+        const powerConsumer = new PowerConsumer("audi-charger", "Audi charger", timePeriodPricelistService)
 
         const startTime = new Date(2024, 8, 24, 19, 30);
         const endTime = new Date(2024, 8, 24, 23);
@@ -50,7 +50,7 @@ import { ConsumptionPlanItem, PowerConsumer } from './PowerConsumer';
 
     test("consumptionPanItems  one hour one in the noon and one in the night in W12", async () => {
         const timePeriodPricelistService: TimePeriodPricelistService = new TimePeriodPricelistService(new W12PricelistProvider())
-        const powerConsumer = new PowerConsumer("audi-charger", timePeriodPricelistService)
+        const powerConsumer = new PowerConsumer("audi-charger", "Audi charger", timePeriodPricelistService)
 
         const startTime = new Date(2024, 8, 24, 14);
         const endTime = new Date(2024, 8, 24, 23);
@@ -77,7 +77,7 @@ import { ConsumptionPlanItem, PowerConsumer } from './PowerConsumer';
 
     test("consumptionPanItems  more than two hour one in noon and one in the night in W12", async () => {
         const timePeriodPricelistService: TimePeriodPricelistService = new TimePeriodPricelistService(new W12PricelistProvider())
-        const powerConsumer = new PowerConsumer("audi-charger", timePeriodPricelistService)
+        const powerConsumer = new PowerConsumer("audi-charger", "Audi charger", timePeriodPricelistService)
 
         const startTime = new Date(2024, 8, 24, 14);
         const endTime = new Date(2024, 8, 24, 23);

@@ -1,4 +1,4 @@
-import { PricelistItem } from "./PricelistItem";
+import { PricelistItem } from "smart-power-consumer-api";
 import { TimePeriodPricelistService } from "./TimePeriodPricelistService";
 
 
@@ -93,7 +93,7 @@ export class PowerConsumer {
         return sortedConsumptionPlan;
     }
 
-    private async createConsumptionPlan(consumptionDuration: number, startFrom: number,  finishAt: number): Promise<ConsumptionPlanItem[]> {
+    async createConsumptionPlan(consumptionDuration: number, startFrom: number,  finishAt: number): Promise<ConsumptionPlanItem[]> {
         const sortedConsumptionPlan = await this.selectPriceListItemsForConsumptionPlan(consumptionDuration, startFrom, finishAt);
         let prevConsumptionPlanItem: ConsumptionPlanItem | null = null;
         let prevItemIsAdjecent = false;

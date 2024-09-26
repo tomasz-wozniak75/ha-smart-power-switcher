@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { DateTimeUtils } from 'smart-power-consumer-api';
 import { CurrencyUtils } from './CurrencyUtils';
+import { PricelistItem } from "smart-power-consumer-api";
 
 export const PriceListTable = () => {
   const [date] = useState(Date.now());
-  const [pricelist, setPricelist] = useState([]);
+  const [pricelist, setPricelist] = useState<PricelistItem[]>([]);
   useEffect(() => {
     fetch(`/pricelist/${DateTimeUtils.formatDate(date)}`)
       .then((res) => {
@@ -16,7 +17,7 @@ export const PriceListTable = () => {
   }, []);
   return (
     <div>
-        <table class="pricelistTable">
+        <table className="pricelistTable">
           <thead>
             <tr>
               <th>Price list {DateTimeUtils.formatDate(date)}</th>
@@ -28,7 +29,7 @@ export const PriceListTable = () => {
             </tr>
           </thead>
             <tbody>
-              {pricelist.map((pricelistItem) => (
+              {pricelist.map((pricelistItem: PricelistItem) => (
                   <tr>
                       <td>{DateTimeUtils.getTime(pricelistItem.startsAt)}</td>
                       <td>{CurrencyUtils.format(pricelistItem.price)}</td>

@@ -1,6 +1,6 @@
 import { DateTimeUtils } from "smart-power-consumer-api";
 import { NotFoundError } from "./NotFoundError";
-import { PricelistItem } from "./PricelistItem";
+import { PricelistItem } from "smart-power-consumer-api";
 import puppeteer from "puppeteer";
 
 
@@ -16,7 +16,7 @@ export class RdnPricelistProvider {
         const priceses = await this.fetchPriceList(requestedDate);
         const priceslist = priceses
             .map((price) => price <= 5 ? 500 : price * 100)
-            .map((price, index) => new PricelistItem(new Date(requestedDate).setHours(index), 60 * 60 * 1000, price));
+            .map((price, index) => ({ startsAt: new Date(requestedDate).setHours(index), duration: 60 * 60 * 1000, price: price }));
         this.priceListCache[requestedDate] = priceslist;
         return priceslist;
     }
@@ -50,7 +50,7 @@ export class RdnPricelistProvider {
     
           
           const parsingResult = await page.evaluate(() => {
-                const result = { "contractDateText": null, };
+                const result = { "contractDateText": null, pricelistArray: null};
                 result['contractDateText'] = document.getElementsByClassName("kontrakt-date")?.item(0)?.innerText;
                 if (result['contractDateText'] && document.getElementById("footable_kontrakty_godzinowe")) {
                     const pricelistArray: number[] = [];

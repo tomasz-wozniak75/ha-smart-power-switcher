@@ -1,4 +1,4 @@
-import { PricelistItem } from "./PricelistItem";
+import { PricelistItem } from "smart-power-consumer-api";
 import { SingleDayPricelist } from "./SingleDayPricelist";
 
 
