@@ -13,9 +13,10 @@ export class RdnPricelistProvider {
         if (this.priceListCache[requestedDate]) {
             return this.priceListCache[requestedDate];
         }
+        const transferCost = 9000;
         const priceses = await this.fetchPriceList(requestedDate);
         const priceslist = priceses
-            .map((price) => price <= 5 ? 500 : price * 100)
+            .map((price) => (price <= 5 ? 500 : price) + transferCost)
             .map((price, index) => ({ startsAt: new Date(requestedDate).setHours(index), duration: 60 * 60 * 1000, price: price }));
         this.priceListCache[requestedDate] = priceslist;
         return priceslist;
@@ -59,7 +60,7 @@ export class RdnPricelistProvider {
                     for(let r=2;  r < 2 + 24; r++ ){
                         const row = rows.item(r)
                         const priceText = row?.cells.item(1)?.innerText as string
-                        const price = Number(priceText.replace(",", ""))
+                        const price = Math.trunc(Number(priceText.replace(",", ".")) * 100);
                         pricelistArray.push(price);
                         result['pricelistArray'] = pricelistArray;
                 }
