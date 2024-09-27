@@ -7,10 +7,11 @@ import { W12PricelistProvider } from './services/W12PricelistProvider';
 import { PowerConsumersCtrl } from './controlers/PowerConsumersCtrl';
 import { PowerConsumersService } from './services/PowerConsumersService';
 import { TimePeriodPricelistService } from './services/TimePeriodPricelistService';
+import { RdnPricelistProvider } from './services/RdnPricelistProvider';
 
 const webServer = express();
 
-const singleDayPricelistService = new TariffSelectorPricelist( new W12PricelistProvider());;
+const singleDayPricelistService = new TariffSelectorPricelist( new RdnPricelistProvider());;
 const pricelistCtrl = new PricelistCtrl(singleDayPricelistService);
 const powerConsumersCtrl = new PowerConsumersCtrl(new PowerConsumersService(new TimePeriodPricelistService(singleDayPricelistService)));
 

@@ -1,6 +1,6 @@
-.App {
+/* .App {
   text-align: center;
-}
+} */
 
 
 .pricelistTable {
@@ -31,5 +31,42 @@
 }
 
 .pricelistTable tbody tr:last-of-type {
+    border-bottom: 2px solid #4f5253;
+}
+
+
+
+
+
+
+
+.consumptionPlanTableconsumptionPlanTable {
+    border-collapse: collapse;
+    margin: 25px 0;
+    font-size: 0.9em;
+    font-family: sans-serif;
+    min-width: 400px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+}
+
+.consumptionPlanTable thead tr {
+    background-color: #dddddd;
+    text-align: left;
+}
+
+.consumptionPlanTable th,
+.consumptionPlanTable td {
+    padding: 2px 2px;
+}
+
+.consumptionPlanTable tbody tr {
+    border-bottom: 1px solid #dddddd;
+}
+
+.consumptionPlanTable tbody tr:nth-of-type(even) {
+    background-color: #f3f3f3;
+}
+
+.consumptionPlanTable tbody tr:last-of-type {
     border-bottom: 2px solid #4f5253;
 }

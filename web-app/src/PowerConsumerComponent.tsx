@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { PowerConsumerModel } from "smart-power-consumer-api";
+import { ConsumptionPlanComponent } from './ConsumptionPlanComponent';
 
 export const PowerConsumerComponent = (powerConsumerProp: PowerConsumerModel) => {
     const [consumptionDuration, setConsumptionDuration] = useState(powerConsumerProp.defaultConsumptionDuration);
@@ -22,13 +23,19 @@ export const PowerConsumerComponent = (powerConsumerProp: PowerConsumerModel) =>
     return (
         <div>
             <header>{powerConsumer.name}</header>
-            <div><input name="consumptionDuration" type='number' value={consumptionDuration} onChange={ (e) => setConsumptionDuration(Number(e.target.value))}/></div>
-            <div><input name="finishAt" type='datetime-local' value={new Date((finishAt.getTime() + 2 * 3600 * 1000)).toJSON().substring(0, 16)} onChange={ (e) => setFinishAt(new Date(e.target.value))}/></div>
+            <div>
+                <label htmlFor="consumptionDuration">Charge duration: </label>
+                <input id="consumptionDuration" type='number' value={consumptionDuration} onChange={ (e) => setConsumptionDuration(Number(e.target.value))}/>
+            </div>
+            <div>
+                <label htmlFor="finishAt">Finish at: </label>
+                <input id="finishAt" type='datetime-local' value={new Date((finishAt.getTime() + 2 * 3600 * 1000)).toJSON().substring(0, 16)} onChange={ (e) => setFinishAt(new Date(e.target.value))}/>
+            </div>
             <div>
                 <input name="schedule" type='button' value={"Schedule"} onClick={schedulePlan} disabled={powerConsumer.consumptionPlan != null}/>
-                <input name="delete" type='button' value={"Cancel"} onClick={deletePlan} disabled={powerConsumer.consumptionPlan == null}/>
+                <input id="delete" type='button' value={"Cancel"} onClick={deletePlan} disabled={powerConsumer.consumptionPlan == null}/>
             </div>
-
+            {powerConsumer.consumptionPlan ? <ConsumptionPlanComponent {...powerConsumer.consumptionPlan}/> : null}
         </div>
     );
 }

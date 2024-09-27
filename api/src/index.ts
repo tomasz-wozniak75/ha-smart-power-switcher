@@ -16,6 +16,7 @@ export interface ConsumptionPlanItem {
 }
 
 export interface ConsumptionPlan {
+    createdAt: number;
     consumptionDuration: number;
     finishAt: number;
     consumptionPlanItems: ConsumptionPlanItem[];

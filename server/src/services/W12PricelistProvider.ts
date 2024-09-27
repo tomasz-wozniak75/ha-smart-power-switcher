@@ -12,7 +12,7 @@ export class W12PricelistProvider implements SingleDayPricelist {
         const inPeakPrice = 160000;
         const hour = 60 * 60 * 1000;
         const pricelist: PricelistItem[] = [];
-        if (requestedDate.getDay() > 4) {
+        if (requestedDate.getDay() > 5) {
            for(let h=0; h<24; h++) {
             pricelist.push({ startsAt: requestedDate.getTime() + h*hour, duration: hour, price: offPeakPrice});
            }     

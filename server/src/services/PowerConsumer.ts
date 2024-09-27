@@ -97,7 +97,7 @@ export class PowerConsumer {
         if (this.consumptionPlan != null && this.consumptionPlan.state == "processing") {
             throw new Error("Current plan needs to be canceled!");
         }
-        this.consumptionPlan = { consumptionDuration, finishAt, consumptionPlanItems: await this.createConsumptionPlan(consumptionDuration, Date.now(), finishAt), state: "processing" };
+        this.consumptionPlan = { createdAt: Date.now(), consumptionDuration, finishAt, consumptionPlanItems: await this.createConsumptionPlan(consumptionDuration, Date.now(), finishAt), state: "processing" };
 
         return this.getPowerConsumerModel();
     }
