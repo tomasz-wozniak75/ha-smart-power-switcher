@@ -28,12 +28,9 @@ export class RdnPricelistProvider {
     }
 
     validatePriceListDate(requestedDate: number, contractDateText: string): void {
-        const expectedDate = new Date(requestedDate);
-        const day = String(expectedDate.getDate()).padStart(2, '0');
-        const month = String(expectedDate.getMonth() + 1).padStart(2, '0');
-        const year = expectedDate.getFullYear();
-        
-        if ( `Kontrakty godzinowe dla dostawy w dniu ${day}-${month}-${year}` !== contractDateText) {
+        const expectedDate = DateTimeUtils.formatDate(requestedDate);
+                
+        if ( `Kontrakty godzinowe dla dostawy w dniu ${expectedDate}` !== contractDateText) {
             throw new NotFoundError("Missing price list for date: " + expectedDate);
         }
     }

@@ -20,6 +20,12 @@ export class DateTimeUtils {
         return date + days * 24 * 60 * 60 * 1000;
     }
 
+
+    public static formatDateForInput(miliseconds: number): string {
+        const date = new Date(miliseconds)
+        return `${date.getFullYear()}-${DateTimeUtils.padTo2Digits(date.getMonth() + 1)}-${DateTimeUtils.padTo2Digits(date.getDate())}`
+    }
+
     public static formatDate(date: number): string {  
         const typedDate = new Date(date)
         const day = String(typedDate.getDate()).padStart(2, '0');

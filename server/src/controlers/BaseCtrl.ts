@@ -17,12 +17,12 @@ export class BaseCtrl {
     }
     
     protected handleErrors(error: Error, res: any) {
-        if (error instanceof NotFoundError) {
+        if (error.name == "NotFoundError") {
             res.status(404);
-        } if (error instanceof UserError) {
+        } else if (error.name == "UserError") {
             res.status(400);
         } else {
-            res.status(500);
+            res.status(501);
         }
         res.json({ "message": error.message });
     }
