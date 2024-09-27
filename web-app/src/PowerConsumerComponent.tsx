@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react';
 import { PowerConsumerModel } from "smart-power-consumer-api";
 import { ConsumptionPlanComponent } from './ConsumptionPlanComponent';
 
+
+const getFinishAt = (finishAt: Date): string => new Date((finishAt.getTime() + 2 * 3600 * 1000)).toJSON().substring(0, 16);
+
 export const PowerConsumerComponent = (powerConsumerProp: PowerConsumerModel) => {
     const [consumptionDuration, setConsumptionDuration] = useState(powerConsumerProp.defaultConsumptionDuration);
     const [finishAt, setFinishAt] = useState(new Date(powerConsumerProp.defaultFinishAt));
@@ -29,7 +32,7 @@ export const PowerConsumerComponent = (powerConsumerProp: PowerConsumerModel) =>
             </div>
             <div>
                 <label htmlFor="finishAt">Finish at: </label>
-                <input id="finishAt" type='datetime-local' value={new Date((finishAt.getTime() + 2 * 3600 * 1000)).toJSON().substring(0, 16)} onChange={ (e) => setFinishAt(new Date(e.target.value))}/>
+                <input id="finishAt" type='datetime-local' value={getFinishAt(finishAt)} onChange={ (e) => setFinishAt(new Date(e.target.value))}/>
             </div>
             <div>
                 <input name="schedule" type='button' value={"Schedule"} onClick={schedulePlan} disabled={powerConsumer.consumptionPlan != null}/>
