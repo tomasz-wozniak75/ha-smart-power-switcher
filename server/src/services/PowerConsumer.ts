@@ -1,5 +1,6 @@
-import { PricelistItem, ConsumptionPlanItem, ConsumptionPlan, PowerConsumerModel, DateTimeUtils } from "smart-power-consumer-api";
+import { PricelistItem, ConsumptionPlanItem, ConsumptionPlan, PowerConsumerModel, DateTimeUtils, SwitchAction } from "smart-power-consumer-api";
 import { TimePeriodPricelistService } from "./TimePeriodPricelistService";
+import schedule from "node-schedule";
 
 
 export class PowerConsumer {
@@ -51,6 +52,10 @@ export class PowerConsumer {
         return sortedConsumptionPlan;
     }
 
+    private newSwitchAction(at:  number, switchOn: boolean): SwitchAction {
+        return {at, switchOn, state: "scheduled", result: null};
+    }
+
     async createConsumptionPlan(consumptionDuration: number, startFrom: number,  finishAt: number): Promise<ConsumptionPlanItem[]> {
         const sortedConsumptionPlan = await this.selectPriceListItemsForConsumptionPlan(consumptionDuration, startFrom, finishAt);
         let prevConsumptionPlanItem: ConsumptionPlanItem | null = null;
@@ -62,22 +67,22 @@ export class PowerConsumer {
                 const prevPricelistItem = prevConsumptionPlanItem.pricelistItem;
                 if ((prevPricelistItem.startsAt + prevPricelistItem.duration) < pricelistItem.startsAt) {
                     prevItemIsAdjecent = false;
-                    prevConsumptionPlanItem.switchActions.push({ at: prevPricelistItem.startsAt + prevPricelistItem.duration, switchOn: false});
+                    prevConsumptionPlanItem.switchActions.push(this.newSwitchAction(prevPricelistItem.startsAt + prevPricelistItem.duration, false));
                 }
             }
             prevConsumptionPlanItem = consumptionItem;
 
             if(consumptionItem.duration < pricelistItem.duration) {
                if (prevItemIsAdjecent) {
-                consumptionItem.switchActions.push({ at: pricelistItem.startsAt+consumptionItem.duration, switchOn: false});
+                consumptionItem.switchActions.push(this.newSwitchAction(pricelistItem.startsAt+consumptionItem.duration, false));
                 prevItemIsAdjecent = false;
                } else {
-                consumptionItem.switchActions.push({ at: pricelistItem.startsAt+(pricelistItem.duration - consumptionItem.duration), switchOn: true});
+                consumptionItem.switchActions.push(this.newSwitchAction(pricelistItem.startsAt+(pricelistItem.duration - consumptionItem.duration), true));
                 prevItemIsAdjecent = true;
                }    
             } else {
              if (!prevItemIsAdjecent) {
-                consumptionItem.switchActions.push({ at: pricelistItem.startsAt, switchOn: true});
+                consumptionItem.switchActions.push(this.newSwitchAction(pricelistItem.startsAt, true));
                 prevItemIsAdjecent = true;
                } 
             }
@@ -86,10 +91,24 @@ export class PowerConsumer {
         const lastConsumptionPlanItem = sortedConsumptionPlan[sortedConsumptionPlan.length-1];
         const lastSwitchActions = lastConsumptionPlanItem.switchActions;
         if (lastSwitchActions.length == 0 || lastSwitchActions[lastSwitchActions.length-1].switchOn ) {
-            lastSwitchActions.push({ at: lastConsumptionPlanItem.pricelistItem.startsAt+lastConsumptionPlanItem.pricelistItem.duration, switchOn: false});
+            lastSwitchActions.push(this.newSwitchAction(lastConsumptionPlanItem.pricelistItem.startsAt+lastConsumptionPlanItem.pricelistItem.duration,  false));
         }
 
         return sortedConsumptionPlan;
+    }
+
+
+    scheduleSwitchActions(consumptionPlan: ConsumptionPlan) {
+        consumptionPlan.consumptionPlanItems.flatMap((consumptionPlanItem) => consumptionPlanItem.switchActions).forEach((switchAction) => {
+            
+            schedule.scheduleJob(switchAction.at, function(switchAction: SwitchAction){
+                if (switchAction.state == "scheduled") {
+                    switchAction.state = "executed";
+                    switchAction.result = "OK";
+                    console.log('Switch action executed ', switchAction);
+                }
+            }.bind(null, switchAction));
+        });
     }
 
 
@@ -99,8 +118,11 @@ export class PowerConsumer {
         }
         this.consumptionPlan = { createdAt: Date.now(), consumptionDuration, finishAt, consumptionPlanItems: await this.createConsumptionPlan(consumptionDuration, Date.now(), finishAt), state: "processing" };
 
+        this.scheduleSwitchActions(this.consumptionPlan);
+
         return this.getPowerConsumerModel();
     }
+
 
     public getPowerConsumerModel(): PowerConsumerModel {
         const now = new Date();
@@ -111,6 +133,11 @@ export class PowerConsumer {
     public deleteConsumptionPlan(): PowerConsumerModel | PromiseLike<PowerConsumerModel> {
         if (this.consumptionPlan) {
             this.consumptionPlan.state = "canceled"
+            this.consumptionPlan.consumptionPlanItems.flatMap((consumptionPlanItem) => consumptionPlanItem.switchActions).forEach((switchAction) => {
+                if (switchAction.state != "executed") {
+                    switchAction.state = "canceled";
+                }
+            });
             this.consumptionPlan = null;
         }
 

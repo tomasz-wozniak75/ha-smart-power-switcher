@@ -15,7 +15,8 @@ const renderSwitchAction = (switchAction: SwitchAction) => {
         <>
                 <td>{DateTimeUtils.formatDateTime(switchAction.at)}</td>
                 <td>{switchAction.switchOn ? "ON": "OFF"}</td>
-                <td>TODO</td>
+                <td>{switchAction.state}</td>
+                <td>{switchAction.result}</td>
         </>
     )
 }
@@ -25,7 +26,7 @@ const renderRow = (consumptionPlanItem: ConsumptionPlanItem, index: number): JSX
     if( switchActions.length == 0 ) {
         return (
             <tr key={index}>
-                <td colSpan={3}></td>
+                <td colSpan={4}></td>
                 {renderPriceItem(consumptionPlanItem)}
             </tr>
         )
@@ -59,26 +60,28 @@ const renderRow = (consumptionPlanItem: ConsumptionPlanItem, index: number): JSX
 
 
 export const ConsumptionPlanComponent = (consumptionPlan: ConsumptionPlan) => {
+  const numberOfColumns = 6;
   return (
     <div>
         <table className="consumptionPlanTable">
           <thead>
             <tr>
-              <th colSpan={5}>Consumption plan created at: {DateTimeUtils.formatDateTime(consumptionPlan.createdAt)}</th>
+              <th colSpan={numberOfColumns}>Consumption plan created at: {DateTimeUtils.formatDateTime(consumptionPlan.createdAt)}</th>
             </tr>
             <tr>
-              <th colSpan={5}>Charge duration: {DateTimeUtils.formatTime(consumptionPlan.consumptionDuration)}</th>
+              <th colSpan={numberOfColumns}>Charge duration: {DateTimeUtils.formatTime(consumptionPlan.consumptionDuration)}</th>
             </tr>
             <tr>
-              <th colSpan={5}>Finish at: {DateTimeUtils.formatDateTime(consumptionPlan.finishAt)}</th>
+              <th colSpan={numberOfColumns}>Finish at: {DateTimeUtils.formatDateTime(consumptionPlan.finishAt)}</th>
             </tr>
             <tr>
-              <th colSpan={5}>Status: {consumptionPlan.state}</th>
+              <th colSpan={numberOfColumns}>Status: {consumptionPlan.state}</th>
             </tr>
             <tr>
                 <th>Switch Action Time</th>
                 <th>Switch Action</th>
                 <th>Switch Action Status</th>
+                <th>Switch Action Result</th>
                 <th>Pricelist time</th>
                 <th>Price [PLN/kWh]</th>
             </tr>
