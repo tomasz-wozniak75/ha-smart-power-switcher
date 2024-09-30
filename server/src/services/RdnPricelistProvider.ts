@@ -13,11 +13,22 @@ export class RdnPricelistProvider {
         if (this.priceListCache[requestedDate]) {
             return this.priceListCache[requestedDate];
         }
+        const minimalPrice = 500;
         const transferCost = 9000;
         const priceses = await this.fetchPriceList(requestedDate);
         const priceslist = priceses
-            .map((price) => (price <= 5 ? 500 : price) + transferCost)
-            .map((price, index) => ({ startsAt: new Date(requestedDate).setHours(index), duration: 60 * 60 * 1000, price: price }));
+            .map((price) => (price <= 5 ? minimalPrice : price) + transferCost)
+            .map((price, index) => ({ startsAt: new Date(requestedDate).setHours(index), duration: 60 * 60 * 1000, price: price, category: "medium" } as PricelistItem))
+            .map((pricelistItem) => {
+                if(pricelistItem.price === minimalPrice + transferCost) {
+                    pricelistItem.category = "min"
+                }
+                if(pricelistItem.price >= 80000) {
+                    pricelistItem.category = "max"
+                }
+                return pricelistItem;
+            }
+            );
         this.priceListCache[requestedDate] = priceslist;
         return priceslist;
     }

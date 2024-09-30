@@ -74,7 +74,7 @@ export const PriceListTable = () => {
                   {filteredPricelist.map((pricelistItem: PricelistItem) => (
                       <tr key={pricelistItem.startsAt}>
                           <td>{DateTimeUtils.getTime(pricelistItem.startsAt)}</td>
-                          <td>{CurrencyUtils.format(pricelistItem.price)}</td>
+                          <td className={`price-${pricelistItem.category}`}>{CurrencyUtils.format(pricelistItem.price)}</td>
                       </tr>
                   ))}
                 </tbody>

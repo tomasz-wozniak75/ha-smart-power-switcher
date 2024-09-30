@@ -74,3 +74,15 @@
 .errorMessage {
     color: red;
 }
+
+.price-min {
+    color: green
+}
+
+.price-medium {
+    color: black
+}
+
+.price-max {
+    color: red
+}

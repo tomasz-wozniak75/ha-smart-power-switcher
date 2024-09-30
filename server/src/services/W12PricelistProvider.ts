@@ -14,12 +14,17 @@ export class W12PricelistProvider implements SingleDayPricelist {
         const pricelist: PricelistItem[] = [];
         if (requestedDate.getDay() > 5) {
            for(let h=0; h<24; h++) {
-            pricelist.push({ startsAt: requestedDate.getTime() + h*hour, duration: hour, price: offPeakPrice});
+            pricelist.push({ startsAt: requestedDate.getTime() + h*hour, duration: hour, price: offPeakPrice, category: "min"});
            }     
         } else {
             for(let h=0; h<24; h++) {
-            pricelist.push({ startsAt: requestedDate.getTime() + h*hour, duration: hour, price: (h<6 || h==13 || h == 14 || h > 21) ? offPeakPrice : inPeakPrice});
-           }
+            pricelist.push({ 
+                startsAt: requestedDate.getTime() + h*hour, 
+                duration: hour, 
+                ...((h<6 || h==13 || h == 14 || h > 21) ? {price: offPeakPrice, category: "min"}  : { price: inPeakPrice, category: "max"})
+               }
+            )
+            }
         }
 
         return Promise.resolve(pricelist)
