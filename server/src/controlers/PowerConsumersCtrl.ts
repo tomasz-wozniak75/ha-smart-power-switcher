@@ -33,8 +33,8 @@ export class PowerConsumersCtrl  extends BaseCtrl {
     private async scheduleConsumptionPlan(req, res): Promise<void> {
         try{
             const powerConsumerId = /^\/power-consumer\/(.*)\/consumption-plan\/?/.exec(req.path)[1];
-            const consumptionDuration = this.getRequestNumericParam(req.query, "consumptionDuration");
-            const finishAt = this.getRequestNumericParam(req.query, "finishAt");
+            const consumptionDuration = this.getRequestNumericParam(req.query, "consumptionDuration") as number;
+            const finishAt = this.getRequestNumericParam(req.query, "finishAt") as number;
             const powerConsumeModel = await this.powerConsumersService.scheduleConsumptionPlan(powerConsumerId, consumptionDuration, finishAt)
             res.status(200);
             res.json(powerConsumeModel)

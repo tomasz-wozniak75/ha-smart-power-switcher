@@ -4,12 +4,12 @@ import { UserError } from "@/services/UserError";
 export class BaseCtrl {
 
     protected getRequestNumericParam(query: any, paramName: string, required = true) {
-        const stringValue = query[paramName]        
-        if (stringValue == null && required) {
+        if (!(paramName in query) && required) {
             throw new UserError("Required param is missing: " + paramName)
         }
 
-        if (stringValue) {
+        const stringValue = query[paramName]; 
+        if (stringValue != undefined) {
             return  Number(stringValue);
         }
 
@@ -17,12 +17,12 @@ export class BaseCtrl {
     }
     
     protected handleErrors(error: Error, res: any) {
-        if (error.name == "NotFoundError") {
+        if (error instanceof NotFoundError) {
             res.status(404);
-        } else if (error.name == "UserError") {
+        } else if (error instanceof UserError) {
             res.status(400);
         } else {
-            res.status(501);
+            res.status(500);
         }
         res.json({ "message": error.message });
     }

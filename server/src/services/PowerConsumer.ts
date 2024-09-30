@@ -1,6 +1,7 @@
 import { PricelistItem, ConsumptionPlanItem, ConsumptionPlan, PowerConsumerModel, DateTimeUtils, SwitchAction } from "smart-power-consumer-api";
 import { TimePeriodPricelistService } from "./TimePeriodPricelistService";
 import schedule from "node-schedule";
+import { UserError } from "./UserError";
 
 
 export class PowerConsumer {
@@ -31,15 +32,23 @@ export class PowerConsumer {
         });        
     }
 
+    private removeElapsedtime(pricelistItem: PricelistItem, startFrom: number): number {
+        if(pricelistItem.startsAt < startFrom && startFrom < (pricelistItem.startsAt + pricelistItem.duration)) {
+            return pricelistItem.duration - (startFrom - pricelistItem.startsAt);            
+        }
+        return pricelistItem.duration;
+    }
+
     private async selectPriceListItemsForConsumptionPlan(consumptionDuration: number, startFrom: number, finishAt: number): Promise<ConsumptionPlanItem[]> {
         const pricelist = await this.timePeriodPricelistService.getPriceList(startFrom, finishAt);
         const pricelistByPrice = this.sortPricelistByPrice(pricelist);
         let currentConsumptionDuration = 0;
         const consumptionPlan: ConsumptionPlanItem[] = [];
         for(let pricelistItem of pricelistByPrice) {
-            if (currentConsumptionDuration+pricelistItem.duration<=consumptionDuration) {
-                currentConsumptionDuration+=pricelistItem.duration;
-                consumptionPlan.push({pricelistItem, duration: pricelistItem.duration, switchActions: [] });
+            const pricelistItemDuration = this.removeElapsedtime(pricelistItem, startFrom);
+            if (currentConsumptionDuration+pricelistItemDuration<=consumptionDuration) {
+                currentConsumptionDuration+=pricelistItemDuration;
+                consumptionPlan.push({pricelistItem, duration: pricelistItemDuration, switchActions: [] });
             }else {
                 const delta = consumptionDuration - currentConsumptionDuration;
                 if (delta > 0){
@@ -77,7 +86,9 @@ export class PowerConsumer {
                 consumptionItem.switchActions.push(this.newSwitchAction(pricelistItem.startsAt+consumptionItem.duration, false));
                 prevItemIsAdjecent = false;
                } else {
-                consumptionItem.switchActions.push(this.newSwitchAction(pricelistItem.startsAt+(pricelistItem.duration - consumptionItem.duration), true));
+                const pricelistItemEnd = pricelistItem.startsAt + pricelistItem.duration;
+                const forcedPricelistItemEnd = finishAt < pricelistItemEnd ? finishAt : pricelistItemEnd;
+                consumptionItem.switchActions.push(this.newSwitchAction(forcedPricelistItemEnd - consumptionItem.duration, true));
                 prevItemIsAdjecent = true;
                }    
             } else {
@@ -91,7 +102,11 @@ export class PowerConsumer {
         const lastConsumptionPlanItem = sortedConsumptionPlan[sortedConsumptionPlan.length-1];
         const lastSwitchActions = lastConsumptionPlanItem.switchActions;
         if (lastSwitchActions.length == 0 || lastSwitchActions[lastSwitchActions.length-1].switchOn ) {
-            lastSwitchActions.push(this.newSwitchAction(lastConsumptionPlanItem.pricelistItem.startsAt+lastConsumptionPlanItem.pricelistItem.duration,  false));
+            let itemStartFrom = lastConsumptionPlanItem.pricelistItem.startsAt;
+            if (lastSwitchActions.length == 1) {
+                itemStartFrom = lastSwitchActions[0].at;
+            }
+            lastSwitchActions.push(this.newSwitchAction(itemStartFrom+lastConsumptionPlanItem.duration,  false));
         }
 
         return sortedConsumptionPlan;
@@ -101,21 +116,47 @@ export class PowerConsumer {
     scheduleSwitchActions(consumptionPlan: ConsumptionPlan) {
         consumptionPlan.consumptionPlanItems.flatMap((consumptionPlanItem) => consumptionPlanItem.switchActions).forEach((switchAction) => {
             
-            schedule.scheduleJob(switchAction.at, function(switchAction: SwitchAction){
+            schedule.scheduleJob(switchAction.at, function(switchAction: SwitchAction, consumptionPlan: ConsumptionPlan){
                 if (switchAction.state == "scheduled") {
                     switchAction.state = "executed";
                     switchAction.result = "OK";
-                    console.log('Switch action executed ', switchAction);
+                    console.log(`Switch action executed at ${new Date().toISOString()}`, switchAction);
                 }
-            }.bind(null, switchAction));
+
+                if(consumptionPlan.state == "processing") {
+                    let hasScheduled = false;
+                    for(let nextSwitchAction of consumptionPlan.consumptionPlanItems.flatMap((consumptionPlanItem) => consumptionPlanItem.switchActions)) {
+                        if (nextSwitchAction.state == "scheduled") {
+                            hasScheduled = true;
+                            break;
+                        }        
+                    }
+                    if (!hasScheduled) {
+                        consumptionPlan.state ="executed"
+                    }
+                }
+            }.bind(null, switchAction, consumptionPlan));
         });
     }
 
 
     public async scheduleConsumptionPlan(consumptionDuration: number, finishAt: number): Promise<PowerConsumerModel> {
         if (this.consumptionPlan != null && this.consumptionPlan.state == "processing") {
-            throw new Error("Current plan needs to be canceled!");
+            throw new UserError("Current plan needs to be canceled!");
         }
+
+        if ( consumptionDuration <= 0) {
+            throw new UserError("Consumption duration should be grater than zero!");
+        }
+
+        if ( finishAt <= Date.now()) {
+            throw new UserError("Finish at should be in the future!");
+        }
+
+        if ( Date.now() >= (finishAt - consumptionDuration)) {
+            throw new UserError("Finish at is too early to execute whole required consumption duration time!");
+        }
+
         this.consumptionPlan = { createdAt: Date.now(), consumptionDuration, finishAt, consumptionPlanItems: await this.createConsumptionPlan(consumptionDuration, Date.now(), finishAt), state: "processing" };
 
         this.scheduleSwitchActions(this.consumptionPlan);

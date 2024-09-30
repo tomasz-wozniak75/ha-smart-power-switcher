@@ -1,10 +1,13 @@
-import { expect, test} from '@jest/globals';
+import { expect, test, describe} from '@jest/globals';
 import { TimePeriodPricelistService as TimePeriodPricelistService } from "./TimePeriodPricelistService";
 import { W12PricelistProvider } from './W12PricelistProvider';
-import { ConsumptionPlanItem, PowerConsumer } from './PowerConsumer';
+import { ConsumptionPlanItem } from 'smart-power-consumer-api';
+import { PowerConsumer } from './PowerConsumer';
 
-    const collectSwitchActions = (consumptionPanItems: ConsumptionPlanItem[]) => consumptionPanItems.flatMap( item => item.switchActions)
 
+const collectSwitchActions = (consumptionPanItems: ConsumptionPlanItem[]) => consumptionPanItems.flatMap( item => item.switchActions)
+
+describe("PowerConsumer tests", () => {
     test("consumptionPanItems two hours in the night in W12", async () => {
         const timePeriodPricelistService: TimePeriodPricelistService = new TimePeriodPricelistService(new W12PricelistProvider())
         const powerConsumer = new PowerConsumer("audi-charger", "Audi charger", timePeriodPricelistService)
@@ -48,7 +51,28 @@ import { ConsumptionPlanItem, PowerConsumer } from './PowerConsumer';
     });
 
 
-    test("consumptionPanItems  one hour one in the noon and one in the night in W12", async () => {
+    test("consumptionPanItems do not start in the past", async () => {
+        const timePeriodPricelistService: TimePeriodPricelistService = new TimePeriodPricelistService(new W12PricelistProvider())
+        const powerConsumer = new PowerConsumer("audi-charger", "Audi charger", timePeriodPricelistService)
+
+        const startTime = new Date(2024, 8, 24, 23, 20);
+        const endTime = new Date(2024, 8, 24, 23, 30);
+        const consumptionPanItems = await powerConsumer.createConsumptionPlan(5*60*1000, startTime.getTime(), endTime.getTime())
+        console.log(JSON.stringify(consumptionPanItems))
+        expect(consumptionPanItems.length).toEqual(1)
+
+        const switchActions = collectSwitchActions(consumptionPanItems)
+        console.log(JSON.stringify(switchActions))
+        expect(switchActions.length).toEqual(2)
+        expect(switchActions[0].switchOn).toEqual(true)
+        expect(switchActions[0].at).toEqual(new Date(2024, 8, 24, 23, 25).getTime())
+
+        expect(switchActions[1].switchOn).toEqual(false)
+        expect(switchActions[1].at).toEqual(new Date(2024, 8, 24, 23, 30).getTime())
+    });
+
+
+    test("consumptionPanItems  two hours, one in the noon and one in the night in W12", async () => {
         const timePeriodPricelistService: TimePeriodPricelistService = new TimePeriodPricelistService(new W12PricelistProvider())
         const powerConsumer = new PowerConsumer("audi-charger", "Audi charger", timePeriodPricelistService)
 
@@ -100,4 +124,5 @@ import { ConsumptionPlanItem, PowerConsumer } from './PowerConsumer';
         expect(switchActions[3].switchOn).toEqual(false)
         expect(switchActions[3].at).toEqual(new Date(2024, 8, 24, 23).getTime())
     });
+});
 

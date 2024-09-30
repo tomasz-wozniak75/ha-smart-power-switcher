@@ -17,7 +17,7 @@ export class PowerConsumersService {
 
     public getPowerConsumer(powerConsumerId: string): PowerConsumer {
         if (this.powerConsumers[powerConsumerId] === undefined) {
-            throw new NotFoundError(`${powerConsumerId} not found`);
+            throw new NotFoundError(`Power consumer ${powerConsumerId} not found`);
         }
 
         return this.powerConsumers[powerConsumerId];

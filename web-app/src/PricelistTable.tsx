@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { DateTimeUtils } from 'smart-power-consumer-api';
 import { CurrencyUtils } from './CurrencyUtils';
 import { PricelistItem } from "smart-power-consumer-api";
+import { ErrorComponent } from './ErrorComponent';
 
 
 
@@ -34,12 +35,12 @@ export const PriceListTable = () => {
           <label htmlFor="date">Select price list date: </label>
           <input id="date" type='date' value={DateTimeUtils.formatDateForInput(date)} onChange={ (e) => setDate(new Date(e.target.value).getTime())}/>
         </div>
-        {fetchingError != null ? <div className='errorMessage'>{fetchingError}</div>:
+        {fetchingError != null ? <ErrorComponent message={fetchingError}/>:
           (
             <table className="pricelistTable">
               <thead>
                 <tr>
-                  <th>Price list for {date == currentDate ? "today" : (date < currentDate ? "the past" : "the future")}: {DateTimeUtils.formatDate(date)}</th>
+                  <th>Price list for {date === currentDate ? "today" : (date < currentDate ? "the past" : "the future")}: {DateTimeUtils.formatDate(date)}</th>
                   <th></th>
                 </tr>
                 <tr>

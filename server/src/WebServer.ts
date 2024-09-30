@@ -11,7 +11,7 @@ import { RdnPricelistProvider } from './services/RdnPricelistProvider';
 
 const webServer = express();
 
-const singleDayPricelistService = new TariffSelectorPricelist( new RdnPricelistProvider());;
+const singleDayPricelistService = new TariffSelectorPricelist( new W12PricelistProvider());;
 const pricelistCtrl = new PricelistCtrl(singleDayPricelistService);
 const powerConsumersCtrl = new PowerConsumersCtrl(new PowerConsumersService(new TimePeriodPricelistService(singleDayPricelistService)));
 

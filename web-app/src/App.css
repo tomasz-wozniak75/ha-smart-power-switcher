@@ -70,3 +70,7 @@
 .consumptionPlanTable tbody tr:last-of-type {
     border-bottom: 2px solid #4f5253;
 }
+
+.errorMessage {
+    color: red;
+}
