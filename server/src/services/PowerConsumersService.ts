@@ -2,6 +2,7 @@ import { PowerConsumerModel } from "smart-power-consumer-api";
 import { NotFoundError } from "./NotFoundError";
 import { PowerConsumer } from "./PowerConsumer";
 import { TimePeriodPricelistService } from "./TimePeriodPricelistService";
+import { HomeAsistantService } from "./HomeAsistantService";
 
 export class PowerConsumersService {
 
@@ -12,7 +13,7 @@ export class PowerConsumersService {
     constructor(timePeriodPricelist: TimePeriodPricelistService) {
         this.timePeriodPricelistService = timePeriodPricelist;
 
-        this.powerConsumers["audi-charger"] = new PowerConsumer("audi-charger", "Audi charger", this.timePeriodPricelistService);
+        this.powerConsumers["audi-charger"] = new PowerConsumer("audi-charger", "Audi charger", this.timePeriodPricelistService, new HomeAsistantService());
     }
 
     public getPowerConsumer(powerConsumerId: string): PowerConsumer {

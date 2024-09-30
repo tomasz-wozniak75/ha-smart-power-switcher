@@ -3,6 +3,7 @@ import { TimePeriodPricelistService as TimePeriodPricelistService } from "./Time
 import { W12PricelistProvider } from './W12PricelistProvider';
 import { ConsumptionPlanItem } from 'smart-power-consumer-api';
 import { PowerConsumer } from './PowerConsumer';
+import { HomeAsistantService } from './HomeAsistantService';
 
 
 const collectSwitchActions = (consumptionPanItems: ConsumptionPlanItem[]) => consumptionPanItems.flatMap( item => item.switchActions)
@@ -10,7 +11,7 @@ const collectSwitchActions = (consumptionPanItems: ConsumptionPlanItem[]) => con
 describe("PowerConsumer tests", () => {
     test("consumptionPanItems two hours in the night in W12", async () => {
         const timePeriodPricelistService: TimePeriodPricelistService = new TimePeriodPricelistService(new W12PricelistProvider())
-        const powerConsumer = new PowerConsumer("audi-charger", "Audi charger", timePeriodPricelistService)
+        const powerConsumer = new PowerConsumer("audi-charger", "Audi charger", timePeriodPricelistService, new HomeAsistantService())
 
         const startTime = new Date(2024, 8, 24, 19, 30);
         const endTime = new Date(2024, 8, 25);
@@ -32,7 +33,7 @@ describe("PowerConsumer tests", () => {
 
     test("consumptionPanItems one hour in the night in W12", async () => {
         const timePeriodPricelistService: TimePeriodPricelistService = new TimePeriodPricelistService(new W12PricelistProvider())
-        const powerConsumer = new PowerConsumer("audi-charger", "Audi charger", timePeriodPricelistService)
+        const powerConsumer = new PowerConsumer("audi-charger", "Audi charger", timePeriodPricelistService, new HomeAsistantService())
 
         const startTime = new Date(2024, 8, 24, 19, 30);
         const endTime = new Date(2024, 8, 24, 23);
@@ -53,7 +54,7 @@ describe("PowerConsumer tests", () => {
 
     test("consumptionPanItems do not start in the past", async () => {
         const timePeriodPricelistService: TimePeriodPricelistService = new TimePeriodPricelistService(new W12PricelistProvider())
-        const powerConsumer = new PowerConsumer("audi-charger", "Audi charger", timePeriodPricelistService)
+        const powerConsumer = new PowerConsumer("audi-charger", "Audi charger", timePeriodPricelistService, new HomeAsistantService())
 
         const startTime = new Date(2024, 8, 24, 23, 20);
         const endTime = new Date(2024, 8, 24, 23, 30);
@@ -74,7 +75,7 @@ describe("PowerConsumer tests", () => {
 
     test("consumptionPanItems  two hours, one in the noon and one in the night in W12", async () => {
         const timePeriodPricelistService: TimePeriodPricelistService = new TimePeriodPricelistService(new W12PricelistProvider())
-        const powerConsumer = new PowerConsumer("audi-charger", "Audi charger", timePeriodPricelistService)
+        const powerConsumer = new PowerConsumer("audi-charger", "Audi charger", timePeriodPricelistService, new HomeAsistantService())
 
         const startTime = new Date(2024, 8, 24, 14);
         const endTime = new Date(2024, 8, 24, 23);
@@ -101,7 +102,7 @@ describe("PowerConsumer tests", () => {
 
     test("consumptionPanItems  more than two hour one in noon and one in the night in W12", async () => {
         const timePeriodPricelistService: TimePeriodPricelistService = new TimePeriodPricelistService(new W12PricelistProvider())
-        const powerConsumer = new PowerConsumer("audi-charger", "Audi charger", timePeriodPricelistService)
+        const powerConsumer = new PowerConsumer("audi-charger", "Audi charger", timePeriodPricelistService, new HomeAsistantService())
 
         const startTime = new Date(2024, 8, 24, 14);
         const endTime = new Date(2024, 8, 24, 23);

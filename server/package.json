@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "tsx watch --clear-screen=false src/WebServer.ts | pino-pretty",
     "build": "tsup",
-    "start": "node dist/WebServer.js",
+    "start": "dotenvx run --env-file=.env.development -- node dist/WebServer.js",
+    "start-prod": "dotenvx run --env-file=.env.production -- node dist/WebServer.js",
     "clean": "rimraf dist coverage",
     "lint": "biome check src/",
     "lint:fix": "biome check src/ --fix",
@@ -25,6 +26,7 @@
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
     "@types/jest": "^29.5.13",
+    "@types/node-schedule": "^2.1.7",
     "@types/supertest": "^6.0.2",
     "@types/swagger-ui-express": "^4.1.6",
     "husky": "^9.0.11",
@@ -42,6 +44,8 @@
     "vitest": "^2.0.0"
   },
   "dependencies": {
+    "@dotenvx/dotenvx": "^1.14.2",
+    "dotenv": "^16.4.5",
     "express": "^4.21.0",
     "node-schedule": "^2.1.1",
     "puppeteer": "^23.4.0"

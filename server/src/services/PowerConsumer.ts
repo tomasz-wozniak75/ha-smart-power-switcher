@@ -2,6 +2,7 @@ import { PricelistItem, ConsumptionPlanItem, ConsumptionPlan, PowerConsumerModel
 import { TimePeriodPricelistService } from "./TimePeriodPricelistService";
 import schedule from "node-schedule";
 import { UserError } from "./UserError";
+import { HomeAsistantService } from "./HomeAsistantService";
 
 
 export class PowerConsumer {
@@ -10,12 +11,13 @@ export class PowerConsumer {
     private consumptionPlan: ConsumptionPlan | null = null;
 
     private timePeriodPricelistService: TimePeriodPricelistService; 
+    private homeAsistantService: HomeAsistantService;
 
-    constructor(haDeviceName: string, name: string, timePeriodPricelist: TimePeriodPricelistService) {
+    constructor(haDeviceName: string, name: string, timePeriodPricelist: TimePeriodPricelistService, homeAsistantService: HomeAsistantService) {
         this.haDeviceName = haDeviceName;
         this.name = name;
         this.timePeriodPricelistService = timePeriodPricelist;
-
+        this.homeAsistantService = homeAsistantService;
     }
 
     private sortConsumptionPlanByTime(consumptionPlan: ConsumptionPlanItem[]): ConsumptionPlanItem[]  {
@@ -62,7 +64,7 @@ export class PowerConsumer {
     }
 
     private newSwitchAction(at:  number, switchOn: boolean): SwitchAction {
-        return {at, switchOn, state: "scheduled", result: null};
+        return {at, switchOn, state: "scheduled", result: undefined};
     }
 
     async createConsumptionPlan(consumptionDuration: number, startFrom: number,  finishAt: number): Promise<ConsumptionPlanItem[]> {
@@ -114,13 +116,22 @@ export class PowerConsumer {
 
 
     scheduleSwitchActions(consumptionPlan: ConsumptionPlan) {
+        const homeAsistantService = this.homeAsistantService;
+        const haDeviceName = this.haDeviceName;
+
         consumptionPlan.consumptionPlanItems.flatMap((consumptionPlanItem) => consumptionPlanItem.switchActions).forEach((switchAction) => {
             
-            schedule.scheduleJob(switchAction.at, function(switchAction: SwitchAction, consumptionPlan: ConsumptionPlan){
+            schedule.scheduleJob(switchAction.at, async function(switchAction: SwitchAction, consumptionPlan: ConsumptionPlan){
                 if (switchAction.state == "scheduled") {
                     switchAction.state = "executed";
-                    switchAction.result = "OK";
-                    console.log(`Switch action executed at ${new Date().toISOString()}`, switchAction);
+                    try{
+                        await homeAsistantService.switchDevice(haDeviceName, switchAction.switchOn);
+                        switchAction.result = "OK";
+                        console.log(`Switch action executed at ${new Date().toISOString()}`, switchAction);
+                    }catch(error) {
+                        switchAction.result = error.message;
+                        console.log(`Switch action executed at ${new Date().toISOString()}`, switchAction);
+                    }
                 }
 
                 if(consumptionPlan.state == "processing") {

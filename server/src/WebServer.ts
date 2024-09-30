@@ -8,6 +8,9 @@ import { PowerConsumersCtrl } from './controlers/PowerConsumersCtrl';
 import { PowerConsumersService } from './services/PowerConsumersService';
 import { TimePeriodPricelistService } from './services/TimePeriodPricelistService';
 import { RdnPricelistProvider } from './services/RdnPricelistProvider';
+import 'dotenv/config'
+
+
 
 const webServer = express();
 
