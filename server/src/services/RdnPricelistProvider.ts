@@ -42,7 +42,11 @@ export class RdnPricelistProvider {
         const expectedDate = DateTimeUtils.formatDate(requestedDate);
                 
         if ( `Kontrakty godzinowe dla dostawy w dniu ${expectedDate}` !== contractDateText) {
-            throw new NotFoundError("Missing price list for date: " + expectedDate);
+            
+            const today = DateTimeUtils.cutOffTime(Date.now())
+            const messagePostfix = requestedDate > today ? ", for tomorrow pricelist is published at 2pm!" : ", pricelists are published for last 2 months!";
+
+            throw new NotFoundError(`Missing price list for date: ${expectedDate}${messagePostfix}`);
         }
     }
    
