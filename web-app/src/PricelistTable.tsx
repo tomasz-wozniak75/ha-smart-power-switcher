@@ -47,9 +47,28 @@ export const PriceListTable = () => {
     return null;
   }
 
-   useEffect(() => {
+  useEffect(() => {
     setFilteredPricelist(pricelist.filter(filterPricelistItem));
    }, [pricelist, hidePastItems, date]);
+
+
+  const sortPricelistByPrice = (pricelist: PricelistItem[]): PricelistItem[] =>  {
+    return [...pricelist].sort((a, b) => {
+                if (a.price < b.price) return -1;
+                if (a.price > b.price) return 1;
+                if (a.startsAt < b.startsAt) return -1;
+                if (a.startsAt > b.startsAt) return 1;
+                return 0;
+    });        
+  }
+
+  const handleSortPricelistByPrice = (event: React.MouseEvent<HTMLElement>) => {
+    setPricelist(sortPricelistByPrice(pricelist))
+  };
+
+  const handleSortPricelistByTime = (event: React.MouseEvent<HTMLElement>) => {
+    setPricelist([...pricelist].sort((a, b) => a.startsAt - b.startsAt))
+  };
 
   return (
     <div>
@@ -66,8 +85,8 @@ export const PriceListTable = () => {
                 </tr>
                 {renderHidePastItems()}
                 <tr>
-                    <th>Hour</th>
-                    <th>Price [PLN/kWh]</th>
+                    <th><a href="#Foo" onClick={handleSortPricelistByTime}>Hour</a></th>
+                    <th><a href="#Foo" onClick={handleSortPricelistByPrice}>Price [PLN/kWh]</a></th>
                 </tr>
               </thead>
                 <tbody>
