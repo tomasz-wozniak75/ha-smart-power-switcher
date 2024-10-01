@@ -13,7 +13,14 @@ export class PowerConsumersService {
     constructor(timePeriodPricelist: TimePeriodPricelistService) {
         this.timePeriodPricelistService = timePeriodPricelist;
 
-        this.powerConsumers["audi-charger"] = new PowerConsumer("audi-charger", "Audi charger", this.timePeriodPricelistService, new HomeAsistantService());
+        const homeAsistantService = new HomeAsistantService(process.env.HA_TOKEN || null, process.env.HA_URL || null);
+
+        const audiChagerId = "switch.audi_charger_breaker_switch";
+        this.powerConsumers[audiChagerId] = new PowerConsumer(audiChagerId, "Audi charger", this.timePeriodPricelistService, homeAsistantService);
+
+
+        const onePhaseSwitchId = "todo";
+        this.powerConsumers[onePhaseSwitchId] = new PowerConsumer(onePhaseSwitchId, "One phase switch", this.timePeriodPricelistService, homeAsistantService);
     }
 
     public getPowerConsumer(powerConsumerId: string): PowerConsumer {
