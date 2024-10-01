@@ -12,7 +12,7 @@
     "lint": "biome check src/",
     "lint:fix": "biome check src/ --fix",
     "format": "biome format src/",
-    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "test": "dotenvx run --env-file=.env.development -- node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "prepare": "husky"
   },
   "keywords": [],

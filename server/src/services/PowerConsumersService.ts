@@ -19,7 +19,7 @@ export class PowerConsumersService {
         this.powerConsumers[audiChagerId] = new PowerConsumer(audiChagerId, "Audi charger", this.timePeriodPricelistService, homeAsistantService);
 
 
-        const onePhaseSwitchId = "todo";
+        const onePhaseSwitchId = "switch.smart_plug_socket_1";
         this.powerConsumers[onePhaseSwitchId] = new PowerConsumer(onePhaseSwitchId, "One phase switch", this.timePeriodPricelistService, homeAsistantService);
     }
 
