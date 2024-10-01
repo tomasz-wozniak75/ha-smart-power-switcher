@@ -13,6 +13,7 @@ export const PriceListTable = () => {
   const [filteredPricelist, setFilteredPricelist] = useState<PricelistItem[]>([]);
   const [fetchingError, setFetchingError] = useState<string[]>(null);
   const [hidePastItems, setHidePastItems] = useState<boolean>(false);
+  const [sortedByTime, setSortedByTime] = useState<boolean>(true);
 
   useEffect(() => {
     const fetchPriceList = async () => {
@@ -64,15 +65,18 @@ export const PriceListTable = () => {
 
   const handleSortPricelistByPrice = (event: React.MouseEvent<HTMLElement>) => {
     setPricelist(sortPricelistByPrice(pricelist))
+    setSortedByTime(false);
   };
 
   const handleSortPricelistByTime = (event: React.MouseEvent<HTMLElement>) => {
-    setPricelist([...pricelist].sort((a, b) => a.startsAt - b.startsAt))
+    setPricelist([...pricelist].sort((a, b) => a.startsAt - b.startsAt));
+    setSortedByTime(true);
   };
 
   return (
     <div>
-        <div>
+        <header>Price list</header>
+        <div className='inputBlock'>
           <label htmlFor="date">Select price list date: </label>
           <input id="date" type='date' value={DateTimeUtils.formatDateForInput(date)} onChange={ (e) => setDate(DateTimeUtils.cutOffTime(new Date(e.target.value).getTime()))}/>
         </div>
@@ -85,8 +89,8 @@ export const PriceListTable = () => {
                 </tr>
                 {renderHidePastItems()}
                 <tr>
-                    <th><a href="#Foo" onClick={handleSortPricelistByTime}>Hour</a></th>
-                    <th><a href="#Foo" onClick={handleSortPricelistByPrice}>Price [PLN/kWh]</a></th>
+                    <th><a href="#Foo" onClick={handleSortPricelistByTime}>Hour{sortedByTime? " ↓": null}</a></th>
+                    <th><a href="#Foo" onClick={handleSortPricelistByPrice}>Price [PLN/kWh]{sortedByTime? null : " ↓"}</a></th>
                 </tr>
               </thead>
                 <tbody>

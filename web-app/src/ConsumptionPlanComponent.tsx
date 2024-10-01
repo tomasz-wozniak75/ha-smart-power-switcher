@@ -3,10 +3,12 @@ import { ConsumptionPlan, ConsumptionPlanItem, DateTimeUtils, PricelistItem, Swi
 import { CurrencyUtils } from './CurrencyUtils';
 
 const renderPriceItem = (consumptionPlanItem: ConsumptionPlanItem) => {
+    const rowSpan = consumptionPlanItem.switchActions.length > 1 ? 2 : 1;
+    const pricelistItem = consumptionPlanItem.pricelistItem;
     return (
         <>
-            <td rowSpan={consumptionPlanItem.switchActions.length > 1 ? 2 : 1}>{DateTimeUtils.getTime(consumptionPlanItem.pricelistItem.startsAt)}</td>
-            <td rowSpan={consumptionPlanItem.switchActions.length > 1 ? 2 : 1}>{CurrencyUtils.format(consumptionPlanItem.pricelistItem.price)}</td>
+            <td rowSpan={rowSpan}>{DateTimeUtils.getTime(pricelistItem.startsAt)}</td>
+            <td rowSpan={rowSpan} className={`price-${pricelistItem.category}`}>{CurrencyUtils.format(pricelistItem.price)}</td>
         </>
     )
 }

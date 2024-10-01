@@ -39,13 +39,13 @@ export const PowerConsumerComponent = (powerConsumerProp: PowerConsumerModel) =>
     const consumptionPlanSchduled = () => powerConsumer.consumptionPlan !== null && powerConsumer.consumptionPlan.state === "processing";
 
     return (
-        <div>
+        <div className='powerConsumer'>
             <header>{powerConsumer.name}</header>
-            <div>
+            <div className='inputBlock'>
                 <label htmlFor="consumptionDuration">Charge duration: </label>
                 <input id="consumptionDuration" type='number' value={consumptionDuration} onChange={ (e) => setConsumptionDuration(Number(e.target.value))}/>
             </div>
-            <div>
+            <div className='inputBlock'>
                 <label htmlFor="finishAt">Finish at: </label>
                 <input id="finishAt" type='datetime-local' value={getFinishAt(finishAt)} onChange={ (e) => setFinishAt(new Date(e.target.value))}/>
             </div>

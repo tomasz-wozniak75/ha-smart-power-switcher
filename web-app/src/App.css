@@ -1,7 +1,16 @@
 /* .App {
   text-align: center;
 } */
+header {
+    margin-top: 10px;
+    margin-bottom: 10px;
+    margin-left: 10px;
+    font-weight: bold;
+}
 
+.inputBlock {
+    margin: 15px;
+}
 
 .pricelistTable {
     border-collapse: collapse;
@@ -10,6 +19,13 @@
     font-family: sans-serif;
     min-width: 400px;
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+    margin: 15px;
+}
+
+.powerConsumer {
+    border-top: 1px solid black;
+    margin-top: 25px;
+    margin-left: 15px;
 }
 
 .pricelistTable thead tr {
@@ -35,12 +51,7 @@
 }
 
 
-
-
-
-
-
-.consumptionPlanTableconsumptionPlanTable {
+.consumptionPlanTable {
     border-collapse: collapse;
     margin: 25px 0;
     font-size: 0.9em;
@@ -86,3 +97,5 @@
 .price-max {
     color: red
 }
+
+
