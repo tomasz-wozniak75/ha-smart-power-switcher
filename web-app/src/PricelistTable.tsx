@@ -14,11 +14,14 @@ export const PriceListTable = () => {
   const [fetchingError, setFetchingError] = useState<string[]>(null);
   const [hidePastItems, setHidePastItems] = useState<boolean>(false);
   const [sortedByTime, setSortedByTime] = useState<boolean>(true);
+  const [isLoading, setLoading] = useState<boolean>(false)
 
   useEffect(() => {
     const fetchPriceList = async () => {
+        setLoading(true);
         const response = await fetch(`/pricelist/${DateTimeUtils.formatDate(date)}`)
         const responseJSON = await response.json();
+        setLoading(false);
         if (response.ok) {
           return responseJSON;
         } else {
@@ -79,6 +82,37 @@ export const PriceListTable = () => {
     setDate(today);
   }
 
+  const renderPricelisttable = () => {
+    if (isLoading) {
+      return <div className="spinner"></div>
+    }
+    return (fetchingError != null ? <ErrorComponent message={fetchingError}/>:
+      (
+        <table className="pricelistTable">
+          <thead>
+            <tr>
+              <th colSpan={2}>Price list for {date === today ? "today" : (date < today ? "the past" : "the future")}: {DateTimeUtils.formatDate(date)}</th>
+            </tr>
+            {renderHidePastItems()}
+            <tr>
+                <th><a href="#Foo" onClick={handleSortPricelistByTime}>Hour{sortedByTime? " ↓": null}</a></th>
+                <th><a href="#Foo" onClick={handleSortPricelistByPrice}>Price [PLN/kWh]{sortedByTime? null : " ↓"}</a></th>
+            </tr>
+          </thead>
+            <tbody>
+              {filteredPricelist.map((pricelistItem: PricelistItem) => (
+                  <tr key={pricelistItem.startsAt}>
+                      <td>{DateTimeUtils.getTime(pricelistItem.startsAt)}</td>
+                      <td className={`price-${pricelistItem.category}`}>{CurrencyUtils.format(pricelistItem.price)}</td>
+                  </tr>
+              ))}
+            </tbody>
+    
+        </table>
+      )
+    )
+  }
+
   return (
     <div>
         <header>Price list</header>
@@ -91,31 +125,7 @@ export const PriceListTable = () => {
               <input name="button-increase-date" type='button' value={"+1d >"}  onClick={(e) => setDate(DateTimeUtils.addDays(date, 1))}/> 
           </div>
         </div>
-        {fetchingError != null ? <ErrorComponent message={fetchingError}/>:
-          (
-            <table className="pricelistTable">
-              <thead>
-                <tr>
-                  <th colSpan={2}>Price list for {date === today ? "today" : (date < today ? "the past" : "the future")}: {DateTimeUtils.formatDate(date)}</th>
-                </tr>
-                {renderHidePastItems()}
-                <tr>
-                    <th><a href="#Foo" onClick={handleSortPricelistByTime}>Hour{sortedByTime? " ↓": null}</a></th>
-                    <th><a href="#Foo" onClick={handleSortPricelistByPrice}>Price [PLN/kWh]{sortedByTime? null : " ↓"}</a></th>
-                </tr>
-              </thead>
-                <tbody>
-                  {filteredPricelist.map((pricelistItem: PricelistItem) => (
-                      <tr key={pricelistItem.startsAt}>
-                          <td>{DateTimeUtils.getTime(pricelistItem.startsAt)}</td>
-                          <td className={`price-${pricelistItem.category}`}>{CurrencyUtils.format(pricelistItem.price)}</td>
-                      </tr>
-                  ))}
-                </tbody>
-        
-            </table>
-          )
-        }
+        {renderPricelisttable()}
     </div>
   );
 };
