@@ -44,6 +44,7 @@ export const PowerConsumerComponent = (powerConsumerProp: PowerConsumerModel) =>
             <div className='inputBlock'>
                 <label htmlFor="consumptionDuration">Charge duration: </label>
                 <input id="consumptionDuration" type='number' step="5" value={consumptionDuration} onChange={ (e) => setConsumptionDuration(Number(e.target.value))}/>
+                <input name="button-setDefault-consumption-duration" type='button' value={"default"}  onClick={(e) => setConsumptionDuration(powerConsumerProp.defaultConsumptionDuration)}/>      
                 <input name="button-upToFinishTime" type='button' value={"up to finish at"}  onClick={(e) => setConsumptionDuration(Math.floor((finishAt.getTime() - Date.now()) / (60 * 1000)) - 2)}/>      
             </div>
             <div>
@@ -54,7 +55,8 @@ export const PowerConsumerComponent = (powerConsumerProp: PowerConsumerModel) =>
                 <div>
                     <input name="button-decrease-1h" type='button' value={"< -1h"}  onClick={(e) => setFinishAt(new Date(finishAt.getTime() - 60 * 60 * 1000))}/>                    
                     <input name="button-decrease-10mins" type='button' value={"< -10mins"}  onClick={(e) => setFinishAt(new Date(finishAt.getTime() - 10 * 60 * 1000))}/>                    
-                    <input name="button-now" type='button' value={"Now"}  onClick={(e) => setFinishAt(new Date())}/>                    
+                    <input name="button-now" type='button' value={"Now"}  onClick={(e) => setFinishAt(new Date())}/>         
+                    <input name="button-setDefault-consumption-duration" type='button' value={"default"}  onClick={(e) => setFinishAt(new Date(powerConsumerProp.defaultFinishAt))}/>                 
                     <input name="button-increase+10mins" type='button' value={"+10mins >"}  onClick={(e) => setFinishAt(new Date(finishAt.getTime() + 10 * 60 * 1000))}/>                    
                     <input name="button-increase+1h" type='button' value={"+1h >"}  onClick={(e) => setFinishAt(new Date(finishAt.getTime() + 60 * 60 * 1000))}/>                    
                 </div>
