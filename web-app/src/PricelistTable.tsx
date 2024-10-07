@@ -7,7 +7,7 @@ import { ErrorComponent } from './ErrorComponent';
 
 
 export const PriceListTable = () => {
-  const [today] = useState<number>(DateTimeUtils.cutOffTime(Date.now()));
+  const [today, setToday] = useState<number>(DateTimeUtils.cutOffTime(Date.now()));
   const [date, setDate] = useState<number>(DateTimeUtils.cutOffTime(Date.now()));
   const [pricelist, setPricelist] = useState<PricelistItem[]>([]);
   const [filteredPricelist, setFilteredPricelist] = useState<PricelistItem[]>([]);
@@ -73,12 +73,22 @@ export const PriceListTable = () => {
     setSortedByTime(true);
   };
 
+  const setTodayAction = () => {
+    setToday(DateTimeUtils.cutOffTime(Date.now()));
+    setDate(today);
+  }
+
   return (
     <div>
         <header>Price list</header>
         <div className='inputBlock'>
           <label htmlFor="date">Select price list date: </label>
           <input id="date" type='date' value={DateTimeUtils.formatDateForInput(date)} onChange={ (e) => setDate(DateTimeUtils.cutOffTime(new Date(e.target.value).getTime()))}/>
+          <div>
+              <input name="button-decrease-date" type='button' value={"< -1d"}  onClick={(e) => setDate(DateTimeUtils.addDays(date, -1))}/>                    
+              <input name="button-now" type='button' value={"Today"}  onClick={(e) => setTodayAction()} disabled={date === today} />                    
+              <input name="button-increase-date" type='button' value={"+1d >"}  onClick={(e) => setDate(DateTimeUtils.addDays(date, 1))}/> 
+          </div>
         </div>
         {fetchingError != null ? <ErrorComponent message={fetchingError}/>:
           (

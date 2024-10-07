@@ -43,11 +43,20 @@ export const PowerConsumerComponent = (powerConsumerProp: PowerConsumerModel) =>
             <header>{powerConsumer.name}</header>
             <div className='inputBlock'>
                 <label htmlFor="consumptionDuration">Charge duration: </label>
-                <input id="consumptionDuration" type='number' value={consumptionDuration} onChange={ (e) => setConsumptionDuration(Number(e.target.value))}/>
+                <input id="consumptionDuration" type='number' step="5" value={consumptionDuration} onChange={ (e) => setConsumptionDuration(Number(e.target.value))}/>
             </div>
-            <div className='inputBlock'>
+            <div>
                 <label htmlFor="finishAt">Finish at: </label>
-                <input id="finishAt" type='datetime-local' value={getFinishAt(finishAt)} onChange={ (e) => setFinishAt(new Date(e.target.value))}/>
+                <div>
+                    <input id="finishAt" type='datetime-local' value={getFinishAt(finishAt)} onChange={ (e) => setFinishAt(new Date(e.target.value))}/>
+                </div>
+                <div>
+                    <input name="button-decrease-1h" type='button' value={"< -1h"}  onClick={(e) => setFinishAt(new Date(finishAt.getTime() - 60 * 60 * 1000))}/>                    
+                    <input name="button-decrease-10mins" type='button' value={"< -10mins"}  onClick={(e) => setFinishAt(new Date(finishAt.getTime() - 10 * 60 * 1000))}/>                    
+                    <input name="button-now" type='button' value={"Now"}  onClick={(e) => setFinishAt(new Date())}/>                    
+                    <input name="button-increase+10mins" type='button' value={"+10mins >"}  onClick={(e) => setFinishAt(new Date(finishAt.getTime() + 10 * 60 * 1000))}/>                    
+                    <input name="button-increase+1h" type='button' value={"+1h >"}  onClick={(e) => setFinishAt(new Date(finishAt.getTime() + 60 * 60 * 1000))}/>                    
+                </div>
             </div>
             <div>
                 <input name="schedule" type='button' value={"Schedule"} onClick={schedulePlan} disabled={consumptionPlanSchduled()}/>
