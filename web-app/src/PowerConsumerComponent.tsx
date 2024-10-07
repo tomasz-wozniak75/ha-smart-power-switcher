@@ -44,6 +44,7 @@ export const PowerConsumerComponent = (powerConsumerProp: PowerConsumerModel) =>
             <div className='inputBlock'>
                 <label htmlFor="consumptionDuration">Charge duration: </label>
                 <input id="consumptionDuration" type='number' step="5" value={consumptionDuration} onChange={ (e) => setConsumptionDuration(Number(e.target.value))}/>
+                <input name="button-upToFinishTime" type='button' value={"up to finish at"}  onClick={(e) => setConsumptionDuration(Math.floor((finishAt.getTime() - Date.now()) / (60 * 1000)) - 2)}/>      
             </div>
             <div>
                 <label htmlFor="finishAt">Finish at: </label>
