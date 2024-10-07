@@ -30,6 +30,7 @@ export const PriceListTable = () => {
       .then((response) => {setFetchingError(null); setPricelist(response); } )
       .catch((error) => {setFetchingError(error.message);});
     setHidePastItems(today === date);
+    setSortedByTime(true);
   }, [date]);
 
   const filterPricelistItem = (pricelistItem: PricelistItem) => today === date && hidePastItems ? (pricelistItem.startsAt + pricelistItem.duration) > Date.now() : true
