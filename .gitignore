@@ -1,7 +1,7 @@
 node_modules
 dist
+server/deployment-packages
 
-node_modules
 .pnp
 .pnp.js
 

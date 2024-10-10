@@ -6,7 +6,6 @@
   "scripts": {
     "dev": "tsx watch --clear-screen=false src/WebServer.ts | pino-pretty",
     "build": "tsup",
-    "build-prod": "dotenvx run --env-file=.env.production -- tsup",
     "start": "dotenvx run --env-file=.env.development -- node dist/WebServer.js",
     "start-prod": "dotenvx run --env-file=.env.production -- node dist/WebServer.js",
     "clean": "rimraf dist coverage",

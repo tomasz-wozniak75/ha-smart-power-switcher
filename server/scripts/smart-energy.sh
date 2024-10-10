@@ -1,0 +1,1 @@
+dotenvx run --env-file=.env.production -- node WebServer.js
