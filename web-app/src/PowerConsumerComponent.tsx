@@ -44,11 +44,18 @@ export const PowerConsumerComponent = (powerConsumerProp: PowerConsumerModel) =>
             <div className='inputBlock'>
                 <label htmlFor="consumptionDuration">Charge duration: </label>
                 <input id="consumptionDuration" type='number' step="5" value={consumptionDuration} onChange={ (e) => setConsumptionDuration(Number(e.target.value))}/>
-                <input name="button-setDefault-consumption-duration" type='button' value={"default"}  onClick={(e) => setConsumptionDuration(powerConsumerProp.defaultConsumptionDuration)}/>      
-                <input name="button-upToFinishTime" type='button' value={"up to finish at"}  onClick={(e) => setConsumptionDuration(Math.floor((finishAt.getTime() - Date.now()) / (60 * 1000)) - 2)}/>      
+                <div>
+                    <input name="button-consumptionDuration-less-10mins" type='button' value={"<< 10 mins"}  onClick={(e) => setConsumptionDuration(consumptionDuration - 10)}/>                    
+                    <input name="button-consumptionDuration-less-5mins" type='button' value={"<< 5 mins"}  onClick={(e) => setConsumptionDuration(consumptionDuration - 5)}/>                    
+                    <input name="button-setDefault-consumption-duration" type='button' value={"default"}  onClick={(e) => setConsumptionDuration(powerConsumerProp.defaultConsumptionDuration)}/>      
+                    <input name="button-upToFinishTime" type='button' value={"up to Finish before"}  onClick={(e) => setConsumptionDuration(Math.floor((finishAt.getTime() - Date.now()) / (60 * 1000)) - 2)}/> 
+                    
+                    <input name="button-consumptionDuration-more-5mins" type='button' value={"5 mins >>"}  onClick={(e) => setConsumptionDuration(consumptionDuration + 5)}/>                    
+                    <input name="button-consumptionDuration-more-10mins" type='button' value={"10 mins >>"}  onClick={(e) => setConsumptionDuration(consumptionDuration + 10)}/>  
+                </div>
             </div>
             <div className='inputBlock'>
-                <label htmlFor="finishAt">Finish at: </label>
+                <label htmlFor="finishAt">Finish before: </label>
                 <div>
                     <input id="finishAt" type='datetime-local' value={getFinishAt(finishAt)} onChange={ (e) => setFinishAt(new Date(e.target.value))}/>
                 </div>
