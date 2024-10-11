@@ -8,12 +8,7 @@
     "build": "tsup",
     "start": "dotenvx run --env-file=.env.development -- node dist/WebServer.js",
     "start-prod": "dotenvx run --env-file=.env.production -- node dist/WebServer.js",
-    "clean": "rimraf dist coverage",
-    "lint": "biome check src/",
-    "lint:fix": "biome check src/ --fix",
-    "format": "biome format src/",
-    "test": "dotenvx run --env-file=.env.development -- node --experimental-vm-modules node_modules/jest/bin/jest.js",
-    "prepare": "husky"
+    "test": "dotenvx run --env-file=.env.development -- node --experimental-vm-modules node_modules/jest/bin/jest.js"
   },
   "keywords": [],
   "author": "tomasz.wozniak.at@gmail.com",
@@ -29,7 +24,6 @@
     "@types/node-schedule": "^2.1.7",
     "@types/supertest": "^6.0.2",
     "@types/swagger-ui-express": "^4.1.6",
-    "husky": "^9.0.11",
     "jest": "^29.7.0",
     "jest-cli": "^29.7.0",
     "lint-staged": "^15.2.2",
@@ -41,19 +35,15 @@
     "tsx": "^4.7.2",
     "typescript": "^5.4.4",
     "vite-tsconfig-paths": "^5.0.0",
-    "vitest": "^2.0.0"
-  },
-  "dependencies": {
+    "vitest": "^2.0.0",
     "@dotenvx/dotenvx": "^1.14.2",
     "dotenv": "^16.4.5",
     "express": "^4.21.0",
     "node-schedule": "^2.1.1",
-    "puppeteer": "^23.4.0"
+    "puppeteer": "^23.5.2"
   },
-  "lint-staged": {
-    "*.{js,ts,cjs,mjs,d.cts,d.mts,json,jsonc}": [
-      "biome check --apply --no-errors-on-unmatched"
-    ]
+  "dependencies": {
+    
   },
   "tsup": {
     "entry": [
@@ -62,6 +52,7 @@
     ],
     "splitting": false,
     "sourcemap": true,
-    "clean": true
+    "clean": true,
+    "skipNodeModulesBundle": false
   }
 }

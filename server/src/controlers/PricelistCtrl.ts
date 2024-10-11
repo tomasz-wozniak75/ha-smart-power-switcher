@@ -1,6 +1,6 @@
 
 import { SingleDayPricelist } from "@/services/SingleDayPricelist";
-import { Express } from "express-serve-static-core";
+import { Express } from "express";
 import { BaseCtrl } from "./BaseCtrl";
 
 export class PricelistCtrl extends BaseCtrl {

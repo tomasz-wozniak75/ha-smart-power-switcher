@@ -1,3 +1,4 @@
+import { Express } from "express";
 import { PowerConsumersService } from "@/services/PowerConsumersService";
 import { BaseCtrl } from "./BaseCtrl";
 

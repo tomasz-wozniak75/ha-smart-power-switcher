@@ -53,6 +53,8 @@ export class RdnPricelistProvider {
     async fetchPriceList(requestedDate: number): Promise<number[]> {
         
         const browser = await puppeteer.launch({
+            ...(process.env.PUPPETEER_BROWSER_VAR ? {executablePath: process.env.PUPPETEER_BROWSER_VAR}: {}),
+            args: ['--no-sandbox'],
             headless: true,
             defaultViewport: null,
           });
