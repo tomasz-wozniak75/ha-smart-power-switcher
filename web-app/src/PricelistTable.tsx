@@ -4,7 +4,7 @@ import { CurrencyUtils } from './CurrencyUtils';
 import { PricelistItem } from "smart-power-consumer-api";
 import { ErrorComponent } from './ErrorComponent';
 
-
+export const daysOfWeek = ['Sunday', 'Monday','Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 export const PriceListTable = () => {
   const [today, setToday] = useState<number>(DateTimeUtils.cutOffTime(Date.now()));
@@ -91,7 +91,7 @@ export const PriceListTable = () => {
         <table className="pricelistTable">
           <thead>
             <tr>
-              <th colSpan={2}>Price list for {date === today ? "today" : (date < today ? "the past" : "the future")}: {DateTimeUtils.formatDate(date)}</th>
+              <th colSpan={2}>Price list for {date === today ? "today" : (date < today ? "the past" : "the future")}: {DateTimeUtils.formatDate(date)} {daysOfWeek[new Date(date).getDay()]}</th>
             </tr>
             {renderHidePastItems()}
             <tr>

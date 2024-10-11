@@ -1,10 +1,12 @@
 import { useState } from 'react';
-import { PowerConsumerModel } from "smart-power-consumer-api";
+import { DateTimeUtils, PowerConsumerModel } from "smart-power-consumer-api";
 import { ConsumptionPlanComponent } from './ConsumptionPlanComponent';
 import { ErrorComponent } from './ErrorComponent';
 
 
-const getFinishAt = (finishAt: Date): string => new Date((finishAt.getTime() + 2 * 3600 * 1000)).toJSON().substring(0, 16);
+
+const fixFinishAt = (finishAt: Date): Date => new Date((finishAt.getTime() + 2 * 3600 * 1000));
+const getFinishAt = (finishAt: Date): string => fixFinishAt(finishAt).toJSON().substring(0, 16);
 
 export const PowerConsumerComponent = (powerConsumerProp: PowerConsumerModel) => {
     const [consumptionDuration, setConsumptionDuration] = useState<number>(powerConsumerProp.defaultConsumptionDuration);
@@ -58,6 +60,7 @@ export const PowerConsumerComponent = (powerConsumerProp: PowerConsumerModel) =>
                 <label htmlFor="finishAt">Finish before: </label>
                 <div>
                     <input id="finishAt" type='datetime-local' value={getFinishAt(finishAt)} onChange={ (e) => setFinishAt(new Date(e.target.value))}/>
+                    <p>{(finishAt.getDay() == new Date().getDay() ? "today " : " tomorrow ") + `at ${DateTimeUtils.formatTime(fixFinishAt(finishAt).getTime())}`}</p>
                 </div>
                 <div>
                     <input name="button-decrease-1h" type='button' value={"<< hour"}  onClick={(e) => setFinishAt(new Date(finishAt.getTime() - 60 * 60 * 1000))}/>                    
