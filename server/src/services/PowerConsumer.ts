@@ -114,39 +114,51 @@ export class PowerConsumer {
         return sortedConsumptionPlan;
     }
 
+    private async executeSwitchAction(switchAction: SwitchAction): Promise<void> {
+        if (switchAction.state == "scheduled") {
+            switchAction.state = "executed";
+            try{
+                await this.homeAsistantService.switchDevice(this.haDeviceName, switchAction.switchOn);
+                switchAction.result = "OK";
+                console.log(`Switch action executed at ${new Date().toISOString()}`, switchAction);
+            }catch(error) {
+                switchAction.result = error.message;
+                console.log(`Switch action executed at ${new Date().toISOString()}`, switchAction);
+            }
+        }
+    }
+
+    private switchConsumptionPlanState(consumptionPlan: ConsumptionPlan): void  {
+        if(consumptionPlan.state == "processing") {
+            let hasScheduled = false;
+            for(let nextSwitchAction of consumptionPlan.consumptionPlanItems.flatMap((consumptionPlanItem) => consumptionPlanItem.switchActions)) {
+                if (nextSwitchAction.state == "scheduled") {
+                    hasScheduled = true;
+                    break;
+                }        
+            }
+            if (!hasScheduled) {
+                consumptionPlan.state ="executed"
+            }
+        }
+    }
 
     scheduleSwitchActions(consumptionPlan: ConsumptionPlan) {
-        const homeAsistantService = this.homeAsistantService;
-        const haDeviceName = this.haDeviceName;
+        const aThis = this;
+        const schedulingThreshold = Date.now() + 60 * 1000;
 
         consumptionPlan.consumptionPlanItems.flatMap((consumptionPlanItem) => consumptionPlanItem.switchActions).forEach((switchAction) => {
-            
-            schedule.scheduleJob(switchAction.at, async function(switchAction: SwitchAction, consumptionPlan: ConsumptionPlan){
-                if (switchAction.state == "scheduled") {
-                    switchAction.state = "executed";
-                    try{
-                        await homeAsistantService.switchDevice(haDeviceName, switchAction.switchOn);
-                        switchAction.result = "OK";
-                        console.log(`Switch action executed at ${new Date().toISOString()}`, switchAction);
-                    }catch(error) {
-                        switchAction.result = error.message;
-                        console.log(`Switch action executed at ${new Date().toISOString()}`, switchAction);
-                    }
-                }
-
-                if(consumptionPlan.state == "processing") {
-                    let hasScheduled = false;
-                    for(let nextSwitchAction of consumptionPlan.consumptionPlanItems.flatMap((consumptionPlanItem) => consumptionPlanItem.switchActions)) {
-                        if (nextSwitchAction.state == "scheduled") {
-                            hasScheduled = true;
-                            break;
-                        }        
-                    }
-                    if (!hasScheduled) {
-                        consumptionPlan.state ="executed"
-                    }
-                }
-            }.bind(null, switchAction, consumptionPlan));
+            if (switchAction.at < schedulingThreshold) {
+                switchAction.at = Date.now();
+                aThis.executeSwitchAction(switchAction);
+                aThis.switchConsumptionPlanState(consumptionPlan);
+            } else {
+                schedule.scheduleJob(switchAction.at, async function(switchAction: SwitchAction, consumptionPlan: ConsumptionPlan){
+                    aThis.executeSwitchAction(switchAction);
+                    aThis.switchConsumptionPlanState(consumptionPlan);
+                    
+                }.bind(null, switchAction, consumptionPlan));
+            }
         });
     }
 
@@ -164,8 +176,8 @@ export class PowerConsumer {
             throw new UserError("Finish at should be in the future!");
         }
 
-        if ( Date.now() >= (finishAt - consumptionDuration)) {
-            throw new UserError("Finish at is too early to execute whole required consumption duration time!");
+        if ( Date.now() > (finishAt - consumptionDuration)) {
+            throw new UserError("Finish at is too early to execute required consumption duration time!");
         }
 
         this.consumptionPlan = { createdAt: Date.now(), consumptionDuration, finishAt, consumptionPlanItems: await this.createConsumptionPlan(consumptionDuration, Date.now(), finishAt), state: "processing" };
@@ -182,7 +194,7 @@ export class PowerConsumer {
         return { id: this.haDeviceName, name: this.name, defaultConsumptionDuration: 90, defaultFinishAt,   consumptionPlan: this.consumptionPlan };
     }
 
-    public deleteConsumptionPlan(): PowerConsumerModel | PromiseLike<PowerConsumerModel> {
+    public async deleteConsumptionPlan(): Promise<PowerConsumerModel> {
         if (this.consumptionPlan) {
             this.consumptionPlan.state = "canceled"
             this.consumptionPlan.consumptionPlanItems.flatMap((consumptionPlanItem) => consumptionPlanItem.switchActions).forEach((switchAction) => {
@@ -191,6 +203,7 @@ export class PowerConsumer {
                 }
             });
             this.consumptionPlan = null;
+            await this.homeAsistantService.switchDevice(this.haDeviceName, false);
         }
 
         return this.getPowerConsumerModel();
