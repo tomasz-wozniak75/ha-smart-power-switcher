@@ -9,6 +9,8 @@ import { PowerConsumersService } from './services/PowerConsumersService';
 import { TimePeriodPricelistService } from './services/TimePeriodPricelistService';
 import { RdnPricelistProvider } from './services/RdnPricelistProvider';
 import 'dotenv/config'
+import fs from 'node:fs';
+
 
 
 
@@ -23,8 +25,32 @@ powerConsumersCtrl.createRoutes(webServer);
 
 webServer.use(express.static(path.join(__dirname, 'web-app')))
 
+const getInputArgument = (name:string): string | null => {
+    const argTuple = process.argv.find(item => item.startsWith(name));
+    if (argTuple) {
+        const splitedArgTuple = argTuple.split("=");
+        if (splitedArgTuple.length > 1) {
+            return splitedArgTuple[1];
+        }
+    }
+    return null;
+}
+
+
 const PORT = process.env.PORT || 3000;
 webServer.listen(PORT, () => {
     console.log(`App listening on port ${PORT}`);
     console.log('Press Ctrl+C to quit.');
+
+    const pidFile = getInputArgument("pid-file")
+    if (pidFile) {
+        
+        fs.writeFile(pidFile, process.pid + "", err => {
+            if (err) {
+                console.error(err);
+            } else {
+                console.log(`pid generated to file ${pidFile}`);
+            }
+        });
+    }
 });
