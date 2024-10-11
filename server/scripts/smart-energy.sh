@@ -1,1 +1,1 @@
-nohup dotenvx run --env-file=.env.production -- node WebServer.js pid-file=../smart-energy.pid >> ../smart-energy.logs &
+dotenvx run --env-file=.env.production -- node WebServer.js pid-file=../smart-energy.pid >> ../smart-energy.logs &

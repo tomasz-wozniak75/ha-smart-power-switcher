@@ -20,14 +20,13 @@ tar -zcvf $server_root/deployment-packages/$deployment_pack  -C $server_root/dis
 echo "Deploying ..."
 sshpass -p$passwd scp $deployment_pack tomaszw@smart-energy.mesh:/home/tomaszw/apps/smart-energy/deployment-packages
 
+echo "Cleaning local package ..."
+rm "$deployment_pack"
+touch "$deployment_pack.installed"
+
 echo "Installing ..."
 deployment_folder="/home/tomaszw/apps/smart-energy/deployment-packages"
 sshpass -p$passwd ssh tomaszw@smart-energy.mesh "cd $deployment_folder; mkdir -p ../public; rm -rf ../public/*; tar -xvf $deployment_pack -C ../public; ../public/install-smart-energy.sh $deployment_pack"
 
-
-echo "Cleaning ..."
-rm $deployment_pack
-touch $deployment_pack.installed
-cd ..
 
 
