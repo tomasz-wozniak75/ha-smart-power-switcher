@@ -1,4 +1,4 @@
-import { DateTimeUtils } from "smart-power-consumer-api";
+import { CurrencyUtils, DateTimeUtils } from "smart-power-consumer-api";
 import { NotFoundError } from "./NotFoundError";
 import { PricelistItem } from "smart-power-consumer-api";
 import puppeteer from "puppeteer";
@@ -20,10 +20,10 @@ export class RdnPricelistProvider {
             .map((price) => (price <= 5 ? minimalPrice : price) + transferCost)
             .map((price, index) => ({ startsAt: new Date(requestedDate).setHours(index), duration: 60 * 60 * 1000, price: price, category: "medium" } as PricelistItem))
             .map((pricelistItem) => {
-                if(pricelistItem.price === minimalPrice + transferCost) {
+                if(CurrencyUtils.getPriceAsNumber(pricelistItem.price) <= 0.2) {
                     pricelistItem.category = "min"
                 }
-                if(pricelistItem.price >= 80000) {
+                if(CurrencyUtils.getPriceAsNumber(pricelistItem.price) >= 0.8) {
                     pricelistItem.category = "max"
                 }
                 return pricelistItem;

@@ -1,4 +1,4 @@
-import { PricelistItem, ConsumptionPlanItem, ConsumptionPlan, PowerConsumerModel, DateTimeUtils, SwitchAction } from "smart-power-consumer-api";
+import { PricelistItem, ConsumptionPlanItem, ConsumptionPlan, PowerConsumerModel, DateTimeUtils, SwitchAction, CurrencyUtils } from "smart-power-consumer-api";
 import { TimePeriodPricelistService } from "./TimePeriodPricelistService";
 import schedule from "node-schedule";
 import { UserError } from "./UserError";
@@ -49,13 +49,39 @@ export class PowerConsumer {
         return endAt - startsAt;
     }
 
-    private calculatePriceItemsWeights(pricelist: any): PricelistItem[] {
+    private calculatePriceItemsWeights(pricelist: PricelistItem[], startFrom: number, finishAt: number): PricelistItem[] {
+        let currentPriceMin = 0;
+        let currentPriceMax = 0;
+        let weight = 0;
+        let weightChangeIndex = 0;
+
+        const aplyWeight = (from: number) => {
+            for (let j=from-1; j>= weightChangeIndex; j--) {
+                pricelist[j].weight = weight;
+            }
+        }
+
+        for(let i = 0; i < pricelist.length; i++) {
+            const pricelistItem = pricelist[i];
+            const itemPrice = CurrencyUtils.getPriceAsNumber(pricelistItem.price);
+            if( currentPriceMin <= itemPrice && itemPrice <= currentPriceMax) {
+                weight += this.applyConstraintsToDuration(pricelistItem, startFrom, finishAt);
+            } else {
+                aplyWeight(i);
+                currentPriceMin = CurrencyUtils.getPriceAsNumber(pricelistItem.price);
+                currentPriceMax = currentPriceMin;
+                weightChangeIndex = i;
+                weight = this.applyConstraintsToDuration(pricelistItem, startFrom, finishAt);
+            }
+          
+        }
+        aplyWeight(pricelist.length);
         return pricelist;
     }
 
     private async selectPriceListItemsForConsumptionPlan(consumptionDuration: number, startFrom: number, finishAt: number): Promise<ConsumptionPlanItem[]> {
-        const pricelist = await this.timePeriodPricelistService.getPriceList(startFrom, finishAt);
-        const pricelistByPrice = this.sortPricelistByPrice(this.calculatePriceItemsWeights(pricelist));
+        const pricelist = JSON.parse(JSON.stringify(await this.timePeriodPricelistService.getPriceList(startFrom, finishAt)));
+        const pricelistByPrice = this.sortPricelistByPrice(this.calculatePriceItemsWeights(pricelist, startFrom, finishAt));
         let currentConsumptionDuration = 0;
         const consumptionPlan: ConsumptionPlanItem[] = [];
         for(let pricelistItem of pricelistByPrice) {

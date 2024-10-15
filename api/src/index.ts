@@ -32,3 +32,16 @@ export interface PowerConsumerModel {
     defaultFinishAt: number | undefined;
     consumptionPlan: ConsumptionPlan | null;
 }
+
+
+export class CurrencyUtils {
+    static getPriceAsNumber(amount: number): number {
+        const shift = 100000;
+        return Math.trunc(Math.trunc(amount/shift*100))/100
+    }
+
+    static format(amount: number): string {
+        
+        return String(CurrencyUtils.getPriceAsNumber(amount));
+    }
+}

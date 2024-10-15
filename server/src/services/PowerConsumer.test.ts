@@ -125,5 +125,55 @@ describe("PowerConsumer tests", () => {
         expect(switchActions[3].switchOn).toEqual(false)
         expect(switchActions[3].at).toEqual(new Date(2024, 8, 24, 23).getTime())
     });
+
+
+    test("consumptionPanItems  more than two hours, two in the night in W12, ten in the noon", async () => {
+        const timePeriodPricelistService: TimePeriodPricelistService = new TimePeriodPricelistService(new W12PricelistProvider())
+        const powerConsumer = new PowerConsumer("audi-charger", "Audi charger", timePeriodPricelistService, new HomeAsistantService())
+
+        const startTime = new Date(2024, 8, 24, 14);
+        const endTime = new Date(2024, 8, 25, 0);
+        const consumptionPanItems = await powerConsumer.createConsumptionPlan(130*60*1000, startTime.getTime(), endTime.getTime())
+        console.log(JSON.stringify(consumptionPanItems))
+        expect(consumptionPanItems.length).toEqual(3)
+
+        const switchActions = collectSwitchActions(consumptionPanItems)
+        console.log(JSON.stringify(switchActions))
+        expect(switchActions.length).toEqual(4)
+        expect(switchActions[0].switchOn).toEqual(true)
+        expect(switchActions[0].at).toEqual(new Date(2024, 8, 24, 14, 50).getTime())
+        
+        expect(switchActions[1].switchOn).toEqual(false)
+        expect(switchActions[1].at).toEqual(new Date(2024, 8, 24, 15).getTime())
+
+        expect(switchActions[2].switchOn).toEqual(true)
+        expect(switchActions[2].at).toEqual(new Date(2024, 8, 24, 22).getTime())
+
+        expect(switchActions[3].switchOn).toEqual(false)
+        expect(switchActions[3].at).toEqual(new Date(2024, 8, 25, 0).getTime())
+    });
+
+
+
+    test("consumptionPanItems  more than two hours, both in the night in W12", async ()=> {
+        const timePeriodPricelistService: TimePeriodPricelistService = new TimePeriodPricelistService(new W12PricelistProvider())
+        const powerConsumer = new PowerConsumer("audi-charger", "Audi charger", timePeriodPricelistService, new HomeAsistantService())
+
+        const startTime = new Date(2024, 8, 24, 14);
+        const endTime = new Date(2024, 8, 25, 0);
+        const consumptionPanItems = await powerConsumer.createConsumptionPlan(120*60*1000, startTime.getTime(), endTime.getTime())
+        console.log(JSON.stringify(consumptionPanItems))
+        expect(consumptionPanItems.length).toEqual(2)
+
+        const switchActions = collectSwitchActions(consumptionPanItems)
+        console.log(JSON.stringify(switchActions))
+        expect(switchActions.length).toEqual(2)
+
+        expect(switchActions[0].switchOn).toEqual(true)
+        expect(switchActions[0].at).toEqual(new Date(2024, 8, 24, 22).getTime())
+
+        expect(switchActions[1].switchOn).toEqual(false)
+        expect(switchActions[1].at).toEqual(new Date(2024, 8, 25, 0).getTime())
+    });
 });
 

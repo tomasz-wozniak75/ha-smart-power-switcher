@@ -26,7 +26,7 @@ export class HomeAsistantService {
             if ( response.ok) {
                 console.log(`homeAsistantService.switchDevice ${this.haUrl}`);
             } else {
-                throw new Error(`${response.statusText} : ${response.text()}`)
+                throw new Error(`Switch device error: ${response.statusText}  ${await response.text()}`);
             }
         }
 

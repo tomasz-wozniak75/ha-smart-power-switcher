@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import { DateTimeUtils } from 'smart-power-consumer-api';
-import { CurrencyUtils } from './CurrencyUtils';
+import { CurrencyUtils, DateTimeUtils } from 'smart-power-consumer-api';
 import { PricelistItem } from "smart-power-consumer-api";
 import { ErrorComponent } from './ErrorComponent';
 

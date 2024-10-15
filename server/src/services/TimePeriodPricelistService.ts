@@ -12,10 +12,10 @@ export class TimePeriodPricelistService {
 
     public async getPriceList(fromTheTime: number, toTheTime: number): Promise<PricelistItem[]> {
         const fromTheDay = DateTimeUtils.cutOffTime(fromTheTime);
-        const totheDay = DateTimeUtils.cutOffTime(toTheTime);
+        const toTheDay = DateTimeUtils.cutOffTime(toTheTime);
 
         const pricelist: PricelistItem[] = [];
-        for(let nextDay = fromTheDay; nextDay <= totheDay; nextDay = DateTimeUtils.addDays(nextDay, 1)) {
+        for(let nextDay = fromTheDay; nextDay <= toTheDay; nextDay = DateTimeUtils.addDays(nextDay, 1)) {
            const singleDayPricelist = await this.singleDayPricelist.getPriceList(nextDay);
            pricelist.push(...singleDayPricelist.filter(item => (item.startsAt + item.duration) > fromTheTime && item.startsAt < toTheTime));     
         }

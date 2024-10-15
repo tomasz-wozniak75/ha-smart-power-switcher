@@ -1,6 +1,5 @@
 
-import { ConsumptionPlan, ConsumptionPlanItem, DateTimeUtils, PricelistItem, SwitchAction } from 'smart-power-consumer-api';
-import { CurrencyUtils } from './CurrencyUtils';
+import { ConsumptionPlan, ConsumptionPlanItem, CurrencyUtils, DateTimeUtils, PricelistItem, SwitchAction } from 'smart-power-consumer-api';
 
 const renderPriceItem = (consumptionPlanItem: ConsumptionPlanItem) => {
     const rowSpan = consumptionPlanItem.switchActions.length > 1 ? 2 : 1;
