@@ -26,28 +26,40 @@ export class PowerConsumer {
 
     private sortPricelistByPrice(pricelist: PricelistItem[]): PricelistItem[]  {
         return [...pricelist].sort((a, b) => {
+                    
                     if (a.price < b.price) return -1;
                     if (a.price > b.price) return 1;
+                    if (a.weight && a.weight > b.weight) return -1;
+                    if (a.weight && a.weight < b.weight) return 1;
                     if (a.startsAt < b.startsAt) return -1;
                     if (a.startsAt > b.startsAt) return 1;
                     return 0;
         });        
     }
 
-    private removeElapsedtime(pricelistItem: PricelistItem, startFrom: number): number {
-        if(pricelistItem.startsAt < startFrom && startFrom < (pricelistItem.startsAt + pricelistItem.duration)) {
-            return pricelistItem.duration - (startFrom - pricelistItem.startsAt);            
+    private applyConstraintsToDuration(pricelistItem: PricelistItem, startFrom: number, finishAt: number): number {
+        let startsAt = pricelistItem.startsAt;
+        let endAt = pricelistItem.startsAt + pricelistItem.duration;
+        if(startsAt < startFrom && startFrom < endAt) {
+            startsAt = startFrom;           
         }
-        return pricelistItem.duration;
+        if(startsAt < finishAt && finishAt < endAt) {
+            endAt = finishAt;           
+        }
+        return endAt - startsAt;
+    }
+
+    private calculatePriceItemsWeights(pricelist: any): PricelistItem[] {
+        return pricelist;
     }
 
     private async selectPriceListItemsForConsumptionPlan(consumptionDuration: number, startFrom: number, finishAt: number): Promise<ConsumptionPlanItem[]> {
         const pricelist = await this.timePeriodPricelistService.getPriceList(startFrom, finishAt);
-        const pricelistByPrice = this.sortPricelistByPrice(pricelist);
+        const pricelistByPrice = this.sortPricelistByPrice(this.calculatePriceItemsWeights(pricelist));
         let currentConsumptionDuration = 0;
         const consumptionPlan: ConsumptionPlanItem[] = [];
         for(let pricelistItem of pricelistByPrice) {
-            const pricelistItemDuration = this.removeElapsedtime(pricelistItem, startFrom);
+            const pricelistItemDuration = this.applyConstraintsToDuration(pricelistItem, startFrom, finishAt);
             if (currentConsumptionDuration+pricelistItemDuration<=consumptionDuration) {
                 currentConsumptionDuration+=pricelistItemDuration;
                 consumptionPlan.push({pricelistItem, duration: pricelistItemDuration, switchActions: [] });
