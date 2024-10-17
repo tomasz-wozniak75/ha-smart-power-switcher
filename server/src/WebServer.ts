@@ -10,6 +10,7 @@ import { TimePeriodPricelistService } from './services/TimePeriodPricelistServic
 import { RdnPricelistProvider } from './services/RdnPricelistProvider';
 import 'dotenv/config'
 import fs from 'node:fs';
+import { JobControler } from './audi-tracker/controlers/JobControler';
 
 
 
@@ -20,8 +21,11 @@ const singleDayPricelistService = new TariffSelectorPricelist( new RdnPricelistP
 const pricelistCtrl = new PricelistCtrl(singleDayPricelistService);
 const powerConsumersCtrl = new PowerConsumersCtrl(new PowerConsumersService(new TimePeriodPricelistService(singleDayPricelistService)));
 
+const jobControler  = new JobControler();
+
 pricelistCtrl.createRoutes(webServer);
 powerConsumersCtrl.createRoutes(webServer);
+jobControler.createRoutes(webServer);
 
 webServer.use(express.static(path.join(__dirname, 'web-app')))
 
