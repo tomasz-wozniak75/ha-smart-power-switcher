@@ -16,16 +16,13 @@ import { ChargingTrackerService } from './audi-tracker/services/ChargingTrackerS
 import { ChargingTrackerControler } from './audi-tracker/controlers/ChargingTrackerControler';
 
 
-
-
-
 const webServer = express();
 
 const singleDayPricelistService = new TariffSelectorPricelist( new RdnPricelistProvider());;
 const pricelistCtrl = new PricelistCtrl(singleDayPricelistService);
 const powerConsumersCtrl = new PowerConsumersCtrl(new PowerConsumersService(new TimePeriodPricelistService(singleDayPricelistService)));
 
-const chargingTrackerService = new ChargingTrackerService(10 * 60 * 1000);
+const chargingTrackerService = new ChargingTrackerService(1 * 60 * 1000);
 const jobControler  = new JobControler([new LocationTrackerService(10*60*1000), chargingTrackerService]);
 const chargingTrackerControler = new ChargingTrackerControler(chargingTrackerService);
 
