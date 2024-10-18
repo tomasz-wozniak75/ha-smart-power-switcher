@@ -17,3 +17,12 @@ test("validate fetchParkingPosition", async () => {
     console.log("refreshToken: ", parkingPosition)
     expect(parkingPosition).not.toBeNull()
 })
+
+
+test("check dateToModifiedSince", async () => {
+    const locationTrackerService = new LocationTrackerService();
+
+    const modifiedSince = await locationTrackerService.dateToModifiedSince(Date.now());
+    console.log(modifiedSince)
+    expect(modifiedSince).not.toBeNull()
+})

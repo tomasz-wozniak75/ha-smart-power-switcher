@@ -12,7 +12,7 @@ export class JobControler extends BaseCtrl {
 
     public constructor() {
         super();
-        this.jobs = [new LocationTrackerService(10*60*1000)];
+        this.jobs = [new LocationTrackerService(1*60*1000)];
     }
 
     public createRoutes(webServer: Express) {

@@ -22,6 +22,7 @@ export class LocationTrackerService extends JobService {
     private url = `https://emea.bff.cariad.digital/`
     private locations: AudiLocation[] = [];
     private currentDay?: number;
+    private lastRefresh: number;
 
     public constructor(interval: number = 15 * 60 * 1000) {
         super("location-tracker", interval);
@@ -29,7 +30,9 @@ export class LocationTrackerService extends JobService {
         this.clientId = process.env.clientId;
         this.userAgent = process.env.userAgent;
         this.refreshToken = process.env.refreshToken;
+        this.lastRefresh = Date.now() - 60*60*1000;
     }
+
 
     private async refreshAccessToken(): Promise<string> {
         const path = `login/v1/idk/token`;
@@ -55,8 +58,15 @@ export class LocationTrackerService extends JobService {
         throw new UserError(response.statusText);
     }
 
-    private async fetchParkingPosition(): Promise<AudiLocation> {
+    private dateToModifiedSince = (date: number) => {
+        const gmtDate = new Date(date - 2 * 60 * 60 * 1000);
+        const dayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        const timeComponent = DateTimeUtils.formatTimeWithSecs(gmtDate.getTime());
+        return `${dayNames[gmtDate.getDay()]}, ${gmtDate.getDate()} ${monthNames[gmtDate.getMonth()]} ${gmtDate.getFullYear()} ${timeComponent} GMT`
+    }
 
+    private async fetchParkingPosition(lastRefresh: number): Promise<AudiLocation> {
         const path = `vehicle/v1/vehicles/${this.vehicleId}/parkingposition`;
 
         if (this.accessToken === undefined) {
@@ -70,7 +80,7 @@ export class LocationTrackerService extends JobService {
                 "accept-charset": "utf-8",
                 "authorization": `Bearer ${this.accessToken}`, 
                 "user-agent": this.userAgent, 
-                "if-modified-since": "Thu, 17 Oct 2024 15:09:12 GMT",
+                "if-modified-since": this.dateToModifiedSince(lastRefresh),
             };
             return await fetch(this.url+path, { method: "get", headers }) ;
         }
@@ -132,14 +142,16 @@ export class LocationTrackerService extends JobService {
        }
 
         try {
-            const newLocation = await this.fetchParkingPosition();
+            const timeBeforeCall = Date.now();
+            const newLocation = await this.fetchParkingPosition(this.lastRefresh);
+            this.lastRefresh = timeBeforeCall;
 
             console.log("Fetched new location:", newLocation);
 
             if (this.isNewLocation(newLocation)) {
                 this.locations.push(newLocation);
             }else {
-                this.getLastLocation().lastRefresh = Date.now();
+                this.getLastLocation().lastRefresh = timeBeforeCall;
             }
 
             this.writeLocations();

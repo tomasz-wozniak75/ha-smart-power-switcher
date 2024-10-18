@@ -12,12 +12,12 @@ export class GpxFormat {
             if (location.lastRefresh === undefined) {
                 return "unknown";
             }
-            return ((location.lastRefresh - new Date(location.carCapturedTimestamp).getTime()) / 60000) + "mins";
+            return DateTimeUtils.formatTime(location.lastRefresh - new Date(location.carCapturedTimestamp).getTime());
         }
         const locationToWpt = (location: AudiLocation) => `
                     <wpt lat="${location.lat}" lon="${location.lon}">
                         <time>${location.carCapturedTimestamp}</time>
-                        <name>Postoj ${calcualteTimeDiff(location)}</name>
+                        <name>Parking for: ${calcualteTimeDiff(location)}</name>
                     </wpt>
         `;
         let gpxFile = this.xmlDoctype;
