@@ -27,6 +27,9 @@ pricelistCtrl.createRoutes(webServer);
 powerConsumersCtrl.createRoutes(webServer);
 jobControler.createRoutes(webServer);
 
+
+webServer.use("/audi-tracker/traces", express.static(path.join(__dirname, 'audi-traces')))
+
 webServer.use(express.static(path.join(__dirname, 'web-app')))
 
 const getInputArgument = (name:string): string | null => {

@@ -12,3 +12,7 @@ chrome-headless-shell@129.0.6668.91 /home/tomaszw/.cache/puppeteer/chrome-headle
 changes in /etc/rc.local for autostart during boot
 #run smart energy app
 sudo -H -u tomaszw /home/tomaszw/apps/smart-energy/public/smart-energy.sh
+
+
+
+http://www.gpxweaver.com/
