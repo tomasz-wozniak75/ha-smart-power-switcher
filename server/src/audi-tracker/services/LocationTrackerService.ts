@@ -46,12 +46,8 @@ export class LocationTrackerService extends AudiService {
 
         let response = await executeFetchParkingPosition();
 
-        console.log(`First fetch parking position status ${response.status} : typeof ${typeof response.status}`)
-
         if (response.status === 401 || response.status === 403) {
-            console.log(`refreshing token ${this.accessToken}`)
             this.accessToken = await this.refreshAccessToken();
-            console.log(`fresh token ${this.accessToken}`)
             response = await executeFetchParkingPosition();
         }
 
