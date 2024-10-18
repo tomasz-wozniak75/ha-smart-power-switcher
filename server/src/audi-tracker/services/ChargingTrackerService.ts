@@ -1,3 +1,4 @@
+import { DateTimeUtils } from "smart-power-consumer-api";
 import { UserError } from "../../services/UserError";
 import { AudiService } from "./AudiService";
 import { ExeutionResult } from "./JobService";
@@ -25,6 +26,8 @@ export class ChargingTrackerService extends AudiService {
 
     private chargingStatus: ChargingStatus | null;
     private allowedBatteryChargingLevel: number = 80;
+    private audiChagerId = "switch.audi_charger_breaker_switch";
+    private smartEnergyUrl = "http://smart-energy.mesh:8080/";
 
     public constructor(interval: number = 15 * 60 * 1000) {
         super("charging-tracker", interval);
@@ -69,6 +72,30 @@ export class ChargingTrackerService extends AudiService {
 
     }
 
+    private async schedulePlan(duration: number, finishAt: Date): Promise<void>  {
+        const path = `/power-consumer/${this.audiChagerId}/consumption-plan?consumptionDuration=${duration*60*1000}&finishAt=${finishAt.getTime()}`;
+        const response = await fetch(this.smartEnergyUrl+path, { method: "post", headers: { 'Accept': 'application/json' } }) ;
+        const json = await response.json();
+    }
+
+    private async cancelPlan(): Promise<void> {
+        const path = `/power-consumer/${this.audiChagerId}/consumption-plan`;
+        let response = await fetch(this.smartEnergyUrl+path, { method: "delete", headers: { 'Accept': 'application/json' } });
+        const json = await response.json();
+    }
+
+    private async createConsumptionPlan(): Promise<void> {
+        const duration = (this.allowedBatteryChargingLevel - this.chargingStatus?.batteryStatus.currentSOC_pct) * 1.2
+        const now = new Date();
+        const finishTomorrowMorning = DateTimeUtils.addDays(new Date(now.getFullYear(), now.getMonth(), now.getDate(), 7).getTime() , 1);
+        let finishAt = finishTomorrowMorning;
+        if (now.getDay() > 5 && now.getHours() < 18) {
+            finishAt = new Date (now.getTime() + 2 * 60 * 1000);
+        }
+
+        await this.schedulePlan(duration, finishAt)
+    }
+
 
     protected async doExecute(): Promise<ExeutionResult> {
         let interval = undefined;
@@ -82,7 +109,7 @@ export class ChargingTrackerService extends AudiService {
             if(!this.chargingStatus || this.chargingStatus.plugStatus.plugConnectionState === "disconnected" && newChargingStatus.plugStatus.plugConnectionState === "connected") {
                 if (newChargingStatus.batteryStatus.currentSOC_pct < this.allowedBatteryChargingLevel) {
                     actionMessage = "Create consumption plan on charger connection";
-                    console.log("plan charging")
+                    this.createConsumptionPlan();
                 }
             }
 
@@ -90,8 +117,8 @@ export class ChargingTrackerService extends AudiService {
 
             if (this.chargingStatus.plugStatus.ledColor === "green") {
                 if (newChargingStatus.batteryStatus.currentSOC_pct >= this.allowedBatteryChargingLevel) {
-                    actionMessage = "Disconnect charger";
-                    console.log("do disconnect !!!")
+                    actionMessage = "Disconnect charger !!!";
+                    await this.cancelPlan();
                 } else {
                     if (newChargingStatus.batteryStatus.currentSOC_pct >= this.allowedBatteryChargingLevel * 0.8) {
                         interval = 3 * 60 * 1000; 
@@ -106,4 +133,5 @@ export class ChargingTrackerService extends AudiService {
         }
 
     }
+
 }

@@ -240,7 +240,6 @@ export class PowerConsumer {
                     switchAction.state = "canceled";
                 }
             });
-            this.consumptionPlan = null;
             await this.homeAsistantService.switchDevice(this.haDeviceName, false);
         }
 
