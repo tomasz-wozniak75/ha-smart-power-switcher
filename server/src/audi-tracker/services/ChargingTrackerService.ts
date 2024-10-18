@@ -55,12 +55,8 @@ export class ChargingTrackerService extends AudiService {
 
         let response = await executeFetchCarStatus();
 
-        console.log(`First fetch car status ${response.status} : typeof ${typeof response.status}`)
-
         if (response.status === 401 || response.status === 403) {
-            console.log(`refreshing token ${this.accessToken}`)
             this.accessToken = await this.refreshAccessToken();
-            console.log(`fresh token ${this.accessToken}`)
             response = await executeFetchCarStatus();
         }
         if (response.ok) {
