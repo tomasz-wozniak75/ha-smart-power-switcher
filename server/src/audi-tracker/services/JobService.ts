@@ -53,7 +53,11 @@ export abstract class JobService {
     protected  abstract doExecute(): Promise<ExeutionResult>;
 
     private scheduleExecution(temporaryInterval?: number) {
-        schedule.scheduleJob(Date.now() + (temporaryInterval ? temporaryInterval : this.jobState.interval), async function(jobSerwice: JobService){
+        let interval = temporaryInterval ? temporaryInterval : this.jobState.interval;
+        if (interval > 5 * 60 * 1000) {
+            interval -= Math.random() * 2 * 60 * 1000;
+        }
+        schedule.scheduleJob(Date.now() + interval, async function(jobSerwice: JobService){
             jobSerwice.execute();
         }.bind(null, this));
     }

@@ -4,6 +4,7 @@ import { Express } from "express";
 import { JobService } from "../services/JobService";
 import { LocationTrackerService } from "../services/LocationTrackerService";
 import { NotFoundError } from "@/services/NotFoundError";
+import { ChargingTrackerService } from "../services/ChargingTrackerService";
 
 
 export class JobControler extends BaseCtrl {
@@ -12,7 +13,7 @@ export class JobControler extends BaseCtrl {
 
     public constructor() {
         super();
-        this.jobs = [new LocationTrackerService(2*60*1000)];
+        this.jobs = [new LocationTrackerService(10*60*1000), new ChargingTrackerService(10*60*1000)];
     }
 
     public createRoutes(webServer: Express) {
