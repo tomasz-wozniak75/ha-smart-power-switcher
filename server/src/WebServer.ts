@@ -11,6 +11,10 @@ import { RdnPricelistProvider } from './services/RdnPricelistProvider';
 import 'dotenv/config'
 import fs from 'node:fs';
 import { JobControler } from './audi-tracker/controlers/JobControler';
+import { LocationTrackerService } from './audi-tracker/services/LocationTrackerService';
+import { ChargingTrackerService } from './audi-tracker/services/ChargingTrackerService';
+import { ChargingTrackerControler } from './audi-tracker/controlers/ChargingTrackerControler';
+
 
 
 
@@ -21,11 +25,14 @@ const singleDayPricelistService = new TariffSelectorPricelist( new RdnPricelistP
 const pricelistCtrl = new PricelistCtrl(singleDayPricelistService);
 const powerConsumersCtrl = new PowerConsumersCtrl(new PowerConsumersService(new TimePeriodPricelistService(singleDayPricelistService)));
 
-const jobControler  = new JobControler();
+const chargingTrackerService = new ChargingTrackerService(10 * 60 * 1000);
+const jobControler  = new JobControler([new LocationTrackerService(10*60*1000), chargingTrackerService]);
+const chargingTrackerControler = new ChargingTrackerControler(chargingTrackerService);
 
 pricelistCtrl.createRoutes(webServer);
 powerConsumersCtrl.createRoutes(webServer);
 jobControler.createRoutes(webServer);
+chargingTrackerControler.createRoutes(webServer);
 
 
 webServer.use("/audi-tracker/traces", express.static(path.join(__dirname, 'audi-traces')))

@@ -33,6 +33,10 @@ export class ChargingTrackerService extends AudiService {
         super("charging-tracker", interval);
     }
 
+    public getChargingStatus(): ChargingStatus | null {
+        return this.chargingStatus;
+    }
+
     private async fetchCarStatus(): Promise<ChargingStatus> {
         const path = `vehicle/v1/vehicles/${this.vehicleId}/selectivestatus`;
         const url = new URL(this.url + path)
