@@ -41,7 +41,7 @@ export abstract class JobService {
             this.jobState.lastExecutionTime = Date.now();
             const result = await this.doExecute();
             this.jobState.logEntries.push(result.logEntry);
-            this.jobState.logEntries.length > 20) {
+            if (this.jobState.logEntries.length > 20) {
                 this.jobState.logEntries.shift();
             }
             this.scheduleExecution(result.inerval);

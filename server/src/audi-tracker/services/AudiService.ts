@@ -3,7 +3,7 @@ import { JobService } from "./JobService";
 import { DateTimeUtils } from "smart-power-consumer-api";
 
 
-export class AudiService extends JobService{
+export class AudiService extends JobService {
 
     protected static accessToken?: string; 
     protected refreshToken: string; 
@@ -20,7 +20,7 @@ export class AudiService extends JobService{
         this.refreshToken = process.env.refreshToken;
     }
 
-        private async refreshAccessToken(): Promise<string> {
+    protected async refreshAccessToken(): Promise<string> {
         const path = `login/v1/idk/token`;
         const headers = {
                 "accept": "application/json",
@@ -41,7 +41,7 @@ export class AudiService extends JobService{
             const json = await response.json()
             return json.access_token;
         } else {
-            throw new UserError(`refreshAccessToken failed${response.statusText}`);
+            throw new UserError(`refreshAccessToken failed ${response.statusText}`);
         }
     }
 
