@@ -116,6 +116,12 @@ export class LocationTrackerService extends AudiService {
     }
 
     protected async doExecute(): Promise<ExeutionResult> {
+
+        const now = new Date();
+        if (now.getDay() < 6 && (now.getHours() < 7 || now.getHours() > 15)) {
+            return null;
+        }
+
        const today = DateTimeUtils.cutOffTime(Date.now());
        if( this.currentDay === undefined) {
            this.currentDay = today;

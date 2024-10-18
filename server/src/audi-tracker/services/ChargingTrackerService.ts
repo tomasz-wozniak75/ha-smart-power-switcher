@@ -99,6 +99,11 @@ export class ChargingTrackerService extends AudiService {
 
     protected async doExecute(): Promise<ExeutionResult> {
         let interval = undefined;
+
+        const now = new Date();
+        if (now.getDay() < 6 && now.getHours() > 7 && now.getHours() < 15) {
+            return null;
+        }
         
         try {
             let actionMessage = "OK";

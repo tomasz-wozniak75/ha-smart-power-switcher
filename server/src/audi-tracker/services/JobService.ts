@@ -40,9 +40,11 @@ export abstract class JobService {
         if (this.jobState.started) {
             this.jobState.lastExecutionTime = Date.now();
             const result = await this.doExecute();
-            this.jobState.logEntries.push(result.logEntry);
-            if (this.jobState.logEntries.length > 20) {
-                this.jobState.logEntries.shift();
+            if (result) {
+                this.jobState.logEntries.push(result.logEntry);
+                if (this.jobState.logEntries.length > 20) {
+                    this.jobState.logEntries.shift();
+                }
             }
             this.scheduleExecution(result.inerval);
         }
