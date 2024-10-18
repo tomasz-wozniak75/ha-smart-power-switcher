@@ -54,8 +54,9 @@ export class LocationTrackerService extends JobService {
         if (response.ok) {
             const json = await response.json()
             return json.access_token;
+        } else {
+            throw new UserError(`refreshAccessToken failed${response.statusText}`);
         }
-        throw new UserError(response.statusText);
     }
 
     private dateToModifiedSince = (date: number) => {
@@ -66,7 +67,7 @@ export class LocationTrackerService extends JobService {
         return `${dayNames[gmtDate.getDay()]}, ${gmtDate.getDate()} ${monthNames[gmtDate.getMonth()]} ${gmtDate.getFullYear()} ${timeComponent} GMT`
     }
 
-    private async fetchParkingPosition(lastRefresh: number): Promise<AudiLocation> {
+    private async fetchParkingPosition(lastRefresh: number): Promise<AudiLocation | null> {
         const path = `vehicle/v1/vehicles/${this.vehicleId}/parkingposition`;
 
         if (this.accessToken === undefined) {
@@ -87,16 +88,25 @@ export class LocationTrackerService extends JobService {
 
         let response = await executeFetchParkingPosition();
 
-        if (response.status === 403) {
+        console.log(`First fetch parking position status ${response.status}`)
+
+        if (response.status in [401, 403]) {
+            console.log(`refreshing token ${this.accessToken}`)
             this.accessToken = await this.refreshAccessToken();
+            console.log(`fresh token ${this.accessToken}`)
             response = await executeFetchParkingPosition();
+        }
+
+        if (response.status === 204) {
+            return null;
         }
 
         if (response.ok) {
             const json = await response.json();
             return json.data;    
         } else {
-            throw new UserError(await response.text())
+            const errorMessage = await response.text();
+            throw new UserError(`fetchParkingPosition failed ${errorMessage}`)
         }
 
     }
@@ -148,17 +158,20 @@ export class LocationTrackerService extends JobService {
 
             console.log("Fetched new location:", newLocation);
 
-            if (this.isNewLocation(newLocation)) {
+            if (newLocation != null && this.isNewLocation(newLocation)) {
                 this.locations.push(newLocation);
             }else {
-                this.getLastLocation().lastRefresh = timeBeforeCall;
+                const lastLocation = this.getLastLocation();
+                if (lastLocation) {
+                    this.getLastLocation().lastRefresh = timeBeforeCall;
+                }
             }
 
             this.writeLocations();
             
-            return `${new Date()}: OK`;
+            return `${new Date().toISOString()}: OK`;
         }catch(error) {
-            return `${new Date()}: ${error.message}`;
+            return `${new Date().toISOString()}: ${error.message}`;
         }
     
     }

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?><gpx xmlns="http://www.topografix.com/GPX/1/1" version="1.1" creator="Wikipedia"
+                                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                                    xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd"> <metadata>
+                    <name>18-10-2024</name>
+                    <desc>Audi track file from: 18-10-2024</desc>
+                    <author><name>Tomasz Wozniak</name></author>
+                  </metadata>
+                
+                    <wpt lat="51.110548" lon="16.958465">
+                        <time>2024-10-18T06:10:37Z</time>
+                        <name>Parking for: 02h:31mins</name>
+                    </wpt>
+        </gpx>
