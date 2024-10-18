@@ -8,6 +8,16 @@
                 
                     <wpt lat="51.110548" lon="16.958465">
                         <time>2024-10-18T06:10:37Z</time>
-                        <name>Parking for: 02h:31mins</name>
+                        <name>Parking for: 06h:47mins</name>
+                    </wpt>
+        
+                    <wpt lat="51.116107" lon="16.950365">
+                        <time>2024-10-18T13:58:42Z</time>
+                        <name>Parking for: 00h:19mins</name>
+                    </wpt>
+        
+                    <wpt lat="51.114758" lon="16.926071">
+                        <time>2024-10-18T14:18:09Z</time>
+                        <name>Parking for: unknown</name>
                     </wpt>
         </gpx>

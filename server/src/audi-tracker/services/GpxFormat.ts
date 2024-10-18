@@ -16,7 +16,7 @@ export class GpxFormat {
         }
         const locationToWpt = (location: AudiLocation) => `
                     <wpt lat="${location.lat}" lon="${location.lon}">
-                        <time>${location.carCapturedTimestamp}</time>
+                        <time>${new Date(location.carCapturedTimestamp).toLocaleString()}</time>
                         <name>Parking for: ${calcualteTimeDiff(location)}</name>
                     </wpt>
         `;

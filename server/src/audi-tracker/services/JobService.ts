@@ -8,6 +8,11 @@ export interface JobState {
     logEntries: string[];
 }
 
+export interface ExeutionResult {
+    logEntry: string;
+    inerval?: number;
+}
+
 export abstract class JobService {
     protected jobState: JobState;
 
@@ -34,15 +39,19 @@ export abstract class JobService {
     protected  async execute(): Promise<void> {
         if (this.jobState.started) {
             this.jobState.lastExecutionTime = Date.now();
-            this.jobState.logEntries.push(await this.doExecute());
-            this.scheduleExecution();
+            const result = await this.doExecute();
+            this.jobState.logEntries.push(result.logEntry);
+            this.jobState.logEntries.length > 20) {
+                this.jobState.logEntries.shift();
+            }
+            this.scheduleExecution(result.inerval);
         }
     }
 
-    protected  abstract doExecute(): Promise<string>;
+    protected  abstract doExecute(): Promise<ExeutionResult>;
 
-    private scheduleExecution() {
-        schedule.scheduleJob(Date.now() + this.jobState.interval, async function(jobSerwice: JobService){
+    private scheduleExecution(temporaryInterval?: number) {
+        schedule.scheduleJob(Date.now() + (temporaryInterval ? temporaryInterval : this.jobState.interval), async function(jobSerwice: JobService){
             jobSerwice.execute();
         }.bind(null, this));
     }

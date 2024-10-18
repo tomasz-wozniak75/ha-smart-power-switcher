@@ -3,6 +3,7 @@ import { UserError } from "../../services/UserError";
 import fs from 'node:fs';
 import { GpxFormat } from "./GpxFormat";
 import { AudiService } from "./AudiService";
+import { ExeutionResult } from "./JobService";
 
 
 export interface AudiLocation {
@@ -45,9 +46,9 @@ export class LocationTrackerService extends AudiService {
 
         let response = await executeFetchParkingPosition();
 
-        console.log(`First fetch parking position status ${response.status}`)
+        console.log(`First fetch parking position status ${response.status} : typeof ${typeof response.status}`)
 
-        if (response.status in [401, 403]) {
+        if (response.status === 401 || response.status === 403) {
             console.log(`refreshing token ${this.accessToken}`)
             this.accessToken = await this.refreshAccessToken();
             console.log(`fresh token ${this.accessToken}`)
@@ -96,11 +97,12 @@ export class LocationTrackerService extends AudiService {
         const fileName = `${audiTracesDir}/${DateTimeUtils.formatDate(this.currentDay)}`;
         const jsonFileName = `${fileName}.json`;
         fs.readFile(jsonFileName, 'utf8', (err, data) => {
-        if (err) {
-            console.error(err);
-            this.locations = [];
-        } else {}
-            this.locations = JSON.parse(data);
+            if (err) {
+                console.error(err);
+                this.locations = [];
+            } else {
+                this.locations = JSON.parse(data);
+            }
         });
     }
 
@@ -117,7 +119,7 @@ export class LocationTrackerService extends AudiService {
         return lastLocation.lon !== newLocation.lon || lastLocation.lat !== newLocation.lat;
     }
 
-    protected async doExecute(): Promise<string> {
+    protected async doExecute(): Promise<ExeutionResult> {
        const today = DateTimeUtils.cutOffTime(Date.now());
        if( this.currentDay === undefined) {
            this.currentDay = today;
@@ -131,6 +133,7 @@ export class LocationTrackerService extends AudiService {
             this.readLocations();     
        }
 
+        let interval = undefined;
         try {
             const timeBeforeCall = Date.now();
             const newLocation = await this.fetchParkingPosition(this.lastRefresh);
@@ -149,9 +152,9 @@ export class LocationTrackerService extends AudiService {
 
             this.writeLocations();
             
-            return `${new Date().toISOString()}: OK`;
+            return { logEntry: `${new Date().toISOString()}: OK`, interval};
         }catch(error) {
-            return `${new Date().toISOString()}: ${error.message}`;
+            return { logEntry: `${new Date().toISOString()}: ${error.message}`,  interval};
         }
     
     }
