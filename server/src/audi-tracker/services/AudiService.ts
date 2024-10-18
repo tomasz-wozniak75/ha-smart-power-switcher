@@ -12,8 +12,8 @@ export class AudiService extends JobService{
     protected userAgent: string; 
     protected url = `https://emea.bff.cariad.digital/`;
 
-    public constructor(id: string) {
-        super(id)
+    public constructor(id: string, interval: number) {
+        super(id, interval)
         this.vehicleId = process.env.vehicleId;
         this.clientId = process.env.clientId;
         this.userAgent = process.env.userAgent;

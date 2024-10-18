@@ -68,18 +68,39 @@ export class LocationTrackerService extends AudiService {
 
     }
 
-    private writeLocations() {
-        var audiTracesDir = './audi-traces';
+    private writeLocations(): void {
+        const audiTracesDir = './audi-traces';
 
         if (!fs.existsSync(audiTracesDir)){
             fs.mkdirSync(audiTracesDir);
         }
-        const gpxfileName = `${audiTracesDir}/${DateTimeUtils.formatDate(this.currentDay)}.gpx`;
-        const gpxFile = GpxFormat.convert(this.currentDay, this.locations);
-        fs.writeFile(gpxfileName, gpxFile, err => {
+        const fileName = `${audiTracesDir}/${DateTimeUtils.formatDate(this.currentDay)}`;
+        const jsonFileName = `${fileName}.json`;
+        fs.writeFile(jsonFileName, JSON.stringify(this.locations), err => {
             if (err) {
                 console.error(err);
             }
+        });
+
+        const gpxFileName = `${fileName}.gpx`;
+        const gpxFile = GpxFormat.convert(this.currentDay, this.locations);
+        fs.writeFile(gpxFileName, gpxFile, err => {
+            if (err) {
+                console.error(err);
+            }
+        });
+    }
+
+    private readLocations(): void {
+        const audiTracesDir = './audi-traces';
+        const fileName = `${audiTracesDir}/${DateTimeUtils.formatDate(this.currentDay)}`;
+        const jsonFileName = `${fileName}.json`;
+        fs.readFile(jsonFileName, 'utf8', (err, data) => {
+        if (err) {
+            console.error(err);
+            this.locations = [];
+        } else {}
+            this.locations = JSON.parse(data);
         });
     }
 
@@ -106,6 +127,8 @@ export class LocationTrackerService extends AudiService {
            this.writeLocations();
            this.locations = []; 
            this.currentDay = today;
+       } else {
+            this.readLocations();     
        }
 
         try {
