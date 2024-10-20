@@ -24,7 +24,7 @@ const singleDayPricelistService = new TariffSelectorPricelist( new RdnPricelistP
 const pricelistCtrl = new PricelistCtrl(singleDayPricelistService);
 const powerConsumersCtrl = new PowerConsumersCtrl(new PowerConsumersService(new TimePeriodPricelistService(singleDayPricelistService)));
 
-const chargingTrackerService = new ChargingTrackerService(1 * 60 * 1000);
+const chargingTrackerService = new ChargingTrackerService(10 * 60 * 1000);
 const jobControler  = new JobControler([new LocationTrackerService(10*60*1000), chargingTrackerService]);
 const chargingTrackerControler = new ChargingTrackerControler(chargingTrackerService);
 
@@ -37,6 +37,7 @@ chargingTrackerControler.createRoutes(webServer);
 webServer.use("/audi-tracker/traces", express.static(path.join(__dirname, 'audi-traces')))
 
 webServer.use(express.static(path.join(__dirname, 'web-app')))
+webServer.use("/audi-tracker/audi-battery-status-web-app", express.static(path.join(__dirname, 'audi-battery-status-web-app')))
 
 const getInputArgument = (name:string): string | null => {
     const argTuple = process.argv.find(item => item.startsWith(name));

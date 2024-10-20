@@ -16,7 +16,9 @@ export class PowerConsumersService {
         const homeAsistantService = new HomeAsistantService(process.env.HA_TOKEN || null, process.env.HA_URL || null);
 
         const audiChagerId = "switch.audi_charger_breaker_switch";
-        this.powerConsumers[audiChagerId] = new PowerConsumer(audiChagerId, "Audi charger", this.timePeriodPricelistService, homeAsistantService, process.env.audiTtrackerConsumptionPlanUrl);
+        this.powerConsumers[audiChagerId] = new PowerConsumer(
+            audiChagerId, "Audi charger", this.timePeriodPricelistService, homeAsistantService, process.env.audiTtrackerConsumptionPlanUrl, process.env.chargingStatusUrl
+        );
 
 
         const onePhaseSwitchId = "switch.smart_plug_socket_1";

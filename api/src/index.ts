@@ -31,6 +31,7 @@ export interface PowerConsumerModel {
     name: string;
     defaultConsumptionDuration: number | undefined;
     defaultFinishAt: number | undefined;
+    chargingStatusUrl: string | undefined; 
     consumptionPlan: ConsumptionPlan | null;
 }
 
