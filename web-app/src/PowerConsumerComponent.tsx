@@ -43,6 +43,7 @@ export const PowerConsumerComponent = (powerConsumerProp: PowerConsumerModel) =>
     return (
         <div className='powerConsumer'>
             <header>{powerConsumer.name}</header>
+            {powerConsumer.chargingStatusUrl ? <iframe src={powerConsumer.chargingStatusUrl} style={{border:"none", height: "50px", width:"300px"}} title="Status"></iframe> : null}
             <div className='inputBlock'>
                 <label htmlFor="consumptionDuration">Charge duration: </label>
                 <input id="consumptionDuration" type='number' step="5" value={consumptionDuration} onChange={ (e) => setConsumptionDuration(Number(e.target.value))}/>

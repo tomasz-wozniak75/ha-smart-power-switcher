@@ -5,6 +5,7 @@ echo "Packaging ..."
 rm -rf dist
 npm run build
 npm --prefix ../web-app run build
+npm --prefix ../audi-battery-status-web-app run build
 cp -v scripts/*.sh dist/
 cp -v .env.production dist/
 

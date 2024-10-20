@@ -11,11 +11,12 @@ export class PowerConsumer {
     private name: string;
     private consumptionPlan: ConsumptionPlan | null = null;
     private consumptionPlanStatelistenerUrl: string | null = null;
+    private chargingStatusUrl?: string;
 
     private timePeriodPricelistService: TimePeriodPricelistService; 
     private homeAsistantService: HomeAsistantService;
 
-    constructor(haDeviceName: string, name: string, timePeriodPricelist: TimePeriodPricelistService, homeAsistantService: HomeAsistantService, consumptionPlanStatelistenerUrl?: string) {
+    constructor(haDeviceName: string, name: string, timePeriodPricelist: TimePeriodPricelistService, homeAsistantService: HomeAsistantService, consumptionPlanStatelistenerUrl?: string, chargingStatusUrl?: string) {
         this.haDeviceName = haDeviceName;
         this.name = name;
         this.timePeriodPricelistService = timePeriodPricelist;
@@ -23,6 +24,7 @@ export class PowerConsumer {
         if (consumptionPlanStatelistenerUrl) {
             this.consumptionPlanStatelistenerUrl = consumptionPlanStatelistenerUrl;
         }
+        this.chargingStatusUrl = chargingStatusUrl;
     }
 
     private sortConsumptionPlanByTime(consumptionPlan: ConsumptionPlanItem[]): ConsumptionPlanItem[]  {
@@ -236,7 +238,7 @@ export class PowerConsumer {
     public getPowerConsumerModel(): PowerConsumerModel {
         const now = new Date();
         const defaultFinishAt = now.getHours() < 16 ? now.getTime() + 2 * 3600 * 1000 : DateTimeUtils.addDays(new Date(now.getFullYear(), now.getMonth(), now.getDate(), 7).getTime() , 1);
-        return { id: this.haDeviceName, name: this.name, defaultConsumptionDuration: 90, defaultFinishAt,   consumptionPlan: this.consumptionPlan };
+        return { id: this.haDeviceName, name: this.name, defaultConsumptionDuration: 90, defaultFinishAt,   consumptionPlan: this.consumptionPlan, chargingStatusUrl: "http://localhost:3000/audi-tracker/audi-battery-status-web-app/" };
     }
 
     public async deleteConsumptionPlan(): Promise<PowerConsumerModel> {
