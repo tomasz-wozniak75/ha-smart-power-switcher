@@ -103,16 +103,25 @@ export class ChargingTrackerService extends AudiService {
     private cleanOldChargingStatus() {
         if (this.chargingStatus) {
             const refreshedAt = new Date(this.chargingStatus.batteryStatus.carCapturedTimestamp);
-            if ((refreshedAt.getTime() - Date.now()) > 3 * 60* 60 * 1000) {
+            if ((refreshedAt.getTime() - Date.now()) > 3 * 60 * 60 * 1000) {
                 this.chargingStatus = null;
             }
         }
+    }
+
+    private executionShouldBeSkippedDueToExecutedPlan() {
+        const now = new Date();
+        return this.consumptionPlan && this.consumptionPlan.state !== "processing" && (now.getHours() > 22 || now.getHours() < 7) 
     }
 
     protected async doExecute(): Promise<ExeutionResult> {
         let interval = undefined;
 
         if (this.executionShouldBeSkipped()) {
+            return null;
+        }
+
+        if (this.executionShouldBeSkippedDueToExecutedPlan()) {
             return null;
         }
         

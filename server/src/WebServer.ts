@@ -24,8 +24,8 @@ const singleDayPricelistService = new TariffSelectorPricelist( new RdnPricelistP
 const pricelistCtrl = new PricelistCtrl(singleDayPricelistService);
 const powerConsumersCtrl = new PowerConsumersCtrl(new PowerConsumersService(new TimePeriodPricelistService(singleDayPricelistService)));
 
-const chargingTrackerService = new ChargingTrackerService(10 * 60 * 1000);
-const jobControler  = new JobControler([new LocationTrackerService(10*60*1000), chargingTrackerService]);
+const chargingTrackerService = new ChargingTrackerService(process.env.chargingTrackerInterval * 60 * 1000);
+const jobControler  = new JobControler([new LocationTrackerService(process.env.locationTrackerInterval * 60 * 1000), chargingTrackerService]);
 const chargingTrackerControler = new ChargingTrackerControler(chargingTrackerService);
 
 pricelistCtrl.createRoutes(webServer);
