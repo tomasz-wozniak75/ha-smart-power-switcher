@@ -47,3 +47,24 @@ export class CurrencyUtils {
         return String(CurrencyUtils.getPriceAsNumber(amount));
     }
 }
+
+
+
+export interface BatteryStatus {
+    carCapturedTimestamp: string,
+    currentSOC_pct: number,
+    cruisingRangeElectric_km:  number
+}
+
+export interface PlugStatus {
+    carCapturedTimestamp: string,
+    plugConnectionState: "disconnected" | "connected",
+    plugLockState: "unlocked" | "locked",
+    externalPower: "unavailable" | "ready",
+    ledColor: "none" | "green"
+}
+
+export interface ChargingStatus {
+    batteryStatus: BatteryStatus,
+    plugStatus: PlugStatus
+}

@@ -16,7 +16,9 @@ export class PowerConsumer {
     private timePeriodPricelistService: TimePeriodPricelistService; 
     private homeAsistantService: HomeAsistantService;
 
-    constructor(haDeviceName: string, name: string, timePeriodPricelist: TimePeriodPricelistService, homeAsistantService: HomeAsistantService, consumptionPlanStatelistenerUrl?: string, chargingStatusUrl?: string) {
+    constructor(
+        haDeviceName: string, name: string, timePeriodPricelist: TimePeriodPricelistService, homeAsistantService: HomeAsistantService, consumptionPlanStatelistenerUrl?: string, chargingStatusUrl?: string
+    ) {
         this.haDeviceName = haDeviceName;
         this.name = name;
         this.timePeriodPricelistService = timePeriodPricelist;
@@ -238,7 +240,7 @@ export class PowerConsumer {
     public getPowerConsumerModel(): PowerConsumerModel {
         const now = new Date();
         const defaultFinishAt = now.getHours() < 16 ? now.getTime() + 2 * 3600 * 1000 : DateTimeUtils.addDays(new Date(now.getFullYear(), now.getMonth(), now.getDate(), 7).getTime() , 1);
-        return { id: this.haDeviceName, name: this.name, defaultConsumptionDuration: 90, defaultFinishAt,   consumptionPlan: this.consumptionPlan, chargingStatusUrl: "http://localhost:3000/audi-tracker/audi-battery-status-web-app/" };
+        return { id: this.haDeviceName, name: this.name, defaultConsumptionDuration: 90, defaultFinishAt,   consumptionPlan: this.consumptionPlan, chargingStatusUrl: this.chargingStatusUrl };
     }
 
     public async deleteConsumptionPlan(): Promise<PowerConsumerModel> {

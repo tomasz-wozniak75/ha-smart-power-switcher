@@ -51,6 +51,13 @@ header {
 }
 
 
+.chargerStatus {
+    margin-left: 10px;
+    border: none;
+    height: 60px; 
+    width: 500px;
+}
+
 .consumptionPlanTable {
     border-collapse: collapse;
     margin: 25px 0;
