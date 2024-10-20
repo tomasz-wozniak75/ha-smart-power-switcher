@@ -27,7 +27,7 @@ export class ChargingTrackerService extends AudiService {
     private chargingStatus: ChargingStatus | null;
     private allowedBatteryChargingLevel: number = 80;
     private audiChagerId = "switch.audi_charger_breaker_switch";
-    private smartEnergyUrl = "http://smart-energy.mesh:8080/";
+    private smartEnergyUrl = process.env.smartEnergyUrl;
 
     public constructor(interval: number = 15 * 60 * 1000) {
         super("charging-tracker", interval);
@@ -77,13 +77,13 @@ export class ChargingTrackerService extends AudiService {
     }
 
     private async schedulePlan(duration: number, finishAt: Date): Promise<void>  {
-        const path = `/power-consumer/${this.audiChagerId}/consumption-plan?consumptionDuration=${duration*60*1000}&finishAt=${finishAt.getTime()}`;
+        const path = `power-consumer/${this.audiChagerId}/consumption-plan?consumptionDuration=${duration*60*1000}&finishAt=${finishAt.getTime()}`;
         const response = await fetch(this.smartEnergyUrl+path, { method: "post", headers: { 'Accept': 'application/json' } }) ;
-        const json = await response.json();
+        console.log(`Consumption plan schedule attempt: ${response.statusText} ${await response.text()}`)
     }
 
     private async cancelPlan(): Promise<void> {
-        const path = `/power-consumer/${this.audiChagerId}/consumption-plan`;
+        const path = `power-consumer/${this.audiChagerId}/consumption-plan`;
         let response = await fetch(this.smartEnergyUrl+path, { method: "delete", headers: { 'Accept': 'application/json' } });
         const json = await response.json();
     }
