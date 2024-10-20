@@ -18,6 +18,7 @@ export interface ConsumptionPlanItem {
 }
 
 export interface ConsumptionPlan {
+    id: string;
     createdAt: number;
     consumptionDuration: number;
     finishAt: number;

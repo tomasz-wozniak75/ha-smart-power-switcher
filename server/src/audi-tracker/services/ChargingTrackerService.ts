@@ -1,4 +1,4 @@
-import { DateTimeUtils } from "smart-power-consumer-api";
+import { ConsumptionPlan, DateTimeUtils } from "smart-power-consumer-api";
 import { UserError } from "../../services/UserError";
 import { AudiService } from "./AudiService";
 import { ExeutionResult } from "./JobService";
@@ -24,8 +24,11 @@ export interface ChargingStatus {
 
 export class ChargingTrackerService extends AudiService {
 
-    private chargingStatus: ChargingStatus | null;
+    private chargingStatus: ChargingStatus | null = null;
     private allowedBatteryChargingLevel: number = 80;
+    private consumptionPlan: ConsumptionPlan | null = null;
+    private ownConsumptionPlanId: string | null = null;
+
     private audiChagerId = "switch.audi_charger_breaker_switch";
     private smartEnergyUrl = process.env.smartEnergyUrl;
 
@@ -79,10 +82,17 @@ export class ChargingTrackerService extends AudiService {
     private async schedulePlan(duration: number, finishAt: Date): Promise<void>  {
         const path = `power-consumer/${this.audiChagerId}/consumption-plan?consumptionDuration=${duration*60*1000}&finishAt=${finishAt.getTime()}`;
         const response = await fetch(this.smartEnergyUrl+path, { method: "post", headers: { 'Accept': 'application/json' } }) ;
-        console.log(`Consumption plan schedule attempt: ${response.statusText} ${await response.text()}`)
+        if (response.ok) {
+            this.consumptionPlan = await response.json()
+            console.log(`Consumption plan schedule attempt: ${response.statusText} ${this.consumptionPlan}`)
+            this.ownConsumptionPlanId = this.consumptionPlan?.id;
+        } else {
+            console.log(`Consumption plan schedule attempt: ${response.statusText} ${await response.text()}`)
+        }
+        
     }
 
-    private async cancelPlan(): Promise<void> {
+    private async cancelConsumptionPlan(): Promise<void> {
         const path = `power-consumer/${this.audiChagerId}/consumption-plan`;
         let response = await fetch(this.smartEnergyUrl+path, { method: "delete", headers: { 'Accept': 'application/json' } });
         const json = await response.json();
@@ -100,12 +110,19 @@ export class ChargingTrackerService extends AudiService {
         await this.schedulePlan(duration, finishAt)
     }
 
+    private executionShouldBeSkipped() {
+        const now = new Date()
+        return now.getDay() < 6 && now.getHours() > 7 && now.getHours() < 15;
+    }
+
+    protected async setConsumptionPlan(consumptionPlan: ConsumptionPlan) {
+        this.consumptionPlan = consumptionPlan;
+    }
 
     protected async doExecute(): Promise<ExeutionResult> {
         let interval = undefined;
 
-        const now = new Date();
-        if (now.getDay() < 6 && now.getHours() > 7 && now.getHours() < 15) {
+        if (this.executionShouldBeSkipped()) {
             return null;
         }
         
@@ -117,17 +134,25 @@ export class ChargingTrackerService extends AudiService {
 
             if(!this.chargingStatus || this.chargingStatus.plugStatus.plugConnectionState === "disconnected" && newChargingStatus.plugStatus.plugConnectionState === "connected") {
                 if (newChargingStatus.batteryStatus.currentSOC_pct < this.allowedBatteryChargingLevel) {
-                    actionMessage = "Create consumption plan on charger connection";
-                    this.createConsumptionPlan();
+                    if (!(this.consumptionPlan && this.consumptionPlan.state == "processing")) {
+                        actionMessage = "Create consumption plan on charger connection";
+                        this.createConsumptionPlan();
+                    }
                 }
+            }
+
+            if(this.consumptionPlan && this.consumptionPlan.id === this.ownConsumptionPlanId && this.consumptionPlan.state === "processing" 
+                && newChargingStatus.plugStatus.plugConnectionState === "disconnected") {
+                 actionMessage = "Cancel consumption plan on charger disconnection";
+                 this.cancelConsumptionPlan();
             }
 
             this.chargingStatus = newChargingStatus;
 
             if (this.chargingStatus.plugStatus.ledColor === "green") {
                 if (newChargingStatus.batteryStatus.currentSOC_pct >= this.allowedBatteryChargingLevel) {
-                    actionMessage = "Disconnect charger !!!";
-                    await this.cancelPlan();
+                    actionMessage += " Disconnect charger !!!";
+                    await this.cancelConsumptionPlan();
                 } else {
                     if (newChargingStatus.batteryStatus.currentSOC_pct >= this.allowedBatteryChargingLevel * 0.8) {
                         interval = 3 * 60 * 1000; 
