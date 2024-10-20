@@ -1,26 +1,7 @@
-import { ConsumptionPlan, DateTimeUtils } from "smart-power-consumer-api";
+import { ChargingStatus, ConsumptionPlan, DateTimeUtils } from "smart-power-consumer-api";
 import { UserError } from "../../services/UserError";
 import { AudiService } from "./AudiService";
 import { ExeutionResult } from "./JobService";
-
-export interface BatteryStatus {
-    carCapturedTimestamp: string,
-    currentSOC_pct: number,
-    cruisingRangeElectric_km:  number
-}
-
-export interface PlugStatus {
-    carCapturedTimestamp: string,
-    plugConnectionState: "disconnected" | "connected",
-    plugLockState: "unlocked" | "locked",
-    externalPower: "unavailable" | "ready",
-    ledColor: "none" | "green"
-}
-
-export interface ChargingStatus {
-    batteryStatus: BatteryStatus,
-    plugStatus: PlugStatus
-}
 
 export class ChargingTrackerService extends AudiService {
 

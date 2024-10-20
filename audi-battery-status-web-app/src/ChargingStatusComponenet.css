@@ -1,0 +1,32 @@
+/* .App {
+  text-align: center;
+} */
+
+p {
+  margin: 0;
+}
+
+.label {
+  font-size: 0.9em;
+  
+}
+
+.value {
+  font-size: 0.9em;
+  
+}
+
+.ok {
+   color: yellowgreen
+}
+
+
+.warning {
+   color: rgb(186, 159, 10);
+   font-weight: bold;
+}
+
+.error {
+   color: red;
+   font-weight: bold;
+}

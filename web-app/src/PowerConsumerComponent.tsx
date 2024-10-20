@@ -43,7 +43,7 @@ export const PowerConsumerComponent = (powerConsumerProp: PowerConsumerModel) =>
     return (
         <div className='powerConsumer'>
             <header>{powerConsumer.name}</header>
-            {powerConsumer.chargingStatusUrl ? <iframe src={powerConsumer.chargingStatusUrl} style={{border:"none", height: "50px", width:"300px"}} title="Status"></iframe> : null}
+            {powerConsumer.chargingStatusUrl ? <iframe src={powerConsumer.chargingStatusUrl} className="chargerStatus" title="Status"></iframe> : null}
             <div className='inputBlock'>
                 <label htmlFor="consumptionDuration">Charge duration: </label>
                 <input id="consumptionDuration" type='number' step="5" value={consumptionDuration} onChange={ (e) => setConsumptionDuration(Number(e.target.value))}/>
@@ -61,7 +61,7 @@ export const PowerConsumerComponent = (powerConsumerProp: PowerConsumerModel) =>
                 <label htmlFor="finishAt">Finish before: </label>
                 <div>
                     <input id="finishAt" type='datetime-local' value={getFinishAt(finishAt)} onChange={ (e) => setFinishAt(new Date(e.target.value))}/>
-                    <p>{(finishAt.getDay() == new Date().getDay() ? "today " : " tomorrow ") + `at ${DateTimeUtils.formatTime(fixFinishAt(finishAt).getTime())}`}</p>
+                    <p>{(finishAt.getDay() === new Date().getDay() ? "today " : " tomorrow ") + `at ${DateTimeUtils.formatTime(fixFinishAt(finishAt).getTime())}`}</p>
                 </div>
                 <div>
                     <input name="button-decrease-1h" type='button' value={"<< hour"}  onClick={(e) => setFinishAt(new Date(finishAt.getTime() - 60 * 60 * 1000))}/>                    
