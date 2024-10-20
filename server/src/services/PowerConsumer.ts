@@ -3,21 +3,26 @@ import { TimePeriodPricelistService } from "./TimePeriodPricelistService";
 import schedule from "node-schedule";
 import { UserError } from "./UserError";
 import { HomeAsistantService } from "./HomeAsistantService";
+import { v4 as uuidv4 } from 'uuid';
 
 
 export class PowerConsumer {
     private haDeviceName: string;
     private name: string;
     private consumptionPlan: ConsumptionPlan | null = null;
+    private consumptionPlanStatelistenerUrl: string | null = null;
 
     private timePeriodPricelistService: TimePeriodPricelistService; 
     private homeAsistantService: HomeAsistantService;
 
-    constructor(haDeviceName: string, name: string, timePeriodPricelist: TimePeriodPricelistService, homeAsistantService: HomeAsistantService) {
+    constructor(haDeviceName: string, name: string, timePeriodPricelist: TimePeriodPricelistService, homeAsistantService: HomeAsistantService, consumptionPlanStatelistenerUrl?: string) {
         this.haDeviceName = haDeviceName;
         this.name = name;
         this.timePeriodPricelistService = timePeriodPricelist;
         this.homeAsistantService = homeAsistantService;
+        if (consumptionPlanStatelistenerUrl) {
+            this.consumptionPlanStatelistenerUrl = consumptionPlanStatelistenerUrl;
+        }
     }
 
     private sortConsumptionPlanByTime(consumptionPlan: ConsumptionPlanItem[]): ConsumptionPlanItem[]  {
@@ -92,7 +97,7 @@ export class PowerConsumer {
             }else {
                 const delta = consumptionDuration - currentConsumptionDuration;
                 if (delta > 0){
-                    consumptionPlan.push({ pricelistItem, duration: delta, switchActions: [] });
+                    consumptionPlan.push({pricelistItem, duration: delta, switchActions: [] });
                 }
                 break;
             }
@@ -176,12 +181,12 @@ export class PowerConsumer {
                 }        
             }
             if (!hasScheduled) {
-                consumptionPlan.state ="executed"
+                consumptionPlan.state ="executed";
             }
         }
     }
 
-    scheduleSwitchActions(consumptionPlan: ConsumptionPlan) {
+    scheduleSwitchActions(consumptionPlan: ConsumptionPlan): void {
         const aThis = this;
         const schedulingThreshold = Date.now() + 60 * 1000;
 
@@ -194,6 +199,7 @@ export class PowerConsumer {
                 schedule.scheduleJob(switchAction.at, async function(switchAction: SwitchAction, consumptionPlan: ConsumptionPlan){
                     aThis.executeSwitchAction(switchAction);
                     aThis.switchConsumptionPlanState(consumptionPlan);
+                    await aThis.sendConsumptionPlanStateNotification();
                     
                 }.bind(null, switchAction, consumptionPlan));
             }
@@ -218,9 +224,10 @@ export class PowerConsumer {
             throw new UserError("Finish at is too early to execute required consumption duration time!");
         }
 
-        this.consumptionPlan = { createdAt: Date.now(), consumptionDuration, finishAt, consumptionPlanItems: await this.createConsumptionPlan(consumptionDuration, Date.now(), finishAt), state: "processing" };
+        this.consumptionPlan = {id: uuidv4(), createdAt: Date.now(), consumptionDuration, finishAt, consumptionPlanItems: await this.createConsumptionPlan(consumptionDuration, Date.now(), finishAt), state: "processing" };
 
         this.scheduleSwitchActions(this.consumptionPlan);
+        await this.sendConsumptionPlanStateNotification();
 
         return this.getPowerConsumerModel();
     }
@@ -233,7 +240,7 @@ export class PowerConsumer {
     }
 
     public async deleteConsumptionPlan(): Promise<PowerConsumerModel> {
-        if (this.consumptionPlan) {
+        if (this.consumptionPlan && this.consumptionPlan.state == "processing") {
             this.consumptionPlan.state = "canceled"
             this.consumptionPlan.consumptionPlanItems.flatMap((consumptionPlanItem) => consumptionPlanItem.switchActions).forEach((switchAction) => {
                 if (switchAction.state != "executed") {
@@ -241,9 +248,25 @@ export class PowerConsumer {
                 }
             });
             await this.homeAsistantService.switchDevice(this.haDeviceName, false);
+            await this.sendConsumptionPlanStateNotification();
         }
 
         return this.getPowerConsumerModel();
+    }
+
+    private async sendConsumptionPlanStateNotification(): Promise<void> {
+        if (this.consumptionPlanStatelistenerUrl) {
+            if (this.consumptionPlan) {
+                const response = await fetch(this.consumptionPlanStatelistenerUrl, { 
+                    method: "post",
+                    headers: {
+                        "Content-Type": "application/json; charset=utf-8"
+                    },
+                    body: JSON.stringify(this.consumptionPlan), 
+                });
+                console.log(`ConsumptionPlanStateNotification set: ${response.statusText}`)
+            }
+        }
     }
 
 }

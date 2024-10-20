@@ -16,6 +16,10 @@ export class ChargingTrackerControler extends BaseCtrl {
         webServer.get(/^\/audi-tracker\/api\/charging\/?$/, async (req, res)=>{
             await this.getChargingStatus(req, res);
         });
+
+        webServer.post(/^\/audi-tracker\/api\/charging\/consumption-plan\/?$/, async (req, res)=>{
+            await this.setConsumptionPlan(req, res);
+        });
     }
     
     public async getChargingStatus(req, res): Promise<void> {
@@ -26,5 +30,10 @@ export class ChargingTrackerControler extends BaseCtrl {
         } else {
             res.sendStatus(204);
         }
+    }
+
+    public async setConsumptionPlan(req, res): Promise<void> {
+        this.chargingTrackerService.setConsumptionPlan(req.body);
+        res.sendStatus(200);
     }
 }

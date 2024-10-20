@@ -1,5 +1,6 @@
 
 import express from 'express';
+import bodyParser from 'body-parser';
 import path from 'path';
 import { PricelistCtrl } from './controlers/PricelistCtrl';
 import { TariffSelectorPricelist } from './services/TariffSelectorPricelist';
@@ -17,6 +18,7 @@ import { ChargingTrackerControler } from './audi-tracker/controlers/ChargingTrac
 
 
 const webServer = express();
+webServer.use(bodyParser.json());
 
 const singleDayPricelistService = new TariffSelectorPricelist( new RdnPricelistProvider());;
 const pricelistCtrl = new PricelistCtrl(singleDayPricelistService);
