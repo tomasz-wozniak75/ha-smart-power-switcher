@@ -11,6 +11,7 @@ export class JobControler extends BaseCtrl {
     public constructor(jobs: JobService[]) {
         super();
         this.jobs = jobs;
+        this.jobs.forEach( async (job) => { await job.start() } )
     }
 
     public createRoutes(webServer: Express) {

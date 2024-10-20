@@ -111,8 +111,8 @@ export class ChargingTrackerService extends AudiService {
     }
 
     private executionShouldBeSkipped() {
-        const now = new Date()
-        return now.getDay() < 6 && now.getHours() > 7 && now.getHours() < 15;
+        const now = new Date();
+        return now.getDay() > 0 && now.getDay() < 6 && now.getHours() > 7 && now.getHours() < 15;
     }
 
     protected async setConsumptionPlan(consumptionPlan: ConsumptionPlan) {
