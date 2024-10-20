@@ -46,7 +46,7 @@ export abstract class JobService {
                     this.jobState.logEntries.shift();
                 }
             }
-            this.scheduleExecution(result.inerval);
+            this.scheduleExecution(result ? result.inerval : undefined);
         }
     }
 

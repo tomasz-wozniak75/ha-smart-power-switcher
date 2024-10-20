@@ -18,15 +18,15 @@ export class JobControler extends BaseCtrl {
             await this.getJobsList(req, res);
         });
 
-        webServer.get(/^\/audi-tracker\/api\/jobs\/.*\/?$/, async (req, res)=>{
+        webServer.get("/audi-tracker/api/jobs/:jobId", async (req, res)=>{
             await this.getJob(req, res);
         });
 
-        webServer.post(/^\/audi-tracker\/api\/jobs\/.*\/start$/, async (req, res)=>{
+        webServer.post("/audi-tracker/api/jobs/:jobId/start", async (req, res)=>{
             await this.start(req, res);
         });
 
-        webServer.post(/^\/audi-tracker\/api\/jobs\/.*\/stop$/, async (req, res)=>{
+        webServer.post("/audi-tracker/api/jobs/:jobId/stop", async (req, res)=>{
             await this.stop(req, res);
         });
     }
@@ -37,7 +37,7 @@ export class JobControler extends BaseCtrl {
     }
 
     private findJob(req, res): JobService | null {
-        const id = "location-tracker"; //todo
+        const id = req.params.jobId;
         const job = this.jobs.find(job => job.getState().id === id);
         console.log("Job: ", job.getState());
         if (job === null) {

@@ -24,8 +24,7 @@ export class ChargingTrackerControler extends BaseCtrl {
             res.status(200);
             res.json(chargingStatus);
         } else {
-            res.status(204);
-            res.text("");
+            res.sendStatus(204);
         }
     }
 }
