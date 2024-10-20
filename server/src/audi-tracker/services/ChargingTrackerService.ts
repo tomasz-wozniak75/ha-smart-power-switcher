@@ -119,6 +119,15 @@ export class ChargingTrackerService extends AudiService {
         this.consumptionPlan = consumptionPlan;
     }
 
+    private cleanOldChargingStatus() {
+        if (this.chargingStatus) {
+            const refreshedAt = new Date(this.chargingStatus.batteryStatus.carCapturedTimestamp);
+            if ((refreshedAt.getTime() - Date.now()) > 3 * 60* 60 * 1000) {
+                this.chargingStatus = null;
+            }
+        }
+    }
+
     protected async doExecute(): Promise<ExeutionResult> {
         let interval = undefined;
 
@@ -132,7 +141,9 @@ export class ChargingTrackerService extends AudiService {
             const newChargingStatus = await this.fetchCarStatus()
             console.log("Fetched charging status:", newChargingStatus);
 
-            if(!this.chargingStatus || this.chargingStatus.plugStatus.plugConnectionState === "disconnected" && newChargingStatus.plugStatus.plugConnectionState === "connected") {
+            this.cleanOldChargingStatus();
+
+            if(this.chargingStatus && this.chargingStatus.plugStatus.plugConnectionState === "disconnected" && newChargingStatus.plugStatus.plugConnectionState === "connected") {
                 if (newChargingStatus.batteryStatus.currentSOC_pct < this.allowedBatteryChargingLevel) {
                     if (!(this.consumptionPlan && this.consumptionPlan.state == "processing")) {
                         actionMessage = "Create consumption plan on charger connection";
