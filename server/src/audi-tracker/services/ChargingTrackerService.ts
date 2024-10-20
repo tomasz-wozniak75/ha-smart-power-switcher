@@ -142,12 +142,15 @@ export class ChargingTrackerService extends AudiService {
             this.chargingStatus = newChargingStatus;
 
             if (this.chargingStatus.plugStatus.ledColor === "green") {
-                if (newChargingStatus.batteryStatus.currentSOC_pct >= this.allowedBatteryChargingLevel) {
+                if (newChargingStatus.batteryStatus.currentSOC_pct >= (this.allowedBatteryChargingLevel-2)) {
                     actionMessage += " Disconnect charger !!!";
                     await this.cancelConsumptionPlan();
                 } else {
                     if (newChargingStatus.batteryStatus.currentSOC_pct >= this.allowedBatteryChargingLevel * 0.8) {
-                        interval = 3 * 60 * 1000; 
+                        interval = 5 * 60 * 1000; 
+                    }
+                    if (newChargingStatus.batteryStatus.currentSOC_pct >= this.allowedBatteryChargingLevel * 0.9) {
+                        interval = 2 * 60 * 1000; 
                     }
                 }
             }
