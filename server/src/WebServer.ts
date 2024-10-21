@@ -39,6 +39,11 @@ webServer.use("/audi-tracker/traces", express.static(path.join(__dirname, 'audi-
 webServer.use(express.static(path.join(__dirname, 'web-app')))
 webServer.use("/audi-tracker/audi-battery-status-web-app", express.static(path.join(__dirname, 'audi-battery-status-web-app')))
 
+process.on('uncaughtException', (error) => {
+    console.error(new Date().toUTCString() + " uncaughtException:", error.message);
+    console.error(error.stack);
+});
+
 const getInputArgument = (name:string): string | null => {
     const argTuple = process.argv.find(item => item.startsWith(name));
     if (argTuple) {
