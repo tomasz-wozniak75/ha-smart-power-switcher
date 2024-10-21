@@ -118,7 +118,7 @@ export class LocationTrackerService extends AudiService {
     protected async doExecute(): Promise<ExeutionResult> {
 
         const now = new Date();
-        if ((now.getDay() == 0 || now.getDay() == 6) && (now.getHours() < 7 || now.getHours() > 15)) {
+        if ((now.getDay() == 0 || now.getDay() == 6) || (now.getHours() < 7 || now.getHours() > 15)) {
             return null;
         }
 
