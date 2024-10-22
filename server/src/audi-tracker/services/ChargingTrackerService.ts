@@ -65,7 +65,6 @@ export class ChargingTrackerService extends AudiService {
         const response = await fetch(this.smartEnergyUrl+path, { method: "post", headers: { 'Accept': 'application/json' } }) ;
         if (response.ok) {
             this.consumptionPlan = await response.json()
-            console.log(`Consumption plan schedule attempt: ${response.statusText} ${this.consumptionPlan}`)
             this.ownConsumptionPlanId = this.consumptionPlan?.id;
         } else {
             console.log(`Consumption plan schedule attempt: ${response.statusText} ${await response.text()}`)
@@ -79,10 +78,10 @@ export class ChargingTrackerService extends AudiService {
         const json = await response.json();
     }
 
-    private async createConsumptionPlan(): Promise<void> {
-        const duration = (this.allowedBatteryChargingLevel - this.chargingStatus?.batteryStatus.currentSOC_pct) * 1.2
+    private async createConsumptionPlan(chargingStatus: ChargingStatus): Promise<void> {
+        const duration = (this.allowedBatteryChargingLevel - chargingStatus?.batteryStatus.currentSOC_pct) * 1.2
         const now = new Date();
-        const finishTomorrowMorning = DateTimeUtils.addDays(new Date(now.getFullYear(), now.getMonth(), now.getDate(), 7).getTime() , 1);
+        const finishTomorrowMorning = new Date(DateTimeUtils.addDays(new Date(now.getFullYear(), now.getMonth(), now.getDate(), 7).getTime() , 1));
         let finishAt = finishTomorrowMorning;
         if (now.getDay() > 5 && now.getHours() < 18) {
             finishAt = new Date (now.getTime() + 2 * 60 * 1000);
@@ -133,11 +132,11 @@ export class ChargingTrackerService extends AudiService {
 
             this.cleanOldChargingStatus();
 
-            if(this.chargingStatus && this.chargingStatus.plugStatus.plugConnectionState === "disconnected" && newChargingStatus.plugStatus.plugConnectionState === "connected") {
-                if (newChargingStatus.batteryStatus.currentSOC_pct < this.allowedBatteryChargingLevel) {
+            if((!this.chargingStatus || this.chargingStatus && this.chargingStatus.plugStatus.plugConnectionState === "disconnected") && newChargingStatus.plugStatus.plugConnectionState === "connected") {
+                if (newChargingStatus.batteryStatus.currentSOC_pct < (this.allowedBatteryChargingLevel - 10)) {
                     if (!(this.consumptionPlan && this.consumptionPlan.state == "processing")) {
                         actionMessage = "Create consumption plan on charger connection";
-                        this.createConsumptionPlan();
+                        this.createConsumptionPlan(newChargingStatus);
                     }
                 }
             }

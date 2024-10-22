@@ -249,6 +249,7 @@ export class PowerConsumer {
             this.consumptionPlan.consumptionPlanItems.flatMap((consumptionPlanItem) => consumptionPlanItem.switchActions).forEach((switchAction) => {
                 if (switchAction.state != "executed") {
                     switchAction.state = "canceled";
+                        switchAction.result = `Canceled at ${DateTimeUtils.formatDateTime(Date.now())}`;
                 }
             });
             await this.homeAsistantService.switchDevice(this.haDeviceName, false);
