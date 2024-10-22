@@ -26,7 +26,7 @@ export abstract class JobService {
 
     public async start(): Promise<JobState> {
         this.jobState.started = true;
-        this.scheduleExecution();
+        await this.execute();
         return this.jobState;
     }
 
