@@ -64,10 +64,11 @@ export class ChargingTrackerService extends AudiService {
         const path = `power-consumer/${this.audiChagerId}/consumption-plan?consumptionDuration=${duration*60*1000}&finishAt=${finishAt.getTime()}`;
         const response = await fetch(this.smartEnergyUrl+path, { method: "post", headers: { 'Accept': 'application/json' } }) ;
         if (response.ok) {
-            this.consumptionPlan = await response.json()
-            this.ownConsumptionPlanId = this.consumptionPlan?.id;
+            const powerConsumerModel = await response.json()
+            const consumptionPlan = powerConsumerModel.consumptionPlan;
+            this.ownConsumptionPlanId = consumptionPlan?.id;
         } else {
-            console.log(`Consumption plan schedule attempt: ${response.statusText} ${await response.text()}`)
+            console.log(`Consumption plan schedule attempt: ${response.statusText}`)
         }
         
     }
@@ -90,16 +91,11 @@ export class ChargingTrackerService extends AudiService {
         await this.schedulePlan(duration, finishAt)
     }
 
-    private executionShouldBeSkipped() {
-        const now = new Date();
-        return now.getDay() > 0 && now.getDay() < 6 && now.getHours() > 7 && now.getHours() < 15;
-    }
-
-    protected async setConsumptionPlan(consumptionPlan: ConsumptionPlan) {
+    protected async setConsumptionPlan(consumptionPlan: ConsumptionPlan): Promise<void> {
         this.consumptionPlan = consumptionPlan;
     }
 
-    private cleanOldChargingStatus() {
+    private cleanOldChargingStatus(): void {
         if (this.chargingStatus) {
             const refreshedAt = new Date(this.chargingStatus.batteryStatus.carCapturedTimestamp);
             if ((refreshedAt.getTime() - Date.now()) > 3 * 60 * 60 * 1000) {
@@ -108,19 +104,35 @@ export class ChargingTrackerService extends AudiService {
         }
     }
 
-    private executionShouldBeSkippedDueToExecutedPlan() {
+    private executionShouldBeSkippedDueTimeOfDay(): boolean {
         const now = new Date();
-        return this.consumptionPlan && this.consumptionPlan.state !== "processing" && (now.getHours() > 22 || now.getHours() < 7) 
+        return now.getDay() > 0 && now.getDay() < 6 && now.getHours() > 7 && now.getHours() < 15;
+    }
+
+    private executionShouldBeSkippedDueToExecutedPlan(): boolean {
+        const now = new Date();
+        return this.consumptionPlan != null && this.consumptionPlan.state !== "processing" && (now.getHours() > 22 || now.getHours() < 7) 
+    }
+
+    private executionShouldBeSkippedDueToForthcomingCharging(): boolean {
+        if (this.consumptionPlan && this.consumptionPlan.state === "processing") {
+            return this.consumptionPlan.consumptionPlanItems[0].switchActions[0].at >= Date.now();
+        }
+        return false;
     }
 
     protected async doExecute(): Promise<ExeutionResult> {
         let interval = undefined;
 
-        if (this.executionShouldBeSkipped()) {
+        if (this.executionShouldBeSkippedDueTimeOfDay()) {
             return null;
         }
 
         if (this.executionShouldBeSkippedDueToExecutedPlan()) {
+            return null;
+        }
+
+        if (this.executionShouldBeSkippedDueToForthcomingCharging()) {
             return null;
         }
         
