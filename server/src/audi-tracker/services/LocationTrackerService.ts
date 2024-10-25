@@ -154,9 +154,9 @@ export class LocationTrackerService extends AudiService {
 
             this.writeLocations();
             
-            return { logEntry: `${new Date().toISOString()}: OK`, interval};
+            return { logEntry: `${DateTimeUtils.formatDateTime(Date.now())}: OK`, interval};
         }catch(error) {
-            return { logEntry: `${new Date().toISOString()}: ${error.message}`,  interval};
+            return { logEntry: `${DateTimeUtils.formatDateTime(Date.now())}: ${error.message}`,  interval};
         }
     
     }

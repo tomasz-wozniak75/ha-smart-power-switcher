@@ -167,10 +167,10 @@ export class PowerConsumer {
             try{
                 await this.homeAsistantService.switchDevice(this.haDeviceName, switchAction.switchOn);
                 switchAction.result = "OK";
-                console.log(`Switch action executed at ${new Date().toISOString()}`, switchAction);
+                console.log(`Switch action executed at ${DateTimeUtils.formatDateTime(Date.now())}`, switchAction);
             }catch(error) {
                 switchAction.result = error.message;
-                console.log(`Switch action executed at ${new Date().toISOString()}`, switchAction);
+                console.log(`Switch action executed at ${DateTimeUtils.formatDateTime(Date.now())}`, switchAction);
             }
         }
     }
