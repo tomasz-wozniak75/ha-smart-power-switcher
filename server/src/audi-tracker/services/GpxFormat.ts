@@ -8,25 +8,26 @@ export class GpxFormat {
                                     xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">`;
   
     public static convert (date: number, locations: AudiLocation[]): string {
-        const calcualteTimeDiff = (location: AudiLocation) => {
-            if (location.lastRefresh === undefined) {
-                return "unknown";
+        const generateLocationName = (location: AudiLocation): string => {
+            let name = `Since: ${DateTimeUtils.formatDateTime(new Date(location.carCapturedTimestamp).getTime())}`;
+            if (location.lastRefresh) {
+                name += ` to: ${DateTimeUtils.formatDateTime(location.lastRefresh)}`;
             }
-            return DateTimeUtils.formatTime(location.lastRefresh - new Date(location.carCapturedTimestamp).getTime());
+            return name;
         }
         const locationToWpt = (location: AudiLocation) => `
                     <wpt lat="${location.lat}" lon="${location.lon}">
-                        <time>${new Date(location.carCapturedTimestamp).toLocaleString()}</time>
-                        <name>Parking for: ${calcualteTimeDiff(location)}</name>
+                        <time>${DateTimeUtils.formatDateTime(location.carCapturedTimestamp)}</time>
+                        <name>${generateLocationName(location)}</name>
                     </wpt>
         `;
         let gpxFile = this.xmlDoctype;
         gpxFile += this.gpxOpeningTag;
-        gpxFile += ` <metadata>
-                    <name>${DateTimeUtils.formatDate(date)}</name>
-                    <desc>Audi track file from: ${DateTimeUtils.formatDate(date)}</desc>
-                    <author><name>Tomasz Wozniak</name></author>
-                  </metadata>
+        gpxFile += `\n<metadata>
+                        <name>${DateTimeUtils.formatDate(date)}</name>
+                        <desc>Audi track file from: ${DateTimeUtils.formatDate(date)}</desc>
+                        <author><name>Tomasz Wozniak</name></author>
+                      </metadata>
                 `;
         for (let nextLocation of locations) {
             gpxFile += locationToWpt(nextLocation);
