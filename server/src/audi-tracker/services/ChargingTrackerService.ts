@@ -2,6 +2,7 @@ import { ChargingStatus, ConsumptionPlan, DateTimeUtils } from "smart-power-cons
 import { UserError } from "../../services/UserError";
 import { AudiService } from "./AudiService";
 import { ExeutionResult } from "./JobService";
+import fs from 'node:fs';
 
 export class ChargingTrackerService extends AudiService {
 
@@ -9,6 +10,7 @@ export class ChargingTrackerService extends AudiService {
     private allowedBatteryChargingLevel: number = 80;
     private consumptionPlan: ConsumptionPlan | null = null;
     private ownConsumptionPlanId: string | null = null;
+    private currentDay?: number;
 
     private audiChagerId = "switch.audi_charger_breaker_switch";
     private smartEnergyUrl = process.env.smartEnergyUrl;
@@ -52,7 +54,17 @@ export class ChargingTrackerService extends AudiService {
         }
         if (response.ok) {
             const json = await response.json();
-            return { batteryStatus: json.charging.batteryStatus.value, plugStatus: json.charging.plugStatus.value };   
+            return { 
+                batteryStatus: json.charging.batteryStatus.value,
+                plugStatus: json.charging.plugStatus.value,
+                measurements: {
+                    electricRange: json.measurements.rangeStatus.value.electricRange,
+                    gasolineRange: json.measurements.rangeStatus.value.gasolineRange,
+                    currentFuelLevel_pct: json.measurements.fuelLevelStatus.value.currentFuelLevel_pct,
+                    currentSOC_pct: json.measurements.fuelLevelStatus.value.currentSOC_pct,
+                    odometer: json.measurements.odometerStatus.value.odometer,
+                } 
+            };   
         } else {
             const errorMessage = await response.text();
             throw new UserError(`fetchCarStatus failed ${errorMessage}`)
@@ -68,15 +80,8 @@ export class ChargingTrackerService extends AudiService {
             const consumptionPlan = powerConsumerModel.consumptionPlan;
             this.ownConsumptionPlanId = consumptionPlan?.id;
         } else {
-            console.log(`Consumption plan schedule attempt: ${response.statusText}`)
+            console.log(`Consumption plan schedule attempt: ${response.statusText} ${await response.text()}`)
         }
-        
-    }
-
-    private async cancelConsumptionPlan(): Promise<void> {
-        const path = `power-consumer/${this.audiChagerId}/consumption-plan`;
-        let response = await fetch(this.smartEnergyUrl+path, { method: "delete", headers: { 'Accept': 'application/json' } });
-        const json = await response.json();
     }
 
     private async createConsumptionPlan(chargingStatus: ChargingStatus): Promise<void> {
@@ -84,11 +89,19 @@ export class ChargingTrackerService extends AudiService {
         const now = new Date();
         const finishTomorrowMorning = new Date(DateTimeUtils.addDays(new Date(now.getFullYear(), now.getMonth(), now.getDate(), 7).getTime() , 1));
         let finishAt = finishTomorrowMorning;
-        if (now.getDay() > 5 && now.getHours() < 18) {
-            finishAt = new Date (now.getTime() + 2 * 60 * 1000);
+        if ((now.getDay() === 0 || now.getDay() === 6)  &&  7 < now.getHours() && now.getHours() < 18) {
+            finishAt = new Date (now.getTime() + 2 * 60 * 60 * 1000);
+        } else if (now.getHours() < 14 ){
+            finishAt = new Date (now.getFullYear(), now.getMonth(), now.getDate(), 23);
         }
 
         await this.schedulePlan(duration, finishAt)
+    }
+
+    private async cancelConsumptionPlan(): Promise<void> {
+        const path = `power-consumer/${this.audiChagerId}/consumption-plan`;
+        let response = await fetch(this.smartEnergyUrl+path, { method: "delete", headers: { 'Accept': 'application/json' } });
+        const json = await response.json();
     }
 
     protected async setConsumptionPlan(consumptionPlan: ConsumptionPlan): Promise<void> {
@@ -121,18 +134,42 @@ export class ChargingTrackerService extends AudiService {
         return false;
     }
 
+    private storeAudiMeasurements() {
+        const audiTracesDir = './audi-traces';
+
+        if (!fs.existsSync(audiTracesDir)){
+            fs.mkdirSync(audiTracesDir);
+        }
+        const fileName = `${audiTracesDir}/${new Date().getFullYear()}.csv`;
+        const m = this.chargingStatus?.measurements;
+        const lineDate = DateTimeUtils.formatDateTime(Date.now());
+        const line = `\n${lineDate};${m?.currentFuelLevel_pct};${m?.gasolineRange};${m?.currentSOC_pct};${m?.electricRange};${m?.odometer};`;
+        fs.appendFile(fileName, line, err => {
+            if (err) {
+                console.error(err);
+            }
+        });
+
+    }
+
     protected async doExecute(): Promise<ExeutionResult> {
         let interval = undefined;
+
+        const now = new Date();
+        if (this.chargingStatus && now.getDay() !== this.currentDay ) {
+            this.storeAudiMeasurements();
+            this.currentDay = now.getDay();
+        }
 
         if (this.executionShouldBeSkippedDueTimeOfDay()) {
             return null;
         }
 
-        if (this.executionShouldBeSkippedDueToExecutedPlan()) {
+        if (this.executionShouldBeSkippedDueToForthcomingCharging()) {
             return null;
         }
 
-        if (this.executionShouldBeSkippedDueToForthcomingCharging()) {
+        if (this.executionShouldBeSkippedDueToExecutedPlan()) {
             return null;
         }
         

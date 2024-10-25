@@ -64,7 +64,16 @@ export interface PlugStatus {
     ledColor: "none" | "green"
 }
 
+export interface AudiMeasurements {
+    electricRange: number,
+    gasolineRange: number,
+    currentFuelLevel_pct: number,
+    currentSOC_pct: number,
+    odometer: number,
+} 
+
 export interface ChargingStatus {
     batteryStatus: BatteryStatus,
-    plugStatus: PlugStatus
+    plugStatus: PlugStatus,
+    measurements: AudiMeasurements
 }
