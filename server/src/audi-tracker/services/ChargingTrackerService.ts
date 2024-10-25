@@ -176,9 +176,9 @@ export class ChargingTrackerService extends AudiService {
             }
 
             
-            return { logEntry: `${new Date().toISOString()}: ${actionMessage}`, interval};
+            return { logEntry: `${DateTimeUtils.formatDateTime(Date.now())}: ${actionMessage}`, interval};
         }catch(error) {
-            return { logEntry: `${new Date().toISOString()}: ${error.message}`,  interval};
+            return { logEntry: `${DateTimeUtils.formatDateTime(Date.now())}: ${error.message}`,  interval};
         }
 
     }

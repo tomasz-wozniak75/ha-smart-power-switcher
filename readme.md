@@ -40,3 +40,9 @@ javascript: (() => {
 
 javascript: (() => { const now = new Date(Date.now() - 24 * 60 * 60 * 1000); const day = String(now.getDate()).padStart(2, '0'); const month = String(now.getMonth() + 1).padStart(2, '0'); window.location.href = `http://smart-energy.mesh:8080/audi-tracker/traces/${day}-${month}-${now.getFullYear()}.gpx`; })();
 
+
+https://linuxize.com/post/how-to-set-or-change-timezone-in-linux/
+timedatectl list-timezones
+Europe/Warsaw
+sudo timedatectl set-timezone <your_time_zone>
+sudo timedatectl set-timezone Europe/Warsaw
