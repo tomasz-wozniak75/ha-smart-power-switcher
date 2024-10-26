@@ -124,7 +124,10 @@ export class ChargingTrackerService extends AudiService {
 
     private executionShouldBeSkippedDueToExecutedPlan(): boolean {
         const now = new Date();
-        return this.consumptionPlan != null && this.consumptionPlan.state !== "processing" && (now.getHours() > 22 || now.getHours() < 7) 
+
+        const processingConsumptionPan = this.consumptionPlan != null && this.consumptionPlan.state !== "processing";
+        const powerIsProvided = this.chargingStatus?.plugStatus.externalPower === "ready";
+        return processingConsumptionPan && !powerIsProvided && (now.getHours() > 22 || now.getHours() < 7)
     }
 
     private executionShouldBeSkippedDueToForthcomingCharging(): boolean {
