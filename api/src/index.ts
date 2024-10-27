@@ -6,6 +6,7 @@ export { DateTimeUtils, PricelistItem };
 
 export interface SwitchAction {
     at: number;
+    executedAt?: number;
     switchOn: boolean;
     state: "scheduled" | "executed" | "canceled";
     result: string | undefined;
