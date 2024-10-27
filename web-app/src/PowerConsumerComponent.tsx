@@ -5,7 +5,7 @@ import { ErrorComponent } from './ErrorComponent';
 
 
 
-const fixFinishAt = (finishAt: Date): Date => new Date((finishAt.getTime() + 2 * 3600 * 1000));
+const fixFinishAt = (finishAt: Date): Date => new Date((finishAt.getTime() + 1 * 3600 * 1000));
 const getFinishAt = (finishAt: Date): string => fixFinishAt(finishAt).toJSON().substring(0, 16);
 
 export const PowerConsumerComponent = (powerConsumerProp: PowerConsumerModel) => {
@@ -67,8 +67,8 @@ export const PowerConsumerComponent = (powerConsumerProp: PowerConsumerModel) =>
                     <input name="button-decrease-1h" type='button' value={"<< hour"}  onClick={(e) => setFinishAt(new Date(finishAt.getTime() - 60 * 60 * 1000))}/>                    
                     <input name="button-decrease-10mins" type='button' value={"<< 10mins"}  onClick={(e) => setFinishAt(new Date(finishAt.getTime() - 10 * 60 * 1000))}/>                    
                     <input name="button-now" type='button' value={"Now"}  onClick={(e) => setFinishAt(new Date())}/>         
+                    <input name="button-setDefault-consumption-duration" type='button' value={"default"}  onClick={(e) => setFinishAt(new Date(powerConsumerProp.defaultFinishAt))}/>  
                     <input name="button-from-now-duration" type='button' value={"From now duration"}  onClick={(e) => setFinishAt(new Date(Date.now() + (consumptionDuration+1)*60*1000))}/>         
-                    <input name="button-setDefault-consumption-duration" type='button' value={"default"}  onClick={(e) => setFinishAt(new Date(powerConsumerProp.defaultFinishAt))}/>                 
                     <input name="button-increase+10mins" type='button' value={"10mins >>"}  onClick={(e) => setFinishAt(new Date(finishAt.getTime() + 10 * 60 * 1000))}/>                    
                     <input name="button-increase+1h" type='button' value={"hour >>"}  onClick={(e) => setFinishAt(new Date(finishAt.getTime() + 60 * 60 * 1000))}/>                    
                 </div>
