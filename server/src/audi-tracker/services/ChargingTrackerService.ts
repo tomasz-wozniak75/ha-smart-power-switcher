@@ -85,7 +85,7 @@ export class ChargingTrackerService extends AudiService {
     }
 
     private async createConsumptionPlan(chargingStatus: ChargingStatus): Promise<void> {
-        const duration = (this.allowedBatteryChargingLevel - chargingStatus?.batteryStatus.currentSOC_pct) * 1.2
+        const duration = (this.allowedBatteryChargingLevel - chargingStatus?.batteryStatus.currentSOC_pct) * 1.1;
         const now = new Date();
         const finishTomorrowMorning = new Date(DateTimeUtils.addDays(new Date(now.getFullYear(), now.getMonth(), now.getDate(), 7).getTime() , 1));
         let finishAt = finishTomorrowMorning;
