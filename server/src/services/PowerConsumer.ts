@@ -5,6 +5,11 @@ import { UserError } from "./UserError";
 import { HomeAsistantService } from "./HomeAsistantService";
 import { v4 as uuidv4 } from 'uuid';
 
+interface ConsumptionStatItem {
+    from: number;
+    to: number;
+    price: number;
+}
 
 export class PowerConsumer {
     private haDeviceName: string;
@@ -175,8 +180,54 @@ export class PowerConsumer {
         }
     }
 
+    private savePowerConsumptionStats(consumptionPlan: ConsumptionPlan): void  {
+        if (false) {
+            //todo
+            return;
+        }
+        if(consumptionPlan.state !== "executed") {
+            return;
+        }
+
+        const consumptionStatItems: ConsumptionStatItem[] = [];
+        for (let consumptionItem of consumptionPlan.consumptionPlanItems) {
+            if (consumptionItem.switchActions.length === 0) {
+                const pricelistItem = consumptionItem.pricelistItem;
+                consumptionStatItems.push(
+                    {from: pricelistItem.startsAt, to: pricelistItem.startsAt + pricelistItem.duration, price: pricelistItem.price }
+                );
+            }
+
+            if (consumptionItem.switchActions.length === 1) {
+                if (consumptionItem.switchActions[0].state === "canceled" ) {
+                    break;                                    
+                }
+                if (consumptionItem.switchActions[0].switchOn) {
+                    // from action to the end
+                    const pricelistItem = consumptionItem.pricelistItem;
+                    consumptionStatItems.push(
+                        {from: consumptionItem.switchActions[0].at, to: pricelistItem.startsAt + pricelistItem.duration, price: CurrencyUtils.getPriceAsNumber(pricelistItem.price) }
+                    );
+                } else {
+                   //from the begining to the action     
+                    const pricelistItem = consumptionItem.pricelistItem;
+                    consumptionStatItems.push(
+                        {from: pricelistItem.startsAt, to: consumptionItem.switchActions[0].at, price: CurrencyUtils.getPriceAsNumber(pricelistItem.price) }
+                    );
+                }
+            }
+            if (consumptionItem.switchActions.length === 2) {
+                //betwen switch actions
+                const pricelistItem = consumptionItem.pricelistItem;
+                consumptionStatItems.push(
+                    {from: consumptionItem.switchActions[0].at, to: consumptionItem.switchActions[1].at, price: CurrencyUtils.getPriceAsNumber(pricelistItem.price) }
+                );
+            } 
+        }
+    }
+
     private switchConsumptionPlanState(consumptionPlan: ConsumptionPlan): void  {
-        if(consumptionPlan.state == "processing") {
+        if(consumptionPlan.state === "processing") {
             let hasScheduled = false;
             for(let nextSwitchAction of consumptionPlan.consumptionPlanItems.flatMap((consumptionPlanItem) => consumptionPlanItem.switchActions)) {
                 if (nextSwitchAction.state == "scheduled") {
@@ -185,7 +236,8 @@ export class PowerConsumer {
                 }        
             }
             if (!hasScheduled) {
-                consumptionPlan.state ="executed";
+                consumptionPlan.state = "executed";
+                this.savePowerConsumptionStats(consumptionPlan);
             }
         }
     }
@@ -250,16 +302,19 @@ export class PowerConsumer {
             let previousActionExecuted = consumptionPlanHasBeenStarted;
             for(let switchAction of switchActions) {
                 if (switchAction.state != "executed") {
-                    switchAction.state = "canceled";
                     if (previousActionExecuted && !switchAction.switchOn) {
                         const now = Date.now();
                         switchAction.result = `Canceled at ${DateTimeUtils.formatDateTime(now)}`;
                         switchAction.executedAt = now;
+                        switchAction.state = "executed";
+                    } else {
+                        switchAction.state = "canceled";
                     }
                     previousActionExecuted = false;
                 }
             };
             this.consumptionPlan.state = consumptionPlanHasBeenStarted ? "executed" : "canceled";
+            this.savePowerConsumptionStats(this.consumptionPlan);
             await this.homeAsistantService.switchDevice(this.haDeviceName, false);
             await this.sendConsumptionPlanStateNotification();
         }
