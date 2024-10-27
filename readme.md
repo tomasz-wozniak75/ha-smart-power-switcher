@@ -46,3 +46,20 @@ timedatectl list-timezones
 Europe/Warsaw
 sudo timedatectl set-timezone <your_time_zone>
 sudo timedatectl set-timezone Europe/Warsaw
+
+
+Common Name (eg: your user, host, or server name) [server]:malina-vpn
+* Notice:
+
+Keypair and certificate request completed. Your files are:
+req: /home/tomaszw/pki/reqs/server.req
+key: /home/tomaszw/pki/private/server.key
+
+
+docker run -d \
+  --name=openvpn-as --cap-add=NET_ADMIN \
+  -p 943:943 -p 443:443 -p 1194:1194/udp \
+  -v /etc/openvpn:/openvpn \
+  openvpn/openvpn-as
+
+

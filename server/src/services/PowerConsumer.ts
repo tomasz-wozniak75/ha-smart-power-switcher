@@ -228,7 +228,7 @@ export class PowerConsumer {
 
         if (consumptionStatItems.length > 0) {
             const id = consumptionPlan.id;
-            const content = consumptionStatItems.map(item => `${id};${new Date(item.from).toLocaleString()};${new Date(item.to).toLocaleString()};${CurrencyUtils.getPriceAsNumber(item.price)}`).join("\n");
+            const content = "\n" + consumptionStatItems.map(item => `${id};${new Date(item.from).toLocaleString()};${new Date(item.to).toLocaleString()};${CurrencyUtils.getPriceAsNumber(item.price)}`).join("\n");
             const audiTracesDir = './audi-traces';
 
             if (!fs.existsSync(audiTracesDir)){
@@ -298,6 +298,8 @@ export class PowerConsumer {
         }
 
         this.consumptionPlan = {id: uuidv4(), createdAt: Date.now(), consumptionDuration, finishAt, consumptionPlanItems: await this.createConsumptionPlan(consumptionDuration, Date.now(), finishAt), state: "processing" };
+
+        console.log(`this.consumptionPlan ${JSON.stringify(this.consumptionPlan)}`)
 
         this.scheduleSwitchActions(this.consumptionPlan);
         await this.sendConsumptionPlanStateNotification();
