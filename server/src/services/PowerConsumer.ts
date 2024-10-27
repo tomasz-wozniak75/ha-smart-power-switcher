@@ -245,13 +245,21 @@ export class PowerConsumer {
 
     public async deleteConsumptionPlan(): Promise<PowerConsumerModel> {
         if (this.consumptionPlan && this.consumptionPlan.state == "processing") {
-            this.consumptionPlan.state = "canceled"
-            this.consumptionPlan.consumptionPlanItems.flatMap((consumptionPlanItem) => consumptionPlanItem.switchActions).forEach((switchAction) => {
+            const switchActions = this.consumptionPlan.consumptionPlanItems.flatMap((consumptionPlanItem) => consumptionPlanItem.switchActions);
+            const consumptionPlanHasBeenStarted = switchActions[0].state === "executed";            
+            let previousActionExecuted = consumptionPlanHasBeenStarted;
+            for(let switchAction of switchActions) {
                 if (switchAction.state != "executed") {
                     switchAction.state = "canceled";
-                        switchAction.result = `Canceled at ${DateTimeUtils.formatDateTime(Date.now())}`;
+                    if (previousActionExecuted && !switchAction.switchOn) {
+                        const now = Date.now();
+                        switchAction.result = `Canceled at ${DateTimeUtils.formatDateTime(now)}`;
+                        switchAction.executedAt = now;
+                    }
+                    previousActionExecuted = false;
                 }
-            });
+            };
+            this.consumptionPlan.state = consumptionPlanHasBeenStarted ? "executed" : "canceled";
             await this.homeAsistantService.switchDevice(this.haDeviceName, false);
             await this.sendConsumptionPlanStateNotification();
         }
