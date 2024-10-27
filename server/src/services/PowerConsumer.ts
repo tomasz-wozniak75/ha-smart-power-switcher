@@ -224,6 +224,10 @@ export class PowerConsumer {
                 );
             } 
         }
+
+        if (consumptionStatItems.length > 0) {
+            
+        }
     }
 
     private switchConsumptionPlanState(consumptionPlan: ConsumptionPlan): void  {
