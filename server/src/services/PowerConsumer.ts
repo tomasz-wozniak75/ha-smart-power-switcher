@@ -4,6 +4,7 @@ import schedule from "node-schedule";
 import { UserError } from "./UserError";
 import { HomeAsistantService } from "./HomeAsistantService";
 import { v4 as uuidv4 } from 'uuid';
+import fs from 'node:fs';
 
 interface ConsumptionStatItem {
     from: number;
@@ -181,10 +182,6 @@ export class PowerConsumer {
     }
 
     private savePowerConsumptionStats(consumptionPlan: ConsumptionPlan): void  {
-        if (false) {
-            //todo
-            return;
-        }
         if(consumptionPlan.state !== "executed") {
             return;
         }
@@ -206,13 +203,13 @@ export class PowerConsumer {
                     // from action to the end
                     const pricelistItem = consumptionItem.pricelistItem;
                     consumptionStatItems.push(
-                        {from: consumptionItem.switchActions[0].at, to: pricelistItem.startsAt + pricelistItem.duration, price: CurrencyUtils.getPriceAsNumber(pricelistItem.price) }
+                        {from: consumptionItem.switchActions[0].at, to: pricelistItem.startsAt + pricelistItem.duration, price: pricelistItem.price }
                     );
                 } else {
                    //from the begining to the action     
                     const pricelistItem = consumptionItem.pricelistItem;
                     consumptionStatItems.push(
-                        {from: pricelistItem.startsAt, to: consumptionItem.switchActions[0].at, price: CurrencyUtils.getPriceAsNumber(pricelistItem.price) }
+                        {from: pricelistItem.startsAt, to: consumptionItem.switchActions[0].at, price: pricelistItem.price }
                     );
                 }
             }
@@ -220,13 +217,25 @@ export class PowerConsumer {
                 //betwen switch actions
                 const pricelistItem = consumptionItem.pricelistItem;
                 consumptionStatItems.push(
-                    {from: consumptionItem.switchActions[0].at, to: consumptionItem.switchActions[1].at, price: CurrencyUtils.getPriceAsNumber(pricelistItem.price) }
+                    {from: consumptionItem.switchActions[0].at, to: consumptionItem.switchActions[1].at, price: pricelistItem.price }
                 );
             } 
         }
 
         if (consumptionStatItems.length > 0) {
-            
+            const id = consumptionPlan.id;
+            const content = consumptionStatItems.map(item => `${id};${new Date(item.from).toLocaleString()};${new Date(item.to).toLocaleString()};${CurrencyUtils.getPriceAsNumber(item.price)}`).join("\n");
+            const audiTracesDir = './audi-traces';
+
+            if (!fs.existsSync(audiTracesDir)){
+                fs.mkdirSync(audiTracesDir);
+            }
+            const fileName = `${audiTracesDir}/${this.name}-${new Date().getFullYear()}.csv`;
+            fs.appendFile(fileName, content, err => {
+                if (err) {
+                    console.error(err);
+                }
+            });
         }
     }
 
