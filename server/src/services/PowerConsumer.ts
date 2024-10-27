@@ -186,6 +186,8 @@ export class PowerConsumer {
             return;
         }
 
+        const getSwitchActionTime = (switchAction: SwitchAction) => switchAction.executedAt ? switchAction.executedAt : switchAction.at;
+
         const consumptionStatItems: ConsumptionStatItem[] = [];
         for (let consumptionItem of consumptionPlan.consumptionPlanItems) {
             if (consumptionItem.switchActions.length === 0) {
@@ -202,14 +204,16 @@ export class PowerConsumer {
                 if (consumptionItem.switchActions[0].switchOn) {
                     // from action to the end
                     const pricelistItem = consumptionItem.pricelistItem;
+                    const switchAction = consumptionItem.switchActions[0];
                     consumptionStatItems.push(
-                        {from: consumptionItem.switchActions[0].at, to: pricelistItem.startsAt + pricelistItem.duration, price: pricelistItem.price }
+                        {from: getSwitchActionTime(switchAction), to: pricelistItem.startsAt + pricelistItem.duration, price: pricelistItem.price }
                     );
                 } else {
                    //from the begining to the action     
                     const pricelistItem = consumptionItem.pricelistItem;
+                    const switchAction = consumptionItem.switchActions[0];
                     consumptionStatItems.push(
-                        {from: pricelistItem.startsAt, to: consumptionItem.switchActions[0].at, price: pricelistItem.price }
+                        {from: pricelistItem.startsAt, to: getSwitchActionTime(switchAction), price: pricelistItem.price }
                     );
                 }
             }
@@ -217,7 +221,7 @@ export class PowerConsumer {
                 //betwen switch actions
                 const pricelistItem = consumptionItem.pricelistItem;
                 consumptionStatItems.push(
-                    {from: consumptionItem.switchActions[0].at, to: consumptionItem.switchActions[1].at, price: pricelistItem.price }
+                    {from: getSwitchActionTime(consumptionItem.switchActions[0]), to: getSwitchActionTime(consumptionItem.switchActions[1]), price: pricelistItem.price }
                 );
             } 
         }
