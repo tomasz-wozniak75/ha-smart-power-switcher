@@ -85,7 +85,7 @@ export class ChargingTrackerService extends AudiService {
     }
 
     private async createConsumptionPlan(chargingStatus: ChargingStatus): Promise<void> {
-        const duration = (this.allowedBatteryChargingLevel - chargingStatus?.batteryStatus.currentSOC_pct) * 1.1;
+        const duration = (this.allowedBatteryChargingLevel - chargingStatus?.batteryStatus.currentSOC_pct) * 1.15;
         const now = new Date();
         const finishTomorrowMorning = new Date(DateTimeUtils.addDays(new Date(now.getFullYear(), now.getMonth(), now.getDate(), 7).getTime() , 1));
         let finishAt = finishTomorrowMorning;
@@ -206,8 +206,11 @@ export class ChargingTrackerService extends AudiService {
                     actionMessage += " Disconnect charger !!!";
                     await this.cancelConsumptionPlan();
                 } else {
+                    if (newChargingStatus.batteryStatus.currentSOC_pct >= this.allowedBatteryChargingLevel * 0.7) {
+                        interval = 6 * 60 * 1000; 
+                    }
                     if (newChargingStatus.batteryStatus.currentSOC_pct >= this.allowedBatteryChargingLevel * 0.8) {
-                        interval = 5 * 60 * 1000; 
+                        interval = 4 * 60 * 1000; 
                     }
                     if (newChargingStatus.batteryStatus.currentSOC_pct >= this.allowedBatteryChargingLevel * 0.9) {
                         interval = 2 * 60 * 1000; 
