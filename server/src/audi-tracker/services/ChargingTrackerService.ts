@@ -138,7 +138,7 @@ export class ChargingTrackerService extends AudiService {
     }
 
     private storeAudiMeasurements() {
-        const audiTracesDir = './audi-traces';
+        const audiTracesDir = process.env.audiTracesDir;
 
         if (!fs.existsSync(audiTracesDir)){
             fs.mkdirSync(audiTracesDir);

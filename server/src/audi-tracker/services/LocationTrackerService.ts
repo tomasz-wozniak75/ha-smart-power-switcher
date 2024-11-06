@@ -66,7 +66,7 @@ export class LocationTrackerService extends AudiService {
     }
 
     private writeLocations(): void {
-        const audiTracesDir = './audi-traces';
+        const audiTracesDir = process.env.audiTracesDir;
 
         if (!fs.existsSync(audiTracesDir)){
             fs.mkdirSync(audiTracesDir);
@@ -89,7 +89,7 @@ export class LocationTrackerService extends AudiService {
     }
 
     private readLocations(): void {
-        const audiTracesDir = './audi-traces';
+        const audiTracesDir = process.env.audiTracesDir;
         const fileName = `${audiTracesDir}/${DateTimeUtils.formatDate(this.currentDay)}`;
         const jsonFileName = `${fileName}.json`;
         fs.readFile(jsonFileName, 'utf8', (err, data) => {

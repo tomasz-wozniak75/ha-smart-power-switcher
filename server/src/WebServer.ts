@@ -34,7 +34,9 @@ jobControler.createRoutes(webServer);
 chargingTrackerControler.createRoutes(webServer);
 
 
-webServer.use("/audi-tracker/traces", express.static(path.join(__dirname, 'audi-traces')))
+const audiTracesDir = path.join(__dirname, process.env.audiTracesDir);
+console.log("audiTracesDir", audiTracesDir)
+webServer.use("/audi-tracker/traces", express.static(audiTracesDir))
 
 webServer.use(express.static(path.join(__dirname, 'web-app')))
 webServer.use("/audi-tracker/audi-battery-status-web-app", express.static(path.join(__dirname, 'audi-battery-status-web-app')))
