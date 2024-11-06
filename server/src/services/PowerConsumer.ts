@@ -229,7 +229,7 @@ export class PowerConsumer {
         if (consumptionStatItems.length > 0) {
             const id = consumptionPlan.id;
             const content = "\n" + consumptionStatItems.map(item => `${id};${new Date(item.from).toLocaleString()};${new Date(item.to).toLocaleString()};${CurrencyUtils.getPriceAsNumber(item.price)}`).join("\n");
-            const audiTracesDir = './audi-traces';
+            const audiTracesDir = process.env.audiTracesDir;
 
             if (!fs.existsSync(audiTracesDir)){
                 fs.mkdirSync(audiTracesDir);
