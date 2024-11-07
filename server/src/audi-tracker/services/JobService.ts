@@ -54,7 +54,7 @@ export abstract class JobService {
 
     private scheduleExecution(temporaryInterval?: number) {
         let interval = temporaryInterval ? temporaryInterval : this.jobState.interval;
-        if (interval > 5 * 60 * 1000) {
+        if (interval > 7 * 60 * 1000) {
             interval -= Math.random() * 2 * 60 * 1000;
         }
         schedule.scheduleJob(Date.now() + interval, async function(jobSerwice: JobService){
