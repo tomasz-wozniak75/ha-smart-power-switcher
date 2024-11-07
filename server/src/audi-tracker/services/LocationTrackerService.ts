@@ -1,6 +1,7 @@
 import { DateTimeUtils } from "smart-power-consumer-api";
 import { UserError } from "../../services/UserError";
 import fs from 'node:fs';
+import path from 'path';
 import { GpxFormat } from "./GpxFormat";
 import { AudiService } from "./AudiService";
 import { ExeutionResult } from "./JobService";
@@ -66,7 +67,7 @@ export class LocationTrackerService extends AudiService {
     }
 
     private writeLocations(): void {
-        const audiTracesDir = process.env.audiTracesDir;
+        const audiTracesDir = path.join(__dirname, process.env.audiTracesDir);
 
         if (!fs.existsSync(audiTracesDir)){
             fs.mkdirSync(audiTracesDir);
@@ -89,7 +90,7 @@ export class LocationTrackerService extends AudiService {
     }
 
     private readLocations(): void {
-        const audiTracesDir = process.env.audiTracesDir;
+        const audiTracesDir = path.join(__dirname, process.env.audiTracesDir);
         const fileName = `${audiTracesDir}/${DateTimeUtils.formatDate(this.currentDay)}`;
         const jsonFileName = `${fileName}.json`;
         fs.readFile(jsonFileName, 'utf8', (err, data) => {

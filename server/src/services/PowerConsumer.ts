@@ -5,6 +5,7 @@ import { UserError } from "./UserError";
 import { HomeAsistantService } from "./HomeAsistantService";
 import { v4 as uuidv4 } from 'uuid';
 import fs from 'node:fs';
+import path from 'path';
 
 interface ConsumptionStatItem {
     from: number;
@@ -229,7 +230,7 @@ export class PowerConsumer {
         if (consumptionStatItems.length > 0) {
             const id = consumptionPlan.id;
             const content = "\n" + consumptionStatItems.map(item => `${id};${new Date(item.from).toLocaleString()};${new Date(item.to).toLocaleString()};${CurrencyUtils.getPriceAsNumber(item.price)}`).join("\n");
-            const audiTracesDir = process.env.audiTracesDir;
+            const audiTracesDir = path.join(__dirname, process.env.audiTracesDir);
 
             if (!fs.existsSync(audiTracesDir)){
                 fs.mkdirSync(audiTracesDir);

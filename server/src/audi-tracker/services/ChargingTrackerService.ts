@@ -3,6 +3,7 @@ import { UserError } from "../../services/UserError";
 import { AudiService } from "./AudiService";
 import { ExeutionResult } from "./JobService";
 import fs from 'node:fs';
+import path from 'path';
 
 export class ChargingTrackerService extends AudiService {
 
@@ -138,7 +139,7 @@ export class ChargingTrackerService extends AudiService {
     }
 
     private storeAudiMeasurements() {
-        const audiTracesDir = process.env.audiTracesDir;
+        const audiTracesDir = path.join(__dirname, process.env.audiTracesDir);;
 
         if (!fs.existsSync(audiTracesDir)){
             fs.mkdirSync(audiTracesDir);
