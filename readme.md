@@ -13,7 +13,7 @@ has free REST API which could be used by smart-energy app.
 Smart energy app takes as an input for each charging the length of the charging and when we want to finish charging. 
 Having such inputs, it searches for the least expensive hours before expected finish time, and it triggers charging
 via Home Assistant REST api. During the night we could have hours with low prices mixed with higher ones, for charging
-it is beneficial to have a single continue time slot. To address this problem, application gives weights to hours 
+it is beneficial to have a single continuous time slot. To address this problem, application gives weights to hours 
 in an allowed charging period, weight is proportional to continuous number of hours with the same price. Next hours
 in the allowed charging period are sorted by price and weight, so the lowest prices with the longest continuous period 
 are selected as first, app takes as many hours as it is required by charging time and next it plans when Tuya switch 
