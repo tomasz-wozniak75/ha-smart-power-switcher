@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    },
+    "moduleResolution": "NodeNext",
+    "outDir": "dist",
+    "importsNotUsedAsValues": "remove",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+  },
+  "include": ["src/**/*", "../api/src/PricelistItem.ts"],
+  "exclude": ["node_modules"]
+}

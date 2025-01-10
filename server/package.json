@@ -1,0 +1,57 @@
+{
+  "name": "ha-smart-power-switcher",
+  "version": "1.0.0",
+  "description": "Home assistant smart power switcher based on current energy costs",
+  "main": "WebServer.ts",
+  "scripts": {
+    "dev": "tsx watch --clear-screen=false src/WebServer.ts | pino-pretty",
+    "build": "tsup",
+    "start": "dotenvx run --env-file=.env.development -- node dist/WebServer.js",
+    "start-prod": "dotenvx run --env-file=.env.production -- node dist/WebServer.js",
+    "test": "dotenvx run --env-file=.env.development -- node --experimental-vm-modules node_modules/jest/bin/jest.js"
+  },
+  "keywords": [],
+  "author": "tomasz.wozniak.at@gmail.com",
+  "license": "MIT",
+  "devDependencies": {
+    "@babel/preset-env": "^7.25.4",
+    "@babel/preset-typescript": "^7.24.7",
+    "@biomejs/biome": "1.9.2",
+    "@dotenvx/dotenvx": "^1.14.2",
+    "@jest/globals": "^29.7.0",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/jest": "^29.5.13",
+    "@types/node-schedule": "^2.1.7",
+    "@types/supertest": "^6.0.2",
+    "@types/swagger-ui-express": "^4.1.6",
+    "body-parser": "^1.20.3",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0",
+    "jest": "^29.7.0",
+    "jest-cli": "^29.7.0",
+    "lint-staged": "^15.2.2",
+    "node-schedule": "^2.1.1",
+    "pino-pretty": "^11.0.0",
+    "puppeteer": "^23.5.2",
+    "rimraf": "^6.0.0",
+    "supertest": "^7.0.0",
+    "ts-jest": "^29.2.5",
+    "tsup": "^8.0.2",
+    "tsx": "^4.7.2",
+    "typescript": "^5.4.4",
+    "uuid": "^10.0.0",
+    "vite-tsconfig-paths": "^5.0.0",
+    "vitest": "^2.0.0"
+  },
+  "tsup": {
+    "entry": [
+      "src",
+      "!src/**/*.test.*"
+    ],
+    "splitting": false,
+    "sourcemap": true,
+    "clean": true,
+    "skipNodeModulesBundle": false
+  }
+}

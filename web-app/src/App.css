@@ -1,0 +1,122 @@
+/* .App {
+  text-align: center;
+} */
+header {
+    margin-top: 10px;
+    margin-bottom: 10px;
+    margin-left: 10px;
+    font-weight: bold;
+}
+
+.inputBlock {
+    margin: 15px;
+}
+
+.pricelistTable {
+    border-collapse: collapse;
+    margin: 25px 0;
+    font-size: 0.9em;
+    font-family: sans-serif;
+    min-width: 400px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+    margin: 15px;
+}
+
+.powerConsumer {
+    border-top: 1px solid black;
+    margin-top: 25px;
+    margin-left: 15px;
+}
+
+.pricelistTable thead tr {
+    background-color: #dddddd;
+    text-align: left;
+}
+
+.pricelistTable th,
+.pricelistTable td {
+    padding: 2px 2px;
+}
+
+.pricelistTable tbody tr {
+    border-bottom: 1px solid #dddddd;
+}
+
+.pricelistTable tbody tr:nth-of-type(even) {
+    background-color: #f3f3f3;
+}
+
+.pricelistTable tbody tr:last-of-type {
+    border-bottom: 2px solid #4f5253;
+}
+
+
+.chargerStatus {
+    margin-left: 10px;
+    border: none;
+    height: 60px; 
+    width: 600px;
+}
+
+.consumptionPlanTable {
+    border-collapse: collapse;
+    margin: 25px 0;
+    font-size: 0.9em;
+    font-family: sans-serif;
+    min-width: 400px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+}
+
+.consumptionPlanTable thead tr {
+    background-color: #dddddd;
+    text-align: left;
+}
+
+.consumptionPlanTable th,
+.consumptionPlanTable td {
+    padding: 2px 2px;
+}
+
+.consumptionPlanTable tbody tr {
+    border-bottom: 1px solid #dddddd;
+}
+
+.consumptionPlanTable tbody tr:nth-of-type(even) {
+    background-color: #f3f3f3;
+}
+
+.consumptionPlanTable tbody tr:last-of-type {
+    border-bottom: 2px solid #4f5253;
+}
+
+.errorMessage {
+    color: red;
+}
+
+.price-min {
+    color: green
+}
+
+.price-medium {
+    color: black
+}
+
+.price-max {
+    color: red
+}
+
+
+.spinner {
+  border: 16px solid #f3f3f3; /* Light grey */
+  border-top: 16px solid #3498db; /* Blue */
+  border-radius: 50%;
+  width: 120px;
+  height: 120px;
+  animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
