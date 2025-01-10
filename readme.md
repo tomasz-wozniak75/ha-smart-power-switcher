@@ -1,65 +1,35 @@
-https://github.com/edwinhern/express-typescript-2024
+# Smart energy home automation
+
+## Purpose
+In Poland, there is an electricity tariff in which prices are changing on an hourly basis due to actual power supply and consumption. 
+Consumers could benefit from low prices during nights or when there is a strong wind or sunny day that causes energy over production.
+
+This project is intended to charge car batteries in the hours when it is profitable. Charging is controlled by [tuya smart swithes](https://www.tuya.com/)
+but Tuya application has only simple automation not sufficient for this task. Tuya exposes REST API but is not free of charge, 
+fortunately Tuya could be integrated with Home Assistant application which has free REST API which could be used by smart-energy app.
+
+## How it works
+Smart energy app takes as an input for each charging the length of the charging and when we want to finish charging. 
+Having such inputs, it searches for the least expensive hours before expected finish time, and it triggers charging
+via Home Assistant REST api. During the night we could have hours with low prices mixed with higher ones, for charging
+it is beneficial to have a single continue time slot. To address this problem, application gives weights to hours 
+in an allowed charging period, weight is proportional to continuous number of hours with the same price. Next hours
+in the allowed charging period are sorted by price and weight, so the lowest prices with the longest continuous period 
+are selected as first, app takes as many hours as it is required by charging time and next it plans when Tuya switch 
+should be turned on or off. 
+If we have single continuous charging period application will plan single action to turn on and single action
+to turn off Tuya switch, If charging period has breaks, we will have more such actions.     
 
 
-how to install dotenv
-sudo npm install @dotenvx/dotenvx -g
 
+## How it is implemented
+Module `server` contains NodeJs application which exposes REST API endpoints for ReactJs fronted application 
+from `wepp-app` module. Endpoints exposed by server allow fetching the price list and schedule charging. 
+Charging planning and execution is executed by server. 
+Price list is not exposed by any REST api it is presented on the website which is scraped by server with puppeteer help.
+Server caches Price lists so website with prices is called only once a day when a new price list for 
+the next day is published. Module `api` contains TypeScript interfaces common for NodeJs app and for ReactJs
 
-npx puppeteer browsers install
-chrome@129.0.6668.91 /home/tomaszw/.cache/puppeteer/chrome/linux-129.0.6668.91/chrome-linux64/chrome
-chrome-headless-shell@129.0.6668.91 /home/tomaszw/.cache/puppeteer/chrome-headless-shell/linux-129.0.6668.91/chrome-headless-shell-linux64/chrome-headless-shell
-
-changes in /etc/rc.local for autostart during boot
-#run smart energy app
-sudo -H -u tomaszw /home/tomaszw/apps/smart-energy/public/smart-energy.sh
-
-
-
-http://www.gpxweaver.com/
-
-
-https://www.gpsvisualizer.com/map_input
-
-//today
-javascript: (() => {
-    const now = new Date();
-    const day = String(now.getDate()).padStart(2, '0');
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    window.location.href = `http://smart-energy.mesh:8080/audi-tracker/traces/${day}-${month}-${now.getFullYear()}.gpx`;
-})();
-
-
-//yesterday
-javascript: (() => {
-    const now = new Date(Date.now() - 24 * 60 * 60 * 1000);
-    const day = String(now.getDate()).padStart(2, '0');
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    window.location.href = `http://smart-energy.mesh:8080/audi-tracker/traces/${day}-${month}-${now.getFullYear()}.gpx`;
-})();
-
-
-javascript: (() => { const now = new Date(Date.now() - 24 * 60 * 60 * 1000); const day = String(now.getDate()).padStart(2, '0'); const month = String(now.getMonth() + 1).padStart(2, '0'); window.location.href = `http://smart-energy.mesh:8080/audi-tracker/traces/${day}-${month}-${now.getFullYear()}.gpx`; })();
-
-
-https://linuxize.com/post/how-to-set-or-change-timezone-in-linux/
-timedatectl list-timezones
-Europe/Warsaw
-sudo timedatectl set-timezone <your_time_zone>
-sudo timedatectl set-timezone Europe/Warsaw
-
-
-Common Name (eg: your user, host, or server name) [server]:malina-vpn
-* Notice:
-
-Keypair and certificate request completed. Your files are:
-req: /home/tomaszw/pki/reqs/server.req
-key: /home/tomaszw/pki/private/server.key
-
-
-docker run -d \
-  --name=openvpn-as --cap-add=NET_ADMIN \
-  -p 943:943 -p 443:443 -p 1194:1194/udp \
-  -v /etc/openvpn:/openvpn \
-  openvpn/openvpn-as
-
-
+Apart from scheduling battery charging, this application also controls battery charging level by connecting with
+Audi servers from which current battery level is fetched, and when battery level is over recommended 80%,
+it cancels current charging. 
