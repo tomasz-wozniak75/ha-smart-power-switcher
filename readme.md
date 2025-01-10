@@ -4,9 +4,10 @@
 In Poland, there is an electricity tariff in which prices are changing on an hourly basis due to actual power supply and consumption. 
 Consumers could benefit from low prices during nights or when there is a strong wind or sunny day that causes energy over production.
 
-This project is intended to charge car batteries in the hours when it is profitable. Charging is controlled by [tuya smart swithes](https://www.tuya.com/)
+This project is intended to charge car batteries in the hours when it is profitable. Charging is controlled by [Tuya smart swithes](https://www.tuya.com/)
 but Tuya application has only simple automation not sufficient for this task. Tuya exposes REST API but is not free of charge, 
-fortunately Tuya could be integrated with Home Assistant application which has free REST API which could be used by smart-energy app.
+fortunately Tuya could be integrated with [Home Assistant](https://www.home-assistant.io/) application which 
+has free REST API which could be used by smart-energy app.
 
 ## How it works
 Smart energy app takes as an input for each charging the length of the charging and when we want to finish charging. 
@@ -33,3 +34,7 @@ the next day is published. Module `api` contains TypeScript interfaces common fo
 Apart from scheduling battery charging, this application also controls battery charging level by connecting with
 Audi servers from which current battery level is fetched, and when battery level is over recommended 80%,
 it cancels current charging. 
+
+## Deployment
+The best hosting for the app is Raspberry Pi which is enough to host express web server and Home Assistance instance.
+Home Assistance instance should be integrated with Tuya cloud application.
