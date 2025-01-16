@@ -1,5 +1,5 @@
-use serde::Serialize;
-use uuid::Uuid;
+use chrono::NaiveDateTime;
+use serde::{Serialize, Serializer};
 
 #[derive(Serialize, Debug, PartialEq)]
 #[serde(rename_all = "lowercase")]
@@ -12,7 +12,8 @@ pub enum PriceCategory {
 #[derive(Serialize, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
 struct PricelistItem {
-    starts_at: u32,
+    #[serde(serialize_with = "crate::model::serialize_naive_date_time")]
+    starts_at: NaiveDateTime,
     duration: u32,
     price: u32,
     weight: Option<u32>,
@@ -75,15 +76,26 @@ struct PowerConsumerModel {
     consumption_plan: Option<ConsumptionPlan>,
 }
 
+pub fn serialize_naive_date_time<S>(
+    date_time: &NaiveDateTime,
+    serializer: S,
+) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    serializer.serialize_i64(date_time.and_utc().timestamp_millis())
+}
+
 #[cfg(test)]
 mod tests {
     use crate::model::*;
+    use chrono::{DateTime, NaiveDate, TimeZone, Utc};
     use serde_test::{assert_ser_tokens, Token};
 
     #[test]
     fn pricelist_item_ser_test() {
         let pricelist_item = PricelistItem {
-            starts_at: 12,
+            starts_at: DateTime::from_timestamp_millis(1737068749821).unwrap().naive_utc(),
             duration: 12,
             price: 1,
             weight: Some(12),
@@ -101,7 +113,7 @@ mod tests {
                     len: 5,
                 },
                 Token::Str("startsAt"),
-                Token::U32(12),
+                Token::I64(1737068749821),
                 Token::Str("duration"),
                 Token::U32(12),
                 Token::Str("price"),
