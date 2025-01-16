@@ -1,5 +1,6 @@
-use chrono::NaiveDateTime;
-use serde::{Serialize, Serializer};
+use chrono::serde::{ts_milliseconds, ts_milliseconds_option};
+use chrono::{DateTime, Utc};
+use serde::Serialize;
 
 #[derive(Serialize, Debug, PartialEq)]
 #[serde(rename_all = "lowercase")]
@@ -12,8 +13,8 @@ pub enum PriceCategory {
 #[derive(Serialize, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
 struct PricelistItem {
-    #[serde(serialize_with = "crate::model::serialize_naive_date_time")]
-    starts_at: NaiveDateTime,
+    #[serde(with = "chrono::serde::ts_milliseconds")]
+    starts_at: DateTime<Utc>,
     duration: u32,
     price: u32,
     weight: Option<u32>,
@@ -31,8 +32,10 @@ enum SwitchActionState {
 #[derive(Serialize, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
 struct SwitchAction {
-    at: u32,
-    executed_at: Option<u32>,
+    #[serde(with = "chrono::serde::ts_milliseconds")]
+    at: DateTime<Utc>,
+    #[serde(with = "chrono::serde::ts_milliseconds_option")]
+    executed_at: Option<DateTime<Utc>>,
     switch_on: bool,
     state: SwitchActionState,
     result: Option<String>,
@@ -58,9 +61,11 @@ enum ConsumptionPlanState {
 #[serde(rename_all = "camelCase")]
 struct ConsumptionPlan {
     id: String,
-    created_at: u32,
+    #[serde(with = "chrono::serde::ts_milliseconds")]
+    created_at: DateTime<Utc>,
     consumption_duration: u32,
-    finish_at: u32,
+    #[serde(with = "chrono::serde::ts_milliseconds")]
+    finish_at: DateTime<Utc>,
     consumption_plan_items: Vec<ConsumptionPlanItem>,
     state: ConsumptionPlanState,
 }
@@ -76,26 +81,16 @@ struct PowerConsumerModel {
     consumption_plan: Option<ConsumptionPlan>,
 }
 
-pub fn serialize_naive_date_time<S>(
-    date_time: &NaiveDateTime,
-    serializer: S,
-) -> Result<S::Ok, S::Error>
-where
-    S: Serializer,
-{
-    serializer.serialize_i64(date_time.and_utc().timestamp_millis())
-}
-
 #[cfg(test)]
 mod tests {
     use crate::model::*;
-    use chrono::{DateTime, NaiveDate, TimeZone, Utc};
+    use chrono::DateTime;
     use serde_test::{assert_ser_tokens, Token};
 
     #[test]
     fn pricelist_item_ser_test() {
         let pricelist_item = PricelistItem {
-            starts_at: DateTime::from_timestamp_millis(1737068749821).unwrap().naive_utc(),
+            starts_at: DateTime::from_timestamp_millis(1737068749821).unwrap(),
             duration: 12,
             price: 1,
             weight: Some(12),
@@ -136,9 +131,9 @@ mod tests {
         const ID: &str = "67e55044-10b1-426f-9247-bb680e5fe0c8";
         let consumption_plan = ConsumptionPlan {
             id: ID.to_string(),
-            created_at: 12,
+            created_at: DateTime::from_timestamp_millis(1737068749821).unwrap(),
             consumption_duration: 12,
-            finish_at: 12,
+            finish_at: DateTime::from_timestamp_millis(1737068749821).unwrap(),
             consumption_plan_items: Vec::new(),
             state: ConsumptionPlanState::Processing,
         };
@@ -156,11 +151,11 @@ mod tests {
                 Token::Str("id"),
                 Token::Str(ID),
                 Token::Str("createdAt"),
-                Token::U32(12),
+                Token::I64(1737068749821),
                 Token::Str("consumptionDuration"),
                 Token::U32(12),
                 Token::Str("finishAt"),
-                Token::U32(12),
+                Token::I64(1737068749821),
                 Token::Str("consumptionPlanItems"),
                 Token::Seq { len: Some(0) },
                 Token::SeqEnd,
