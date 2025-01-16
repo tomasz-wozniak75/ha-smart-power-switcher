@@ -45,6 +45,8 @@ struct ConsumptionPlanItem {
     switch_actions: Vec<SwitchAction>,
 }
 
+#[derive(Serialize, Debug, PartialEq)]
+#[serde(rename_all = "camelCase")]
 enum ConsumptionPlanState {
     Processing,
     Executed,
@@ -54,7 +56,7 @@ enum ConsumptionPlanState {
 #[derive(Serialize, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
 struct ConsumptionPlan {
-    id: Uuid,
+    id: String,
     created_at: u32,
     consumption_duration: u32,
     finish_at: u32,
@@ -65,7 +67,7 @@ struct ConsumptionPlan {
 #[derive(Serialize, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
 struct PowerConsumerModel {
-    id: Uuid,
+    id: String,
     name: String,
     default_consumption_duration: Option<u32>,
     default_finish_at: Option<u32>,
@@ -79,7 +81,7 @@ mod tests {
     use serde_test::{assert_ser_tokens, Token};
 
     #[test]
-    fn first_test() {
+    fn pricelist_item_ser_test() {
         let pricelist_item = PricelistItem {
             starts_at: 12,
             duration: 12,
@@ -111,6 +113,49 @@ mod tests {
                 Token::UnitVariant {
                     name: "PriceCategory",
                     variant: "medium",
+                },
+                Token::StructEnd,
+            ],
+        );
+    }
+
+    #[test]
+    fn consumption_plan_ser_test() {
+        const ID: &str = "67e55044-10b1-426f-9247-bb680e5fe0c8";
+        let consumption_plan = ConsumptionPlan {
+            id: ID.to_string(),
+            created_at: 12,
+            consumption_duration: 12,
+            finish_at: 12,
+            consumption_plan_items: Vec::new(),
+            state: ConsumptionPlanState::Processing,
+        };
+
+        let serialized = serde_json::to_string(&consumption_plan).unwrap();
+        println!("Serialized object: {}", serialized);
+
+        assert_ser_tokens(
+            &consumption_plan,
+            &[
+                Token::Struct {
+                    name: "ConsumptionPlan",
+                    len: 6,
+                },
+                Token::Str("id"),
+                Token::Str(ID),
+                Token::Str("createdAt"),
+                Token::U32(12),
+                Token::Str("consumptionDuration"),
+                Token::U32(12),
+                Token::Str("finishAt"),
+                Token::U32(12),
+                Token::Str("consumptionPlanItems"),
+                Token::Seq { len: Some(0) },
+                Token::SeqEnd,
+                Token::Str("state"),
+                Token::UnitVariant {
+                    name: "ConsumptionPlanState",
+                    variant: "processing",
                 },
                 Token::StructEnd,
             ],
