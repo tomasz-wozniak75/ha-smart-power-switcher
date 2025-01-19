@@ -1,12 +1,10 @@
 use axum::{routing::get, Router};
 
-use rusty_server::hello_user;
+use rusty_server::get_price_list;
 
 #[tokio::main]
 async fn main() {
-    let app = Router::new()
-        .route("/", get(|| async { "Hello, World!" }))
-        .route("/user/{user_id}", get(hello_user));
+    let app = Router::new().route("/pricelist/{date}", get(get_price_list));
 
     // run our app with hyper, listening globally on port 3000
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();

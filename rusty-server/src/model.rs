@@ -2,7 +2,12 @@ use chrono::{DateTime, Utc};
 use serde::{Serialize, Serializer};
 use uuid::Uuid;
 
-#[derive(Serialize, Debug, PartialEq)]
+#[derive(serde::Serialize)]
+pub struct User {
+    pub id: u32,
+}
+
+#[derive(Serialize, Debug, PartialEq, Clone)]
 #[serde(rename_all = "lowercase")]
 pub enum PriceCategory {
     Min,
@@ -10,9 +15,9 @@ pub enum PriceCategory {
     Max,
 }
 
-#[derive(Serialize, Debug, PartialEq)]
+#[derive(Serialize, Debug, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
-struct PricelistItem {
+pub struct PricelistItem {
     #[serde(with = "chrono::serde::ts_milliseconds")]
     starts_at: DateTime<Utc>,
     duration: u32,
@@ -21,9 +26,21 @@ struct PricelistItem {
     category: PriceCategory,
 }
 
+impl PricelistItem {
+    pub fn new(starts_at: DateTime<Utc>, duration: u32, price: u32) -> Self {
+        Self {
+            starts_at,
+            duration,
+            price,
+            weight: None,
+            category: PriceCategory::Medium,
+        }
+    }
+}
+
 #[derive(Serialize, Debug, PartialEq)]
 #[serde(rename_all = "lowercase")]
-enum SwitchActionState {
+pub enum SwitchActionState {
     Scheduled,
     Executed,
     Canceled,
@@ -31,7 +48,7 @@ enum SwitchActionState {
 
 #[derive(Serialize, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
-struct SwitchAction {
+pub struct SwitchAction {
     #[serde(with = "chrono::serde::ts_milliseconds")]
     at: DateTime<Utc>,
     #[serde(with = "chrono::serde::ts_milliseconds_option")]
@@ -43,7 +60,7 @@ struct SwitchAction {
 
 #[derive(Serialize, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
-struct ConsumptionPlanItem {
+pub struct ConsumptionPlanItem {
     pricelist_item: PricelistItem,
     duration: u32,
     switch_actions: Vec<SwitchAction>,
@@ -51,7 +68,7 @@ struct ConsumptionPlanItem {
 
 #[derive(Serialize, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
-enum ConsumptionPlanState {
+pub enum ConsumptionPlanState {
     Processing,
     Executed,
     Canceled,
@@ -59,7 +76,7 @@ enum ConsumptionPlanState {
 
 #[derive(Serialize, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
-struct ConsumptionPlan {
+pub struct ConsumptionPlan {
     #[serde(serialize_with = "crate::model::serialize_uuid")]
     id: Uuid,
     #[serde(with = "chrono::serde::ts_milliseconds")]
@@ -83,10 +100,7 @@ struct PowerConsumerModel {
     consumption_plan: Option<ConsumptionPlan>,
 }
 
-pub fn serialize_uuid<S>(
-    uuid_value: &Uuid,
-    serializer: S,
-) -> Result<S::Ok, S::Error>
+pub fn serialize_uuid<S>(uuid_value: &Uuid, serializer: S) -> Result<S::Ok, S::Error>
 where
     S: Serializer,
 {
@@ -102,14 +116,7 @@ mod tests {
 
     #[test]
     fn pricelist_item_ser_test() {
-        let pricelist_item = PricelistItem {
-            starts_at: DateTime::from_timestamp_millis(1737068749821).unwrap(),
-            duration: 12,
-            price: 1,
-            weight: Some(12),
-            category: PriceCategory::Medium,
-        };
-
+        let pricelist_item = PricelistItem::new(DateTime::from_timestamp_millis(1737068749821).unwrap(), 12, 1);
         let serialized = serde_json::to_string(&pricelist_item).unwrap();
         println!("Serialized object: {}", serialized);
 
@@ -127,8 +134,7 @@ mod tests {
                 Token::Str("price"),
                 Token::U32(1),
                 Token::Str("weight"),
-                Token::Some,
-                Token::U32(12),
+                Token::None,
                 Token::Str("category"),
                 Token::UnitVariant {
                     name: "PriceCategory",
