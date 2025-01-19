@@ -3,8 +3,8 @@ use serde::{Serialize, Serializer};
 use uuid::Uuid;
 
 #[derive(serde::Serialize)]
-pub struct User {
-    pub id: u32,
+pub struct ErrorMessage {
+    pub message: String,
 }
 
 #[derive(Serialize, Debug, PartialEq, Clone)]
@@ -116,7 +116,11 @@ mod tests {
 
     #[test]
     fn pricelist_item_ser_test() {
-        let pricelist_item = PricelistItem::new(DateTime::from_timestamp_millis(1737068749821).unwrap(), 12, 1);
+        let pricelist_item = PricelistItem::new(
+            DateTime::from_timestamp_millis(1737068749821).unwrap(),
+            12,
+            1,
+        );
         let serialized = serde_json::to_string(&pricelist_item).unwrap();
         println!("Serialized object: {}", serialized);
 
