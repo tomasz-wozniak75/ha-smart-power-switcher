@@ -1,6 +1,6 @@
-use chrono::serde::{ts_milliseconds, ts_milliseconds_option};
 use chrono::{DateTime, Utc};
-use serde::Serialize;
+use serde::{Serialize, Serializer};
+use uuid::Uuid;
 
 #[derive(Serialize, Debug, PartialEq)]
 #[serde(rename_all = "lowercase")]
@@ -60,7 +60,8 @@ enum ConsumptionPlanState {
 #[derive(Serialize, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
 struct ConsumptionPlan {
-    id: String,
+    #[serde(serialize_with = "crate::model::serialize_uuid")]
+    id: Uuid,
     #[serde(with = "chrono::serde::ts_milliseconds")]
     created_at: DateTime<Utc>,
     consumption_duration: u32,
@@ -73,7 +74,8 @@ struct ConsumptionPlan {
 #[derive(Serialize, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
 struct PowerConsumerModel {
-    id: String,
+    #[serde(serialize_with = "crate::model::serialize_uuid")]
+    id: Uuid,
     name: String,
     default_consumption_duration: Option<u32>,
     default_finish_at: Option<u32>,
@@ -81,11 +83,22 @@ struct PowerConsumerModel {
     consumption_plan: Option<ConsumptionPlan>,
 }
 
+pub fn serialize_uuid<S>(
+    uuid_value: &Uuid,
+    serializer: S,
+) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    serializer.serialize_str(&uuid_value.as_hyphenated().to_string())
+}
+
 #[cfg(test)]
 mod tests {
     use crate::model::*;
     use chrono::DateTime;
     use serde_test::{assert_ser_tokens, Token};
+    use uuid::uuid;
 
     #[test]
     fn pricelist_item_ser_test() {
@@ -130,7 +143,7 @@ mod tests {
     fn consumption_plan_ser_test() {
         const ID: &str = "67e55044-10b1-426f-9247-bb680e5fe0c8";
         let consumption_plan = ConsumptionPlan {
-            id: ID.to_string(),
+            id: uuid!(ID),
             created_at: DateTime::from_timestamp_millis(1737068749821).unwrap(),
             consumption_duration: 12,
             finish_at: DateTime::from_timestamp_millis(1737068749821).unwrap(),
