@@ -1,6 +1,8 @@
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, TimeDelta, Utc};
 use serde::{Serialize, Serializer};
 use uuid::Uuid;
+
+pub type Currency = u32;
 
 #[derive(serde::Serialize)]
 pub struct ErrorMessage {
@@ -20,21 +22,43 @@ pub enum PriceCategory {
 pub struct PricelistItem {
     #[serde(with = "chrono::serde::ts_milliseconds")]
     starts_at: DateTime<Utc>,
-    duration: u32,
-    price: u32,
+    #[serde(serialize_with = "crate::model::serialize_time_delta")]
+    duration: TimeDelta,
+    price: Currency,
     weight: Option<u32>,
     category: PriceCategory,
 }
 
 impl PricelistItem {
-    pub fn new(starts_at: DateTime<Utc>, duration: u32, price: u32) -> Self {
+    pub fn new(
+        starts_at: DateTime<Utc>,
+        duration: TimeDelta,
+        price: Currency,
+        category: PriceCategory,
+    ) -> Self {
         Self {
             starts_at,
             duration,
             price,
             weight: None,
-            category: PriceCategory::Medium,
+            category,
         }
+    }
+
+    pub fn starts_at(&self) -> &DateTime<Utc> {
+        &self.starts_at
+    }
+
+    pub fn duration(&self) -> &TimeDelta {
+        &self.duration
+    }
+
+    pub fn price(&self) -> Currency {
+        self.price
+    }
+
+    pub fn weight(&self) -> Option<u32> {
+        self.weight
     }
 }
 
@@ -100,6 +124,13 @@ struct PowerConsumerModel {
     consumption_plan: Option<ConsumptionPlan>,
 }
 
+pub fn serialize_time_delta<S>(time_delta: &TimeDelta, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    serializer.serialize_i64(time_delta.num_milliseconds())
+}
+
 pub fn serialize_uuid<S>(uuid_value: &Uuid, serializer: S) -> Result<S::Ok, S::Error>
 where
     S: Serializer,
@@ -118,8 +149,9 @@ mod tests {
     fn pricelist_item_ser_test() {
         let pricelist_item = PricelistItem::new(
             DateTime::from_timestamp_millis(1737068749821).unwrap(),
-            12,
+            TimeDelta::milliseconds(12),
             1,
+            PriceCategory::Medium,
         );
         let serialized = serde_json::to_string(&pricelist_item).unwrap();
         println!("Serialized object: {}", serialized);
@@ -134,7 +166,7 @@ mod tests {
                 Token::Str("startsAt"),
                 Token::I64(1737068749821),
                 Token::Str("duration"),
-                Token::U32(12),
+                Token::I64(12),
                 Token::Str("price"),
                 Token::U32(1),
                 Token::Str("weight"),
