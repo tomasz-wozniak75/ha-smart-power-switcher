@@ -5,10 +5,15 @@ use axum::{
 
 use rusty_server::{
     delete_consumption_plan, get_power_consumers, get_price_list, schedule_consumption_plan,
+    services::W12PricelistProvider, AppState,
 };
 
 #[tokio::main]
 async fn main() {
+    let state = AppState {
+        single_day_pricelist: W12PricelistProvider {},
+    };
+
     let app = Router::new()
         .route("/pricelist/{date}", get(get_price_list))
         .route("/power-consumer", get(get_power_consumers))
@@ -19,7 +24,8 @@ async fn main() {
         .route(
             "/power-consumer/{power_consumer_id}/consumption-plan",
             delete(delete_consumption_plan),
-        );
+        )
+        .with_state(state);
 
     // run our app with hyper, listening globally on port 3000
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();

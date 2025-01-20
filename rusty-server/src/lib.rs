@@ -1,23 +1,26 @@
-mod model;
+pub mod model;
+pub mod services;
 
 use axum::{
-    extract::{Path, Query},
+    extract::{Path, Query, State},
     http::StatusCode,
     response::{IntoResponse, Json, Response},
 };
-use chrono::{DateTime, ParseError, Utc};
+use chrono::{DateTime, ParseError, TimeDelta, Utc};
 use model::{ErrorMessage, PricelistItem};
 use serde::Deserialize;
+use services::{SingleDayPricelist, W12PricelistProvider};
 use uuid::Uuid;
 
-pub async fn get_price_list(Path(date): Path<String>) -> Response {
+#[derive(Clone)]
+pub struct AppState {
+    pub single_day_pricelist: W12PricelistProvider,
+}
+
+pub async fn get_price_list(Path(date): Path<String>, State(state): State<AppState>) -> Response {
     println!("date: {}", date);
     match parse_date_path_param(date) {
-        Ok(date) => Json(vec![
-            PricelistItem::new(date, 12, 12),
-            PricelistItem::new(Utc::now(), 14, 14),
-        ])
-        .into_response(),
+        Ok(date) => Json(state.single_day_pricelist.get_price_list(&date)).into_response(),
         Err(error) => (
             StatusCode::BAD_REQUEST,
             Json(ErrorMessage {
@@ -49,7 +52,7 @@ pub async fn delete_consumption_plan(Path(power_consumer_id): Path<Uuid>) -> Res
 }
 
 fn parse_date_path_param(date: String) -> Result<DateTime<Utc>, ParseError> {
-    DateTime::parse_from_str(&(date + " 00:00:00 +01:00"), "%d-%m-%Y  %H:%M:%S %z")
+    DateTime::parse_from_str(&(date + " 00:00:00 +00:00"), "%d-%m-%Y  %H:%M:%S %z")
         .map(|d| d.with_timezone(&Utc))
 }
 
@@ -61,9 +64,10 @@ mod tests {
 
     #[test]
     fn parse_date_path_param_test() {
+        println!("parsed date : {}", parse_date_path_param("12-12-2024".to_owned()).unwrap());
         assert_eq!(
-            Local.with_ymd_and_hms(2024, 12, 12, 0, 0, 0).unwrap(),
-            parse_date_path_param("12-12-2024".to_owned()).unwrap()
+            parse_date_path_param("12-12-2024".to_owned()).unwrap(),
+            Utc.with_ymd_and_hms(2024, 12, 12, 0, 0, 0).unwrap(),
         );
     }
 }
