@@ -1,12 +1,14 @@
 mod model;
 
 use axum::{
-    extract::Path,
+    extract::{Path, Query},
     http::StatusCode,
     response::{IntoResponse, Json, Response},
 };
 use chrono::{DateTime, ParseError, Utc};
 use model::{ErrorMessage, PricelistItem};
+use serde::Deserialize;
+use uuid::Uuid;
 
 pub async fn get_price_list(Path(date): Path<String>) -> Response {
     println!("date: {}", date);
@@ -24,6 +26,26 @@ pub async fn get_price_list(Path(date): Path<String>) -> Response {
         )
             .into_response(),
     }
+}
+
+pub async fn get_power_consumers() -> Response {
+    ().into_response()
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ConsumptionDurationParam {
+    pub consumption_duration: u32,
+}
+pub async fn schedule_consumption_plan(
+    Path(power_consumer_id): Path<String>,
+    Query(consumption_duration_param): Query<ConsumptionDurationParam>,
+) -> Response {
+    ().into_response()
+}
+
+pub async fn delete_consumption_plan(Path(power_consumer_id): Path<Uuid>) -> Response {
+    ().into_response()
 }
 
 fn parse_date_path_param(date: String) -> Result<DateTime<Utc>, ParseError> {
