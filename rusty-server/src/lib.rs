@@ -1,15 +1,15 @@
 pub mod model;
-pub mod services;
+pub mod price_list_providers;
 
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
     response::{IntoResponse, Json, Response},
 };
-use chrono::{DateTime, ParseError, TimeDelta, Utc};
-use model::{ErrorMessage, PricelistItem};
+use chrono::{DateTime, ParseError, Utc};
+use model::ErrorMessage;
+use price_list_providers::{SingleDayPricelist, W12PricelistProvider};
 use serde::Deserialize;
-use services::{SingleDayPricelist, W12PricelistProvider};
 use uuid::Uuid;
 
 #[derive(Clone)]
@@ -64,7 +64,10 @@ mod tests {
 
     #[test]
     fn parse_date_path_param_test() {
-        println!("parsed date : {}", parse_date_path_param("12-12-2024".to_owned()).unwrap());
+        println!(
+            "parsed date : {}",
+            parse_date_path_param("12-12-2024".to_owned()).unwrap()
+        );
         assert_eq!(
             parse_date_path_param("12-12-2024".to_owned()).unwrap(),
             Utc.with_ymd_and_hms(2024, 12, 12, 0, 0, 0).unwrap(),
