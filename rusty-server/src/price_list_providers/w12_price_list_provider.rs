@@ -1,28 +1,11 @@
 use chrono::{
-    DateTime, Datelike, Local, TimeDelta, TimeZone, Utc,
+    DateTime, Datelike, TimeDelta, Utc,
     Weekday::{Sat, Sun},
 };
 
 use crate::model::{Currency, PriceCategory, PricelistItem};
 
-pub trait SingleDayPricelist {
-    fn get_price_list(&self, for_day: &DateTime<Utc>) -> Vec<PricelistItem>;
-}
-
-fn cut_off_time_from_date(date_time: &DateTime<Utc>) -> DateTime<Utc> {
-    let local_date_time = date_time.with_timezone(&Local);
-    Local
-        .with_ymd_and_hms(
-            local_date_time.year(),
-            local_date_time.month(),
-            local_date_time.day(),
-            0,
-            0,
-            0,
-        )
-        .map(|dt| dt.with_timezone(&Utc))
-        .unwrap()
-}
+use super::{commons::cut_off_time_from_date, SingleDayPricelist};
 
 const OFF_PEAK_PRICE: Currency = 80000;
 const IN_PEAK_PRICE: Currency = 160000;
