@@ -1,4 +1,5 @@
 pub mod model;
+mod power_consumers;
 pub mod price_list_providers;
 
 use axum::{
@@ -8,6 +9,7 @@ use axum::{
 };
 use chrono::{DateTime, ParseError, Utc};
 use model::ErrorMessage;
+use power_consumers::PowerConsumersService;
 use price_list_providers::{SingleDayPricelist, W12PricelistProvider};
 use serde::Deserialize;
 use uuid::Uuid;
