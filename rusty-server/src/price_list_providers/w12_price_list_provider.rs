@@ -54,11 +54,9 @@ impl SingleDayPricelist for W12PricelistProvider {
 
 #[cfg(test)]
 mod tests {
-    use chrono::{Datelike, Local, Timelike, Utc};
-
-    use crate::price_list_providers::cut_off_time_from_date;
-
+    use super::cut_off_time_from_date;
     use super::{SingleDayPricelist, W12PricelistProvider};
+    use chrono::{Datelike, Local, Timelike, Utc};
 
     #[test]
     fn w12_pricelist_provider_test() {

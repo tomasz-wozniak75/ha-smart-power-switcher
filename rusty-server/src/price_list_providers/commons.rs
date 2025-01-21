@@ -25,7 +25,7 @@ pub fn cut_off_time_from_date(date_time: &DateTime<Utc>) -> DateTime<Utc> {
 mod tests {
     use chrono::{Datelike, Local, Timelike, Utc};
 
-    use crate::price_list_providers::cut_off_time_from_date;
+    use super::cut_off_time_from_date;
 
     #[test]
     fn cut_off_time_from_date_test() {

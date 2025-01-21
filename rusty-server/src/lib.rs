@@ -1,5 +1,5 @@
 pub mod model;
-mod power_consumers;
+pub mod power_consumers;
 pub mod price_list_providers;
 
 use axum::{
@@ -17,6 +17,7 @@ use uuid::Uuid;
 #[derive(Clone)]
 pub struct AppState {
     pub single_day_pricelist: W12PricelistProvider,
+    pub power_consumers_service: PowerConsumersService,
 }
 
 pub async fn get_price_list(Path(date): Path<String>, State(state): State<AppState>) -> Response {
@@ -33,8 +34,11 @@ pub async fn get_price_list(Path(date): Path<String>, State(state): State<AppSta
     }
 }
 
-pub async fn get_power_consumers() -> Response {
-    ().into_response()
+pub async fn get_power_consumers(State(state): State<AppState>) -> Response {
+    let power_consumers_model_list = state
+        .power_consumers_service
+        .get_power_consumers_model_list();
+    (StatusCode::OK, Json(power_consumers_model_list)).into_response()
 }
 
 #[derive(Deserialize)]
