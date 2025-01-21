@@ -114,14 +114,32 @@ pub struct ConsumptionPlan {
 
 #[derive(Serialize, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
-struct PowerConsumerModel {
-    #[serde(serialize_with = "crate::model::serialize_uuid")]
-    id: Uuid,
+pub struct PowerConsumerModel {
+    id: String,
     name: String,
-    default_consumption_duration: Option<u32>,
-    default_finish_at: Option<u32>,
+    #[serde(with = "chrono::serde::ts_milliseconds_option")]
+    default_finish_at: Option<DateTime<Utc>>,
+    #[serde(serialize_with = "crate::model::serialize_time_delta")]
+    default_consumption_duration: TimeDelta,
     charging_status_url: Option<String>,
     consumption_plan: Option<ConsumptionPlan>,
+}
+impl PowerConsumerModel {
+    pub(crate) fn new(
+        id: String,
+        name: String,
+        default_finish_at: DateTime<Utc>,
+        default_consumption_duration: TimeDelta,
+    ) -> Self {
+        Self {
+            id,
+            name,
+            default_consumption_duration: default_consumption_duration,
+            default_finish_at: Some(default_finish_at),
+            charging_status_url: None,
+            consumption_plan: None,
+        }
+    }
 }
 
 pub fn serialize_time_delta<S>(time_delta: &TimeDelta, serializer: S) -> Result<S::Ok, S::Error>

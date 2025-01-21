@@ -5,13 +5,15 @@ use axum::{
 
 use rusty_server::{
     delete_consumption_plan, get_power_consumers, get_price_list,
-    price_list_providers::W12PricelistProvider, schedule_consumption_plan, AppState,
+    power_consumers::PowerConsumersService, price_list_providers::W12PricelistProvider,
+    schedule_consumption_plan, AppState,
 };
 
 #[tokio::main]
 async fn main() {
     let state = AppState {
         single_day_pricelist: W12PricelistProvider {},
+        power_consumers_service: PowerConsumersService::new(),
     };
 
     let app = Router::new()
