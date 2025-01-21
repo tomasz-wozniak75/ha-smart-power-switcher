@@ -45,8 +45,8 @@ impl SingleDayPricelist for W12PricelistProvider {
     fn get_price_list(&self, for_day: &DateTime<Utc>) -> Vec<PricelistItem> {
         let for_day = cut_off_time_from_date(for_day);
 
-        match for_day.weekday() {
-            Sat | Sun => (0..24)
+        if for_day.weekday() == Sat || for_day.weekday() == Sun {
+            (0..24)
                 .into_iter()
                 .map(|h| {
                     PricelistItem::new(
@@ -56,14 +56,15 @@ impl SingleDayPricelist for W12PricelistProvider {
                         PriceCategory::Min,
                     )
                 })
-                .collect(),
-            _ => (0..24)
+                .collect()
+        } else {
+            (0..24)
                 .into_iter()
                 .map(|h| {
                     let (price, category) = self.map_hour_to_price(h);
                     PricelistItem::new(for_day + ONE_HOUR * h, ONE_HOUR, price, category)
                 })
-                .collect(),
+                .collect()
         }
     }
 }
@@ -72,7 +73,7 @@ impl SingleDayPricelist for W12PricelistProvider {
 mod tests {
     use chrono::{Datelike, Local, Timelike, Utc};
 
-    use crate::services::cut_off_time_from_date;
+    use crate::price_list_providers::cut_off_time_from_date;
 
     use super::{SingleDayPricelist, W12PricelistProvider};
 
