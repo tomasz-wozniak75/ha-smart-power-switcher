@@ -1,4 +1,5 @@
 use chrono::{DateTime, TimeDelta, Utc};
+use serde::de::{Deserialize, Deserializer};
 use serde::{Serialize, Serializer};
 use uuid::Uuid;
 
@@ -147,6 +148,13 @@ where
     S: Serializer,
 {
     serializer.serialize_i64(time_delta.num_milliseconds())
+}
+
+pub fn deserialize_time_delta<'de, D>(deserializer: D) -> Result<TimeDelta, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    i64::deserialize(deserializer).map(|milisec| TimeDelta::milliseconds(milisec))
 }
 
 pub fn serialize_uuid<S>(uuid_value: &Uuid, serializer: S) -> Result<S::Ok, S::Error>

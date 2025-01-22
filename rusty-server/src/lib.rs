@@ -7,6 +7,7 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Json, Response},
 };
+use chrono::TimeDelta;
 use chrono::{DateTime, ParseError, Utc};
 use model::ErrorMessage;
 use power_consumers::PowerConsumersService;
@@ -43,14 +44,33 @@ pub async fn get_power_consumers(State(state): State<AppState>) -> Response {
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct ConsumptionDurationParam {
-    pub consumption_duration: u32,
+pub struct ScheduleConsumptionPlanParams {
+    #[serde(deserialize_with = "model::deserialize_time_delta")]
+    pub consumption_duration: TimeDelta,
+    #[serde(with = "chrono::serde::ts_milliseconds")]
+    pub finish_at: DateTime<Utc>,
 }
+
 pub async fn schedule_consumption_plan(
     Path(power_consumer_id): Path<String>,
-    Query(consumption_duration_param): Query<ConsumptionDurationParam>,
+    Query(ScheduleConsumptionPlanParams {
+        consumption_duration,
+        finish_at,
+    }): Query<ScheduleConsumptionPlanParams>,
+    State(AppState {
+        single_day_pricelist: _,
+        power_consumers_service,
+    }): State<AppState>,
 ) -> Response {
-    ().into_response()
+    (
+        StatusCode::OK,
+        Json(
+            power_consumers_service
+                .schedule_consumption_plan(power_consumer_id, consumption_duration, finish_at)
+                .unwrap(),
+        ),
+    )
+        .into_response()
 }
 
 pub async fn delete_consumption_plan(Path(power_consumer_id): Path<Uuid>) -> Response {
