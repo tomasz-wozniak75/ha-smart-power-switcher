@@ -76,4 +76,16 @@ impl PowerConsumersService {
             .map(|(_, v)| v.to_power_consumer_model())
             .collect()
     }
+
+    pub fn schedule_consumption_plan(
+        &self,
+        power_consumer_id: String,
+        consumption_duration: TimeDelta,
+        finish_at: DateTime<Utc>,
+    ) -> Result<PowerConsumerModel, &str> {
+        self.power_consumers
+            .get(&power_consumer_id)
+            .map(|power_consumer| power_consumer.to_power_consumer_model())
+            .ok_or("dada")
+    }
 }
