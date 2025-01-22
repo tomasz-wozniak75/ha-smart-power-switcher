@@ -63,7 +63,7 @@ impl PricelistItem {
     }
 }
 
-#[derive(Serialize, Debug, PartialEq)]
+#[derive(Serialize, Debug, PartialEq, Clone)]
 #[serde(rename_all = "lowercase")]
 pub enum SwitchActionState {
     Scheduled,
@@ -71,7 +71,7 @@ pub enum SwitchActionState {
     Canceled,
 }
 
-#[derive(Serialize, Debug, PartialEq)]
+#[derive(Serialize, Debug, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct SwitchAction {
     #[serde(with = "chrono::serde::ts_milliseconds")]
@@ -83,7 +83,7 @@ pub struct SwitchAction {
     result: Option<String>,
 }
 
-#[derive(Serialize, Debug, PartialEq)]
+#[derive(Serialize, Debug, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ConsumptionPlanItem {
     pricelist_item: PricelistItem,
@@ -91,7 +91,7 @@ pub struct ConsumptionPlanItem {
     switch_actions: Vec<SwitchAction>,
 }
 
-#[derive(Serialize, Debug, PartialEq)]
+#[derive(Serialize, Debug, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub enum ConsumptionPlanState {
     Processing,
@@ -99,18 +99,19 @@ pub enum ConsumptionPlanState {
     Canceled,
 }
 
-#[derive(Serialize, Debug, PartialEq)]
+#[derive(Serialize, Debug, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ConsumptionPlan {
     #[serde(serialize_with = "crate::model::serialize_uuid")]
-    id: Uuid,
+    pub id: Uuid,
     #[serde(with = "chrono::serde::ts_milliseconds")]
-    created_at: DateTime<Utc>,
-    consumption_duration: u32,
+    pub created_at: DateTime<Utc>,
+    #[serde(serialize_with = "crate::model::serialize_time_delta")]
+    pub consumption_duration: TimeDelta,
     #[serde(with = "chrono::serde::ts_milliseconds")]
-    finish_at: DateTime<Utc>,
-    consumption_plan_items: Vec<ConsumptionPlanItem>,
-    state: ConsumptionPlanState,
+    pub finish_at: DateTime<Utc>,
+    pub consumption_plan_items: Vec<ConsumptionPlanItem>,
+    pub state: ConsumptionPlanState,
 }
 
 #[derive(Serialize, Debug, PartialEq)]
@@ -126,11 +127,12 @@ pub struct PowerConsumerModel {
     consumption_plan: Option<ConsumptionPlan>,
 }
 impl PowerConsumerModel {
-    pub(crate) fn new(
+    pub fn new(
         id: String,
         name: String,
         default_finish_at: DateTime<Utc>,
         default_consumption_duration: TimeDelta,
+        consumption_plan: Option<ConsumptionPlan>,
     ) -> Self {
         Self {
             id,
@@ -138,7 +140,7 @@ impl PowerConsumerModel {
             default_consumption_duration: default_consumption_duration,
             default_finish_at: Some(default_finish_at),
             charging_status_url: None,
-            consumption_plan: None,
+            consumption_plan,
         }
     }
 }
@@ -213,7 +215,7 @@ mod tests {
         let consumption_plan = ConsumptionPlan {
             id: uuid!(ID),
             created_at: DateTime::from_timestamp_millis(1737068749821).unwrap(),
-            consumption_duration: 12,
+            consumption_duration: TimeDelta::milliseconds(12),
             finish_at: DateTime::from_timestamp_millis(1737068749821).unwrap(),
             consumption_plan_items: Vec::new(),
             state: ConsumptionPlanState::Processing,
@@ -234,7 +236,7 @@ mod tests {
                 Token::Str("createdAt"),
                 Token::I64(1737068749821),
                 Token::Str("consumptionDuration"),
-                Token::U32(12),
+                Token::I64(12),
                 Token::Str("finishAt"),
                 Token::I64(1737068749821),
                 Token::Str("consumptionPlanItems"),
