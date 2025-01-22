@@ -2,6 +2,8 @@ pub mod model;
 pub mod power_consumers;
 pub mod price_list_providers;
 
+use std::sync::{Arc, RwLock};
+
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -15,16 +17,27 @@ use price_list_providers::{SingleDayPricelist, W12PricelistProvider};
 use serde::Deserialize;
 use uuid::Uuid;
 
-#[derive(Clone)]
 pub struct AppState {
     pub single_day_pricelist: W12PricelistProvider,
     pub power_consumers_service: PowerConsumersService,
 }
 
-pub async fn get_price_list(Path(date): Path<String>, State(state): State<AppState>) -> Response {
+pub type SharedState = Arc<RwLock<AppState>>;
+
+pub async fn get_price_list(
+    Path(date): Path<String>,
+    State(state): State<SharedState>,
+) -> Response {
     println!("date: {}", date);
     match parse_date_path_param(date) {
-        Ok(date) => Json(state.single_day_pricelist.get_price_list(&date)).into_response(),
+        Ok(date) => Json(
+            &state
+                .read()
+                .unwrap()
+                .single_day_pricelist
+                .get_price_list(&date),
+        )
+        .into_response(),
         Err(error) => (
             StatusCode::BAD_REQUEST,
             Json(ErrorMessage {
@@ -35,8 +48,10 @@ pub async fn get_price_list(Path(date): Path<String>, State(state): State<AppSta
     }
 }
 
-pub async fn get_power_consumers(State(state): State<AppState>) -> Response {
-    let power_consumers_model_list = state
+pub async fn get_power_consumers(State(state): State<SharedState>) -> Response {
+    let power_consumers_model_list = &state
+        .read()
+        .unwrap()
         .power_consumers_service
         .get_power_consumers_model_list();
     (StatusCode::OK, Json(power_consumers_model_list)).into_response()
@@ -57,15 +72,15 @@ pub async fn schedule_consumption_plan(
         consumption_duration,
         finish_at,
     }): Query<ScheduleConsumptionPlanParams>,
-    State(AppState {
-        single_day_pricelist: _,
-        power_consumers_service,
-    }): State<AppState>,
+    State(state): State<SharedState>,
 ) -> Response {
     (
         StatusCode::OK,
         Json(
-            power_consumers_service
+            &state
+                .write()
+                .unwrap()
+                .power_consumers_service
                 .schedule_consumption_plan(power_consumer_id, consumption_duration, finish_at)
                 .unwrap(),
         ),

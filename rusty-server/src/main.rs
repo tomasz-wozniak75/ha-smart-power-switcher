@@ -1,3 +1,5 @@
+use std::sync::{Arc, RwLock};
+
 use axum::{
     routing::{delete, get, post},
     Router,
@@ -11,10 +13,10 @@ use rusty_server::{
 
 #[tokio::main]
 async fn main() {
-    let state = AppState {
+    let state = Arc::new(RwLock::new(AppState {
         single_day_pricelist: W12PricelistProvider {},
         power_consumers_service: PowerConsumersService::new(),
-    };
+    }));
 
     let app = Router::new()
         .route("/pricelist/{date}", get(get_price_list))

@@ -1,13 +1,15 @@
 use std::collections::HashMap;
 
 use chrono::{DateTime, Datelike, Local, TimeDelta, TimeZone, Timelike, Utc};
+use uuid::Uuid;
 
-use crate::model::PowerConsumerModel;
+use crate::model::{ConsumptionPlan, ConsumptionPlanState, PowerConsumerModel};
 
 #[derive(Clone)]
 pub struct PowerConsumer {
     ha_device_name: String,
     name: String,
+    consumption_plan: Option<ConsumptionPlan>,
 }
 
 impl PowerConsumer {
@@ -15,6 +17,7 @@ impl PowerConsumer {
         Self {
             ha_device_name,
             name,
+            consumption_plan: None,
         }
     }
 
@@ -41,11 +44,26 @@ impl PowerConsumer {
             self.name.clone(),
             Self::get_default_charging_finish_time(),
             TimeDelta::minutes(90),
+            self.consumption_plan.clone(),
         )
+    }
+
+    pub fn create_consumption_plan(
+        &mut self,
+        consumption_duration: TimeDelta,
+        finish_at: DateTime<Utc>,
+    ) {
+        self.consumption_plan = Some(ConsumptionPlan {
+            id: Uuid::new_v4(),
+            created_at: Utc::now(),
+            consumption_duration,
+            finish_at,
+            consumption_plan_items: Vec::new(),
+            state: ConsumptionPlanState::Processing,
+        });
     }
 }
 
-#[derive(Clone)]
 pub struct PowerConsumersService {
     power_consumers: HashMap<String, PowerConsumer>,
 }
@@ -78,13 +96,17 @@ impl PowerConsumersService {
     }
 
     pub fn schedule_consumption_plan(
-        &self,
+        &mut self,
         power_consumer_id: String,
         consumption_duration: TimeDelta,
         finish_at: DateTime<Utc>,
     ) -> Result<PowerConsumerModel, &str> {
-        self.power_consumers
-            .get(&power_consumer_id)
+        let power_consumer = self.power_consumers.get_mut(&power_consumer_id);
+        power_consumer
+            .map(|pc| {
+                pc.create_consumption_plan(consumption_duration, finish_at);
+                pc
+            })
             .map(|power_consumer| power_consumer.to_power_consumer_model())
             .ok_or("dada")
     }
