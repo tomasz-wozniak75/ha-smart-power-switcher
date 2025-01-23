@@ -1,66 +1,13 @@
 use chrono::{DateTime, TimeDelta, Utc};
-use serde::de::{Deserialize, Deserializer};
-use serde::{Serialize, Serializer};
+
+use serde::Serialize;
 use uuid::Uuid;
 
-pub type Currency = u32;
+use super::PricelistItem;
 
 #[derive(serde::Serialize)]
 pub struct ErrorMessage {
     pub message: String,
-}
-
-#[derive(Serialize, Debug, PartialEq, Clone)]
-#[serde(rename_all = "lowercase")]
-pub enum PriceCategory {
-    Min,
-    Medium,
-    Max,
-}
-
-#[derive(Serialize, Debug, PartialEq, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct PricelistItem {
-    #[serde(with = "chrono::serde::ts_milliseconds")]
-    starts_at: DateTime<Utc>,
-    #[serde(serialize_with = "crate::model::serialize_time_delta")]
-    duration: TimeDelta,
-    price: Currency,
-    weight: Option<u32>,
-    category: PriceCategory,
-}
-
-impl PricelistItem {
-    pub fn new(
-        starts_at: DateTime<Utc>,
-        duration: TimeDelta,
-        price: Currency,
-        category: PriceCategory,
-    ) -> Self {
-        Self {
-            starts_at,
-            duration,
-            price,
-            weight: None,
-            category,
-        }
-    }
-
-    pub fn starts_at(&self) -> &DateTime<Utc> {
-        &self.starts_at
-    }
-
-    pub fn duration(&self) -> &TimeDelta {
-        &self.duration
-    }
-
-    pub fn price(&self) -> Currency {
-        self.price
-    }
-
-    pub fn weight(&self) -> Option<u32> {
-        self.weight
-    }
 }
 
 #[derive(Serialize, Debug, PartialEq, Clone)]
@@ -145,69 +92,12 @@ impl PowerConsumerModel {
     }
 }
 
-pub fn serialize_time_delta<S>(time_delta: &TimeDelta, serializer: S) -> Result<S::Ok, S::Error>
-where
-    S: Serializer,
-{
-    serializer.serialize_i64(time_delta.num_milliseconds())
-}
-
-pub fn deserialize_time_delta<'de, D>(deserializer: D) -> Result<TimeDelta, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    i64::deserialize(deserializer).map(|milisec| TimeDelta::milliseconds(milisec))
-}
-
-pub fn serialize_uuid<S>(uuid_value: &Uuid, serializer: S) -> Result<S::Ok, S::Error>
-where
-    S: Serializer,
-{
-    serializer.serialize_str(&uuid_value.as_hyphenated().to_string())
-}
-
 #[cfg(test)]
 mod tests {
     use crate::model::*;
-    use chrono::DateTime;
+    use chrono::{DateTime, TimeDelta};
     use serde_test::{assert_ser_tokens, Token};
     use uuid::uuid;
-
-    #[test]
-    fn pricelist_item_ser_test() {
-        let pricelist_item = PricelistItem::new(
-            DateTime::from_timestamp_millis(1737068749821).unwrap(),
-            TimeDelta::milliseconds(12),
-            1,
-            PriceCategory::Medium,
-        );
-        let serialized = serde_json::to_string(&pricelist_item).unwrap();
-        println!("Serialized object: {}", serialized);
-
-        assert_ser_tokens(
-            &pricelist_item,
-            &[
-                Token::Struct {
-                    name: "PricelistItem",
-                    len: 5,
-                },
-                Token::Str("startsAt"),
-                Token::I64(1737068749821),
-                Token::Str("duration"),
-                Token::I64(12),
-                Token::Str("price"),
-                Token::U32(1),
-                Token::Str("weight"),
-                Token::None,
-                Token::Str("category"),
-                Token::UnitVariant {
-                    name: "PriceCategory",
-                    variant: "medium",
-                },
-                Token::StructEnd,
-            ],
-        );
-    }
 
     #[test]
     fn consumption_plan_ser_test() {

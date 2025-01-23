@@ -56,7 +56,7 @@ impl SingleDayPricelist for W12PricelistProvider {
 mod tests {
     use super::cut_off_time_from_date;
     use super::{SingleDayPricelist, W12PricelistProvider};
-    use chrono::{Datelike, Local, Timelike, Utc};
+    use chrono::Utc;
 
     #[test]
     fn w12_pricelist_provider_test() {
