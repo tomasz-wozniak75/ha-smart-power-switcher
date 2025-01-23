@@ -88,8 +88,22 @@ pub async fn schedule_consumption_plan(
         .into_response()
 }
 
-pub async fn delete_consumption_plan(Path(power_consumer_id): Path<Uuid>) -> Response {
-    ().into_response()
+pub async fn cancel_consumption_plan(
+    Path(power_consumer_id): Path<String>,
+    State(state): State<SharedState>,
+) -> Response {
+    (
+        StatusCode::OK,
+        Json(
+            &state
+                .write()
+                .unwrap()
+                .power_consumers_service
+                .cancel_consumption_plan(power_consumer_id)
+                .unwrap(),
+        ),
+    )
+        .into_response()
 }
 
 fn parse_date_path_param(date: String) -> Result<DateTime<Utc>, ParseError> {

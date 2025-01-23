@@ -51,4 +51,14 @@ impl PowerConsumersService {
             .map(|power_consumer| power_consumer.to_power_consumer_model())
             .ok_or("dada")
     }
+
+    pub fn cancel_consumption_plan(
+        &mut self,
+        power_consumer_id: String,
+    ) -> Result<PowerConsumerModel, &str> {
+        self.power_consumers
+            .get_mut(&power_consumer_id)
+            .map(|pc| pc.cancel_consumption_plan())
+            .ok_or("dada")
+    }
 }

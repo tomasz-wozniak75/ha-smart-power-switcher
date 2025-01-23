@@ -24,10 +24,10 @@ pub struct SwitchAction {
     #[serde(with = "chrono::serde::ts_milliseconds")]
     at: DateTime<Utc>,
     #[serde(with = "chrono::serde::ts_milliseconds_option")]
-    executed_at: Option<DateTime<Utc>>,
-    switch_on: bool,
-    state: SwitchActionState,
-    result: Option<String>,
+    pub executed_at: Option<DateTime<Utc>>,
+    pub switch_on: bool,
+    pub state: SwitchActionState,
+    pub result: Option<String>,
 }
 
 #[derive(Serialize, Debug, PartialEq, Clone)]
@@ -35,7 +35,7 @@ pub struct SwitchAction {
 pub struct ConsumptionPlanItem {
     pricelist_item: PricelistItem,
     duration: u32,
-    switch_actions: Vec<SwitchAction>,
+    pub switch_actions: Vec<SwitchAction>,
 }
 
 #[derive(Serialize, Debug, PartialEq, Clone)]
