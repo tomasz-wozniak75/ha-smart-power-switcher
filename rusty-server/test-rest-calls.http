@@ -7,3 +7,7 @@ GET http://127.0.0.1:3000/power-consumer
 ###
 
 POST http://127.0.0.1:3000/power-consumer/switch.audi_charger_breaker_switch/consumption-plan?consumptionDuration=3600&finishAt=1737500232225
+
+###
+
+DELETE http://127.0.0.1:3000/power-consumer/switch.audi_charger_breaker_switch/consumption-plan

@@ -6,7 +6,7 @@ use axum::{
 };
 
 use rusty_server::{
-    delete_consumption_plan, get_power_consumers, get_price_list,
+    cancel_consumption_plan, get_power_consumers, get_price_list,
     power_consumers::PowerConsumersService, price_list_providers::W12PricelistProvider,
     schedule_consumption_plan, AppState,
 };
@@ -27,7 +27,7 @@ async fn main() {
         )
         .route(
             "/power-consumer/{power_consumer_id}/consumption-plan",
-            delete(delete_consumption_plan),
+            delete(cancel_consumption_plan),
         )
         .with_state(state);
 
