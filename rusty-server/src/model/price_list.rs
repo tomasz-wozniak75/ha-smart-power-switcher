@@ -24,12 +24,7 @@ pub struct PricelistItem {
 }
 
 impl PricelistItem {
-    pub fn new(
-        starts_at: DateTime<Utc>,
-        duration: TimeDelta,
-        price: Currency,
-        category: PriceCategory,
-    ) -> Self {
+    pub fn new(starts_at: DateTime<Utc>, duration: TimeDelta, price: Currency, category: PriceCategory) -> Self {
         Self {
             starts_at,
             duration,
