@@ -23,24 +23,32 @@ pub fn cut_off_time_from_date(date_time: &DateTime<Utc>) -> DateTime<Utc> {
 
 #[cfg(test)]
 mod tests {
-    use chrono::{Datelike, Local, Timelike, Utc};
+    use chrono::{Datelike, Local, TimeZone, Timelike, Utc};
 
     use super::cut_off_time_from_date;
 
     #[test]
     fn cut_off_time_from_date_test() {
-        let now = Utc::now();
-        println!("now: {}", now);
+        let now = Utc.with_ymd_and_hms(2024, 1, 1, 23, 10, 0).unwrap();
+        let local_now = now.with_timezone(&Local);
+        println!("now: {}", local_now);
         let day = cut_off_time_from_date(&now).with_timezone(&Local);
         println!("day: {}", day);
         assert_eq!(
-            (now.year(), now.month(), now.day()),
-            (day.year(), day.month(), day.day())
+            (local_now.year(), local_now.month(), local_now.day()),
+            (day.year(), day.month(), day.day()),
+            "The day before cut off and after should be the same"
         );
-        assert_eq!((day.hour(), day.minute(), day.second()), (0, 0, 0));
+        assert_eq!(
+            (day.hour(), day.minute(), day.second()),
+            (0, 0, 0),
+            "After cut off local date time should time part equal to midnight"
+        );
 
         let day_with_next_cut_off = cut_off_time_from_date(&now);
-        println!("day_with_next_cut_off: {}", day_with_next_cut_off);
-        assert_eq!(day, day_with_next_cut_off);
+        assert_eq!(
+            day, day_with_next_cut_off,
+            "Second cut off should not change anythging"
+        );
     }
 }
