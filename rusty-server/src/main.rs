@@ -6,9 +6,8 @@ use axum::{
 };
 
 use rusty_server::{
-    cancel_consumption_plan, get_power_consumers, get_price_list,
-    power_consumers::PowerConsumersService, price_list_providers::W12PricelistProvider,
-    schedule_consumption_plan, AppState,
+    cancel_consumption_plan, get_power_consumers, get_price_list, power_consumers::PowerConsumersService,
+    price_list_providers::W12PricelistProvider, schedule_consumption_plan, AppState,
 };
 
 #[tokio::main]

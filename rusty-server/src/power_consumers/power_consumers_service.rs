@@ -21,8 +21,7 @@ impl PowerConsumersService {
             .insert(audi_power_consumer.id().to_owned(), audi_power_consumer);
 
         let one_phase_switch_id = "switch.smart_plug_socket_1".to_owned();
-        let one_phase_switch =
-            PowerConsumer::new(one_phase_switch_id, "One phase switch".to_owned());
+        let one_phase_switch = PowerConsumer::new(one_phase_switch_id, "One phase switch".to_owned());
         this.power_consumers
             .insert(one_phase_switch.id().to_owned(), one_phase_switch);
 
@@ -52,10 +51,7 @@ impl PowerConsumersService {
             .ok_or("dada")
     }
 
-    pub fn cancel_consumption_plan(
-        &mut self,
-        power_consumer_id: String,
-    ) -> Result<PowerConsumerModel, &str> {
+    pub fn cancel_consumption_plan(&mut self, power_consumer_id: String) -> Result<PowerConsumerModel, &str> {
         self.power_consumers
             .get_mut(&power_consumer_id)
             .map(|pc| pc.cancel_consumption_plan())

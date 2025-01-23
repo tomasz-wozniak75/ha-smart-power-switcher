@@ -46,9 +46,6 @@ mod tests {
         );
 
         let day_with_next_cut_off = cut_off_time_from_date(&now);
-        assert_eq!(
-            day, day_with_next_cut_off,
-            "Second cut off should not change anythging"
-        );
+        assert_eq!(day, day_with_next_cut_off, "Second cut off should not change anythging");
     }
 }
