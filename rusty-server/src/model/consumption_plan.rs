@@ -5,11 +5,6 @@ use uuid::Uuid;
 
 use super::PricelistItem;
 
-#[derive(serde::Serialize)]
-pub struct ErrorMessage {
-    pub message: String,
-}
-
 #[derive(Serialize, Debug, PartialEq, Clone)]
 #[serde(rename_all = "lowercase")]
 pub enum SwitchActionState {

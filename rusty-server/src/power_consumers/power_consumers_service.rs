@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::model::PowerConsumerModel;
+use crate::model::{AppError, PowerConsumerModel};
 use chrono::{DateTime, TimeDelta, Utc};
 
 use super::power_consumer::PowerConsumer;
@@ -40,7 +40,7 @@ impl PowerConsumersService {
         power_consumer_id: String,
         consumption_duration: TimeDelta,
         finish_at: DateTime<Utc>,
-    ) -> Result<PowerConsumerModel, &str> {
+    ) -> Result<PowerConsumerModel, AppError> {
         let power_consumer = self.power_consumers.get_mut(&power_consumer_id);
         power_consumer
             .map(|pc| {
@@ -48,13 +48,13 @@ impl PowerConsumersService {
                 pc
             })
             .map(|power_consumer| power_consumer.to_power_consumer_model())
-            .ok_or("dada")
+            .ok_or(AppError::not_found("Power consumer not found"))
     }
 
-    pub fn cancel_consumption_plan(&mut self, power_consumer_id: String) -> Result<PowerConsumerModel, &str> {
+    pub fn cancel_consumption_plan(&mut self, power_consumer_id: String) -> Result<PowerConsumerModel, AppError> {
         self.power_consumers
             .get_mut(&power_consumer_id)
             .map(|pc| pc.cancel_consumption_plan())
-            .ok_or("dada")
+            .ok_or(AppError::not_found("Power consumer not found"))
     }
 }

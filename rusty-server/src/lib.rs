@@ -10,8 +10,8 @@ use axum::{
     response::{IntoResponse, Json, Response},
 };
 use chrono::TimeDelta;
-use chrono::{DateTime, ParseError, Utc};
-use model::ErrorMessage;
+use chrono::{DateTime, Utc};
+use model::AppError;
 use power_consumers::PowerConsumersService;
 use price_list_providers::{SingleDayPricelist, W12PricelistProvider};
 use serde::Deserialize;
@@ -27,13 +27,7 @@ pub async fn get_price_list(Path(date): Path<String>, State(state): State<Shared
     println!("date: {}", date);
     match parse_date_path_param(date) {
         Ok(date) => Json(&state.read().unwrap().single_day_pricelist.get_price_list(&date)).into_response(),
-        Err(error) => (
-            StatusCode::BAD_REQUEST,
-            Json(ErrorMessage {
-                message: error.to_string(),
-            }),
-        )
-            .into_response(),
+        Err(error) => (error.code(), Json(error)).into_response(),
     }
 }
 
@@ -60,17 +54,13 @@ pub async fn schedule_consumption_plan(
     }): Query<ScheduleConsumptionPlanParams>,
     State(state): State<SharedState>,
 ) -> Response {
-    (
-        StatusCode::OK,
-        Json(
-            &state
-                .write()
-                .unwrap()
-                .power_consumers_service
-                .schedule_consumption_plan(power_consumer_id, consumption_duration, finish_at)
-                .unwrap(),
-        ),
-    )
+    state
+        .write()
+        .unwrap()
+        .power_consumers_service
+        .schedule_consumption_plan(power_consumer_id, consumption_duration, finish_at)
+        .map(|pcm| (StatusCode::OK, Json(pcm)))
+        .map_err(|e| (e.code(), Json(e)))
         .into_response()
 }
 
@@ -78,22 +68,20 @@ pub async fn cancel_consumption_plan(
     Path(power_consumer_id): Path<String>,
     State(state): State<SharedState>,
 ) -> Response {
-    (
-        StatusCode::OK,
-        Json(
-            &state
-                .write()
-                .unwrap()
-                .power_consumers_service
-                .cancel_consumption_plan(power_consumer_id)
-                .unwrap(),
-        ),
-    )
+    state
+        .write()
+        .unwrap()
+        .power_consumers_service
+        .cancel_consumption_plan(power_consumer_id)
+        .map(|pcm| (StatusCode::OK, Json(pcm)))
+        .map_err(|e| (e.code(), Json(e)))
         .into_response()
 }
 
-fn parse_date_path_param(date: String) -> Result<DateTime<Utc>, ParseError> {
-    DateTime::parse_from_str(&(date + " 00:00:00 +00:00"), "%d-%m-%Y  %H:%M:%S %z").map(|d| d.with_timezone(&Utc))
+fn parse_date_path_param(date: String) -> Result<DateTime<Utc>, AppError> {
+    DateTime::parse_from_str(&(date + " 00:00:00 +00:00"), "%d-%m-%Y  %H:%M:%S %z")
+        .map(|d| d.with_timezone(&Utc))
+        .map_err(|_e| AppError::user_error("Input date has incorrect format"))
 }
 
 #[cfg(test)]
