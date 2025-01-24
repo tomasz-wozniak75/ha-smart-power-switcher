@@ -44,7 +44,7 @@ impl PowerConsumer {
             self.name.clone(),
             Self::get_default_charging_finish_time(),
             TimeDelta::minutes(90),
-            self.consumption_plan.clone(),
+            self.consumption_plan.as_ref(),
         )
     }
 
