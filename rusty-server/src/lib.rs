@@ -38,11 +38,8 @@ pub async fn get_price_list(Path(date): Path<String>, State(state): State<Shared
 }
 
 pub async fn get_power_consumers(State(state): State<SharedState>) -> Response {
-    let power_consumers_model_list = &state
-        .read()
-        .unwrap()
-        .power_consumers_service
-        .get_power_consumers_model_list();
+    let app_state = state.read().unwrap();
+    let power_consumers_model_list = &app_state.power_consumers_service.get_power_consumers_model_list();
     (StatusCode::OK, Json(power_consumers_model_list)).into_response()
 }
 
