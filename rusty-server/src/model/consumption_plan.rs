@@ -22,7 +22,7 @@ pub enum SwitchActionState {
 #[serde(rename_all = "camelCase")]
 pub struct SwitchAction {
     #[serde(with = "chrono::serde::ts_milliseconds")]
-    at: DateTime<Utc>,
+    pub at: DateTime<Utc>,
     #[serde(with = "chrono::serde::ts_milliseconds_option")]
     pub executed_at: Option<DateTime<Utc>>,
     pub switch_on: bool,

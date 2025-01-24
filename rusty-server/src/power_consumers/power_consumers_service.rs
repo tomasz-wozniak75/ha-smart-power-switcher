@@ -44,7 +44,7 @@ impl PowerConsumersService {
         let power_consumer = self.power_consumers.get_mut(&power_consumer_id);
         power_consumer
             .map(|pc| {
-                pc.create_consumption_plan(consumption_duration, finish_at);
+                pc.create_consumption_plan(consumption_duration, Utc::now(), finish_at);
                 pc
             })
             .map(|power_consumer| power_consumer.to_power_consumer_model())
