@@ -28,9 +28,35 @@ pub struct SwitchAction {
 #[derive(Serialize, Debug, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ConsumptionPlanItem {
-    pricelist_item: PricelistItem,
-    duration: u32,
-    pub switch_actions: Vec<SwitchAction>,
+    price_list_item: PricelistItem,
+    #[serde(serialize_with = "crate::model::serialize_time_delta")]
+    duration: TimeDelta,
+    switch_actions: Vec<SwitchAction>,
+}
+impl ConsumptionPlanItem {
+    pub fn new(price_list_item: PricelistItem, duration: TimeDelta) -> Self {
+        Self {
+            price_list_item,
+            duration,
+            switch_actions: Vec::new(),
+        }
+    }
+
+    pub fn price_list_item(&self) -> &PricelistItem {
+        &self.price_list_item
+    }
+
+    pub fn duration(&self) -> TimeDelta {
+        self.duration
+    }
+
+    pub fn switch_actions_mut(&mut self) -> &mut Vec<SwitchAction> {
+        &mut self.switch_actions
+    }
+
+    pub fn switch_actions(&self) -> &[SwitchAction] {
+        &self.switch_actions
+    }
 }
 
 #[derive(Serialize, Debug, PartialEq, Clone)]

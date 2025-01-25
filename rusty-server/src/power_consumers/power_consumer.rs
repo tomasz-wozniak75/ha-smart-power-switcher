@@ -68,7 +68,7 @@ impl PowerConsumer {
                 let switch_actions = consumption_plan
                     .consumption_plan_items
                     .iter_mut()
-                    .flat_map(|consumption_plan_item| &mut consumption_plan_item.switch_actions)
+                    .flat_map(|consumption_plan_item| consumption_plan_item.switch_actions_mut())
                     .collect::<Vec<&mut SwitchAction>>();
 
                 let consumption_plan_has_been_started = switch_actions[0].state == SwitchActionState::Executed;
@@ -131,6 +131,10 @@ impl PowerConsumer {
         }
     }
 
+    fn compare_by_start_at(a: &ConsumptionPlanItem, b: &ConsumptionPlanItem) -> Ordering {
+        a.price_list_item().starts_at().cmp(&b.price_list_item().starts_at())
+    }
+
     fn select_price_list_items_for_consumption_plan(
         &self,
         consumption_duration: TimeDelta,
@@ -140,9 +144,46 @@ impl PowerConsumer {
         let mut price_list = self
             .time_period_price_list_service
             .get_price_list(start_from, finish_at);
-        price_list.sort_by(PowerConsumer::compare_by_price_weight_and_start_at);
+        price_list.sort_by(Self::compare_by_price_weight_and_start_at);
+        let mut current_consumption_duration = TimeDelta::milliseconds(0);
+        let mut consumption_plan: Vec<ConsumptionPlanItem> = Vec::new();
+        for price_list_item in price_list {
+            let pricelist_item_duration =
+                Self::apply_constraints_to_duration(&price_list_item, &start_from, &finish_at);
+            if current_consumption_duration + pricelist_item_duration <= consumption_duration {
+                current_consumption_duration += pricelist_item_duration;
+                consumption_plan.push(ConsumptionPlanItem::new(price_list_item, pricelist_item_duration));
+            } else {
+                let delta = consumption_duration.num_milliseconds() - current_consumption_duration.num_milliseconds();
+                if delta > 0 {
+                    consumption_plan.push(ConsumptionPlanItem::new(
+                        price_list_item,
+                        TimeDelta::milliseconds(delta),
+                    ));
+                }
+                break;
+            }
+        }
 
-        vec![]
+        consumption_plan.sort_by(Self::compare_by_start_at);
+
+        consumption_plan
+    }
+
+    fn apply_constraints_to_duration(
+        price_list_item: &PricelistItem,
+        start_from: &DateTime<Utc>,
+        finish_at: &DateTime<Utc>,
+    ) -> TimeDelta {
+        let mut starts_at = price_list_item.starts_at();
+        let mut end_at = &(*price_list_item.starts_at() + *price_list_item.duration());
+        if starts_at < start_from && start_from < end_at {
+            starts_at = start_from;
+        }
+        if starts_at < finish_at && finish_at < end_at {
+            end_at = finish_at;
+        }
+        *end_at - *starts_at
     }
 }
 
@@ -183,7 +224,7 @@ mod tests {
     fn collect_switch_actions<'a>(consumption_plan_items: &'a Vec<ConsumptionPlanItem>) -> Vec<&'a SwitchAction> {
         consumption_plan_items
             .iter()
-            .flat_map(|cp| cp.switch_actions.iter())
+            .flat_map(|cp| cp.switch_actions().iter())
             .collect()
     }
 
