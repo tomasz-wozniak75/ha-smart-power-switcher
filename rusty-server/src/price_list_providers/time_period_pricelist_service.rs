@@ -15,9 +15,9 @@ impl TimePeriodPriceListService {
         Self { single_day_price_list }
     }
 
-    pub fn get_price_list(&self, from_the_time: DateTime<Utc>, to_the_time: DateTime<Utc>) -> Vec<PricelistItem> {
-        let from_the_day = cut_off_time_from_date(&from_the_time);
-        let to_the_day = cut_off_time_from_date(&to_the_time);
+    pub fn get_price_list(&self, from_the_time: &DateTime<Utc>, to_the_time: &DateTime<Utc>) -> Vec<PricelistItem> {
+        let from_the_day = cut_off_time_from_date(from_the_time);
+        let to_the_day = cut_off_time_from_date(to_the_time);
 
         let mut price_list: Vec<PricelistItem> = Vec::new();
         let mut next_day = from_the_day.clone();
@@ -27,7 +27,7 @@ impl TimePeriodPriceListService {
                 single_day_price_list
                     .iter()
                     .filter(|item| {
-                        (*item.starts_at() + *item.duration()) > from_the_time && *item.starts_at() < to_the_time
+                        (*item.starts_at() + *item.duration()) > *from_the_time && *item.starts_at() < *to_the_time
                     })
                     .map(|item| item.clone()),
             );
@@ -65,7 +65,7 @@ mod tests {
 
         let start_time = date_time(2024, 8, 24, 13, 30);
         let end_time = date_time(2024, 8, 24, 13, 45);
-        let end_time = time_period_price_list_service.get_price_list(start_time, end_time);
+        let end_time = time_period_price_list_service.get_price_list(&start_time, &end_time);
         assert_eq!(end_time.len(), 1)
     }
 
@@ -75,7 +75,7 @@ mod tests {
 
         let start_time = date_time(2024, 8, 24, 13, 30);
         let end_time = date_time(2024, 8, 24, 14, 45);
-        let end_time = time_period_price_list_service.get_price_list(start_time, end_time);
+        let end_time = time_period_price_list_service.get_price_list(&start_time, &end_time);
         assert_eq!(end_time.len(), 2)
     }
 
@@ -85,7 +85,7 @@ mod tests {
 
         let start_time = date_time(2024, 8, 24, 13, 0);
         let end_time = date_time(2024, 8, 25, 13, 0);
-        let price_list = time_period_price_list_service.get_price_list(start_time, end_time);
+        let price_list = time_period_price_list_service.get_price_list(&start_time, &end_time);
         assert_eq!(price_list.len(), 24)
     }
 }

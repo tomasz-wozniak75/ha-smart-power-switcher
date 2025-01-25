@@ -17,12 +17,48 @@ pub enum SwitchActionState {
 #[serde(rename_all = "camelCase")]
 pub struct SwitchAction {
     #[serde(with = "chrono::serde::ts_milliseconds")]
-    pub at: DateTime<Utc>,
-    #[serde(with = "chrono::serde::ts_milliseconds_option")]
-    pub executed_at: Option<DateTime<Utc>>,
+    at: DateTime<Utc>,
     pub switch_on: bool,
-    pub state: SwitchActionState,
-    pub result: Option<String>,
+    state: SwitchActionState,
+    #[serde(with = "chrono::serde::ts_milliseconds_option")]
+    executed_at: Option<DateTime<Utc>>,
+    result: Option<String>,
+}
+
+impl SwitchAction {
+    pub fn new(at: DateTime<Utc>, switch_on: bool) -> Self {
+        Self {
+            at: at,
+            switch_on,
+            state: SwitchActionState::Scheduled,
+            executed_at: None,
+            result: None,
+        }
+    }
+
+    pub fn at(&self) -> &DateTime<Utc> {
+        &self.at
+    }
+
+    pub fn switch_on(&self) -> bool {
+        self.switch_on
+    }
+
+    pub fn state(&self) -> &SwitchActionState {
+        &self.state
+    }
+
+    pub fn set_result(&mut self, result: Option<String>) {
+        self.result = result;
+    }
+
+    pub(crate) fn set_executed_at(&mut self, executed_at: Option<DateTime<Utc>>) {
+        self.executed_at = executed_at;
+    }
+
+    pub(crate) fn set_state(&mut self, state: SwitchActionState) {
+        self.state = state;
+    }
 }
 
 #[derive(Serialize, Debug, PartialEq, Clone)]
@@ -46,8 +82,8 @@ impl ConsumptionPlanItem {
         &self.price_list_item
     }
 
-    pub fn duration(&self) -> TimeDelta {
-        self.duration
+    pub fn duration(&self) -> &TimeDelta {
+        &self.duration
     }
 
     pub fn switch_actions_mut(&mut self) -> &mut Vec<SwitchAction> {

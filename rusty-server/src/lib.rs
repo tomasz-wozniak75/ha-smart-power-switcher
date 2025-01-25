@@ -58,7 +58,7 @@ pub async fn schedule_consumption_plan(
         .write()
         .unwrap()
         .power_consumers_service
-        .schedule_consumption_plan(power_consumer_id, consumption_duration, finish_at)
+        .schedule_consumption_plan(power_consumer_id, consumption_duration, &finish_at)
         .map(|pcm| (StatusCode::OK, Json(pcm)))
         .map_err(|e| (e.code(), Json(e)))
         .into_response()
