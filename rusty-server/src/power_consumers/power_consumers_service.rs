@@ -1,32 +1,40 @@
-use std::{collections::HashMap, sync::Arc};
+use std::{collections::HashMap, rc::Rc, sync::Arc};
 
 use crate::{
     model::{AppError, PowerConsumerModel},
-    price_list_providers::{SingleDayPricelist, TariffSelectorPricelist},
+    price_list_providers::{TariffSelectorPricelist, TimePeriodPriceListService},
 };
 use chrono::{DateTime, TimeDelta, Utc};
 
 use super::power_consumer::PowerConsumer;
 
 pub struct PowerConsumersService {
-    single_day_price_list: Arc<TariffSelectorPricelist>,
+    time_period_price_list_service: Arc<TimePeriodPriceListService>,
     power_consumers: HashMap<String, PowerConsumer>,
 }
 
 impl PowerConsumersService {
     pub fn new(tariff_selector_pricelist: Arc<TariffSelectorPricelist>) -> Self {
         let mut this = Self {
-            single_day_price_list: tariff_selector_pricelist,
+            time_period_price_list_service: Arc::new(TimePeriodPriceListService::new(tariff_selector_pricelist)),
             power_consumers: HashMap::new(),
         };
 
         let audi_chager_id = "switch.audi_charger_breaker_switch".to_owned();
-        let audi_power_consumer = PowerConsumer::new(audi_chager_id, "Audi charger".to_owned());
+        let audi_power_consumer = PowerConsumer::new(
+            audi_chager_id,
+            "Audi charger".to_owned(),
+            this.time_period_price_list_service.clone(),
+        );
         this.power_consumers
             .insert(audi_power_consumer.id().to_owned(), audi_power_consumer);
 
         let one_phase_switch_id = "switch.smart_plug_socket_1".to_owned();
-        let one_phase_switch = PowerConsumer::new(one_phase_switch_id, "One phase switch".to_owned());
+        let one_phase_switch = PowerConsumer::new(
+            one_phase_switch_id,
+            "One phase switch".to_owned(),
+            this.time_period_price_list_service.clone(),
+        );
         this.power_consumers
             .insert(one_phase_switch.id().to_owned(), one_phase_switch);
 

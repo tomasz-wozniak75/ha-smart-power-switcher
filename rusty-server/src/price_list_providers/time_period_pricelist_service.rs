@@ -6,11 +6,11 @@ use crate::model::PricelistItem;
 
 use super::{commons::cut_off_time_from_date, SingleDayPricelist, TariffSelectorPricelist};
 
-pub struct TimePeriodPricelistService {
+pub struct TimePeriodPriceListService {
     single_day_price_list: Arc<TariffSelectorPricelist>,
 }
 
-impl TimePeriodPricelistService {
+impl TimePeriodPriceListService {
     pub fn new(single_day_price_list: Arc<TariffSelectorPricelist>) -> Self {
         Self { single_day_price_list }
     }
@@ -46,7 +46,7 @@ mod tests {
 
     use crate::price_list_providers::{TariffSelectorPricelist, TariffTypes};
 
-    use super::TimePeriodPricelistService;
+    use super::TimePeriodPriceListService;
 
     fn date_time(year: i32, month: u32, day: u32, hour: u32, min: u32) -> DateTime<Utc> {
         Local
@@ -55,8 +55,8 @@ mod tests {
             .unwrap()
     }
 
-    fn create_time_period_price_list_service() -> TimePeriodPricelistService {
-        TimePeriodPricelistService::new(Arc::new(TariffSelectorPricelist::new(TariffTypes::W12)))
+    fn create_time_period_price_list_service() -> TimePeriodPriceListService {
+        TimePeriodPriceListService::new(Arc::new(TariffSelectorPricelist::new(TariffTypes::W12)))
     }
 
     #[test]
