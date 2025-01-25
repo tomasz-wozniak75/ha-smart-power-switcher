@@ -14,13 +14,10 @@ use rusty_server::{
 
 #[tokio::main]
 async fn main() {
-    let tariff_selector_pricelist = TariffSelectorPricelist {
-        current_tariff: TariffTypes::W12,
-        w12_pricelist_provider: W12PricelistProvider {},
-    };
+    let tariff_selector_pricelist = Arc::new(TariffSelectorPricelist::new(TariffTypes::W12));
     let state = Arc::new(RwLock::new(AppState {
-        single_day_pricelist: tariff_selector_pricelist,
-        power_consumers_service: PowerConsumersService::new(),
+        single_day_pricelist: tariff_selector_pricelist.clone(),
+        power_consumers_service: PowerConsumersService::new(tariff_selector_pricelist.clone()),
     }));
 
     let app = Router::new()

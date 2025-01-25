@@ -1,17 +1,22 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::Arc};
 
-use crate::model::{AppError, PowerConsumerModel};
+use crate::{
+    model::{AppError, PowerConsumerModel},
+    price_list_providers::{SingleDayPricelist, TariffSelectorPricelist},
+};
 use chrono::{DateTime, TimeDelta, Utc};
 
 use super::power_consumer::PowerConsumer;
 
 pub struct PowerConsumersService {
+    single_day_price_list: Arc<TariffSelectorPricelist>,
     power_consumers: HashMap<String, PowerConsumer>,
 }
 
 impl PowerConsumersService {
-    pub fn new() -> Self {
+    pub fn new(tariff_selector_pricelist: Arc<TariffSelectorPricelist>) -> Self {
         let mut this = Self {
+            single_day_price_list: tariff_selector_pricelist,
             power_consumers: HashMap::new(),
         };
 

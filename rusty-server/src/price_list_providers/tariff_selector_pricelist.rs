@@ -1,4 +1,4 @@
-use chrono::DateTime;
+use chrono::{DateTime, Utc};
 
 use crate::model::PricelistItem;
 
@@ -9,12 +9,21 @@ pub enum TariffTypes {
     NextDayMarket,
 }
 pub struct TariffSelectorPricelist {
-    pub current_tariff: TariffTypes,
-    pub w12_pricelist_provider: W12PricelistProvider,
+    current_tariff: TariffTypes,
+    w12_pricelist_provider: W12PricelistProvider,
+}
+
+impl TariffSelectorPricelist {
+    pub fn new(current_tariff: TariffTypes) -> Self {
+        Self {
+            current_tariff,
+            w12_pricelist_provider: W12PricelistProvider {},
+        }
+    }
 }
 
 impl SingleDayPricelist for TariffSelectorPricelist {
-    fn get_price_list(&self, for_day: &DateTime<chrono::Utc>) -> Vec<PricelistItem> {
+    fn get_price_list(&self, for_day: &DateTime<Utc>) -> Vec<PricelistItem> {
         match self.current_tariff {
             TariffTypes::W12 => self.w12_pricelist_provider.get_price_list(for_day),
             TariffTypes::NextDayMarket => todo!(),
