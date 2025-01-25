@@ -17,7 +17,7 @@ use price_list_providers::{SingleDayPricelist, TariffSelectorPricelist};
 use serde::Deserialize;
 
 pub struct AppState {
-    pub single_day_pricelist: TariffSelectorPricelist,
+    pub single_day_pricelist: Arc<TariffSelectorPricelist>,
     pub power_consumers_service: PowerConsumersService,
 }
 

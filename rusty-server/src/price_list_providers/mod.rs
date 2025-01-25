@@ -1,5 +1,6 @@
 mod commons;
 mod tariff_selector_pricelist;
+mod time_period_pricelist_service;
 mod w12_price_list_provider;
 
 pub use self::commons::SingleDayPricelist;
