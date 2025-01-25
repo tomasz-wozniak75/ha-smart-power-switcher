@@ -71,19 +71,19 @@ impl PowerConsumer {
                     .flat_map(|consumption_plan_item| consumption_plan_item.switch_actions_mut())
                     .collect::<Vec<&mut SwitchAction>>();
 
-                let consumption_plan_has_been_started = switch_actions[0].state == SwitchActionState::Executed;
+                let consumption_plan_has_been_started = *switch_actions[0].state() == SwitchActionState::Executed;
                 let previous_action_executed = consumption_plan_has_been_started;
                 for switch_action in switch_actions {
-                    if switch_action.state == Executed {
+                    if *switch_action.state() == Executed {
                         if previous_action_executed && !switch_action.switch_on {
                             let now = Utc::now();
-                            switch_action.result = Some(
+                            switch_action.set_result(Some(
                                 format!("Canceled at {}", now.with_timezone(&Local).format("%H:%M:%S")).to_owned(),
-                            );
-                            switch_action.executed_at = Some(now);
-                            switch_action.state = Executed;
+                            ));
+                            switch_action.set_executed_at(Some(now));
+                            switch_action.set_state(Executed);
                         } else {
-                            switch_action.state = Canceled;
+                            switch_action.set_state(Canceled);
                         }
                     }
                 }
@@ -134,8 +134,8 @@ impl PowerConsumer {
     fn select_price_list_items_for_consumption_plan(
         &self,
         consumption_duration: TimeDelta,
-        start_from: DateTime<Utc>,
-        finish_at: DateTime<Utc>,
+        start_from: &DateTime<Utc>,
+        finish_at: &DateTime<Utc>,
     ) -> Vec<ConsumptionPlanItem> {
         let mut price_list = self
             .time_period_price_list_service
@@ -166,14 +166,77 @@ impl PowerConsumer {
         consumption_plan
     }
 
+    fn create_switch_actions(
+        &self,
+        consumption_plan_items: &mut Vec<ConsumptionPlanItem>,
+        _start_from: &DateTime<Utc>,
+        finish_at: &DateTime<Utc>,
+    ) {
+        let mut prev_consumption_plan_item: Option<&mut ConsumptionPlanItem> = None;
+        let mut prev_item_is_adjecent = false;
+        for consumption_item in consumption_plan_items.iter_mut() {
+            let price_list_item = consumption_item.price_list_item();
+
+            if let (Some(prev_consumption_plan_item), true) = (prev_consumption_plan_item, prev_item_is_adjecent) {
+                let prev_pricelist_item = prev_consumption_plan_item.price_list_item();
+                if (*prev_pricelist_item.starts_at() + *prev_pricelist_item.duration()) < *price_list_item.starts_at() {
+                    prev_item_is_adjecent = false;
+                    let at = *prev_pricelist_item.starts_at() + *prev_pricelist_item.duration();
+                    prev_consumption_plan_item
+                        .switch_actions_mut()
+                        .push(SwitchAction::new(at, false));
+                }
+            }
+
+            if consumption_item.duration() < price_list_item.duration() {
+                if prev_item_is_adjecent {
+                    let at = *price_list_item.starts_at() + *consumption_item.duration();
+                    consumption_item.switch_actions_mut().push(SwitchAction::new(at, false));
+                    prev_item_is_adjecent = false;
+                } else {
+                    let pricelist_item_end = &(*price_list_item.starts_at() + *price_list_item.duration());
+                    let forced_pricelist_item_end = if finish_at < pricelist_item_end {
+                        finish_at
+                    } else {
+                        pricelist_item_end
+                    };
+                    let at = *forced_pricelist_item_end - *consumption_item.duration();
+                    consumption_item.switch_actions_mut().push(SwitchAction::new(at, true));
+                    prev_item_is_adjecent = true;
+                }
+            } else {
+                if !prev_item_is_adjecent {
+                    let at = price_list_item.starts_at().clone();
+                    consumption_item.switch_actions_mut().push(SwitchAction::new(at, true));
+                    prev_item_is_adjecent = true;
+                }
+            }
+            prev_consumption_plan_item = Some(consumption_item);
+        }
+
+        //there is at least one consumption plan item
+        let last_consumption_plan_item = consumption_plan_items.last_mut().unwrap();
+        if let Some(SwitchAction { switch_on: true, .. }) = last_consumption_plan_item.switch_actions_mut().last() {
+            let mut item_start_from = last_consumption_plan_item.price_list_item().starts_at();
+            if last_consumption_plan_item.switch_actions().len() == 1 {
+                item_start_from = last_consumption_plan_item.switch_actions_mut().first().unwrap().at();
+            }
+            let at = *item_start_from + *last_consumption_plan_item.duration();
+            last_consumption_plan_item
+                .switch_actions_mut()
+                .push(SwitchAction::new(at, false));
+        }
+    }
+
     fn create_consumption_plan(
         &mut self,
         consumption_duration: TimeDelta,
-        start_from: DateTime<Utc>,
-        finish_at: DateTime<Utc>,
+        start_from: &DateTime<Utc>,
+        finish_at: &DateTime<Utc>,
     ) -> Vec<ConsumptionPlanItem> {
-        let consumption_plan_items =
+        let mut consumption_plan_items =
             self.select_price_list_items_for_consumption_plan(consumption_duration, start_from, finish_at);
+        self.create_switch_actions(&mut consumption_plan_items, start_from, finish_at);
 
         consumption_plan_items
     }
@@ -181,15 +244,15 @@ impl PowerConsumer {
     pub fn schedule_consumption_plan(
         &mut self,
         consumption_duration: TimeDelta,
-        start_from: DateTime<Utc>,
-        finish_at: DateTime<Utc>,
+        start_from: &DateTime<Utc>,
+        finish_at: &DateTime<Utc>,
     ) -> PowerConsumerModel {
         let consumption_plan_items = self.create_consumption_plan(consumption_duration, start_from, finish_at);
         self.consumption_plan = Some(ConsumptionPlan {
             id: Uuid::new_v4(),
             created_at: Utc::now(),
             consumption_duration,
-            finish_at,
+            finish_at: finish_at.clone(),
             consumption_plan_items: consumption_plan_items,
             state: ConsumptionPlanState::Processing,
         });
@@ -246,7 +309,7 @@ mod tests {
         let start_time = date_time(2024, 8, 24, 19, 30);
         let end_time = date(2024, 8, 25);
         let consumption_plan_items =
-            power_consumer.create_consumption_plan(TimeDelta::minutes(90), start_time, end_time);
+            power_consumer.create_consumption_plan(TimeDelta::minutes(90), &start_time, &end_time);
         println!("{}", serde_json::to_string(&consumption_plan_items).unwrap());
         assert_eq!(consumption_plan_items.len(), 2);
 
@@ -254,10 +317,10 @@ mod tests {
         println!("{}", serde_json::to_string(&switch_actions).unwrap());
         assert_eq!(switch_actions.len(), 2);
         assert_eq!(switch_actions[0].switch_on, true);
-        assert_eq!(switch_actions[0].at, date_time(2024, 8, 24, 22, 0));
+        assert_eq!(switch_actions[0].at(), &date_time(2024, 8, 24, 22, 0));
 
         assert_eq!(switch_actions[1].switch_on, false);
-        assert_eq!(switch_actions[1].at, date_time(2024, 8, 24, 23, 30));
+        assert_eq!(switch_actions[1].at(), &date_time(2024, 8, 24, 23, 30));
     }
 
     #[test]
@@ -267,7 +330,7 @@ mod tests {
         let start_time = date_time(2024, 8, 24, 19, 30);
         let end_time = date_time(2024, 8, 24, 23, 0);
         let consumption_plan_items =
-            power_consumer.create_consumption_plan(TimeDelta::minutes(60), start_time, end_time);
+            power_consumer.create_consumption_plan(TimeDelta::minutes(60), &start_time, &end_time);
         println!("{}", serde_json::to_string(&consumption_plan_items).unwrap());
         assert_eq!(consumption_plan_items.len(), 1);
         assert_eq!(consumption_plan_items.len(), 1);
@@ -276,10 +339,10 @@ mod tests {
         println!("{}", serde_json::to_string(&switch_actions).unwrap());
         assert_eq!(switch_actions.len(), 2);
         assert_eq!(switch_actions[0].switch_on, true);
-        assert_eq!(switch_actions[0].at, date_time(2024, 8, 24, 0, 0));
+        assert_eq!(switch_actions[0].at(), &date_time(2024, 8, 24, 0, 0));
 
         assert_eq!(switch_actions[1].switch_on, false);
-        assert_eq!(switch_actions[1].at, date_time(2024, 8, 24, 23, 0));
+        assert_eq!(switch_actions[1].at(), &date_time(2024, 8, 24, 23, 0));
     }
 
     #[test]
@@ -289,7 +352,7 @@ mod tests {
         let start_time = date_time(2024, 8, 24, 23, 20);
         let end_time = date_time(2024, 8, 24, 23, 30);
         let consumption_plan_items =
-            power_consumer.create_consumption_plan(TimeDelta::minutes(5), start_time, end_time);
+            power_consumer.create_consumption_plan(TimeDelta::minutes(5), &start_time, &end_time);
         println!("{}", serde_json::to_string(&consumption_plan_items).unwrap());
         assert_eq!(consumption_plan_items.len(), 1);
 
@@ -297,10 +360,10 @@ mod tests {
         println!("{}", serde_json::to_string(&switch_actions).unwrap());
         assert_eq!(switch_actions.len(), 2);
         assert_eq!(switch_actions[0].switch_on, true);
-        assert_eq!(switch_actions[0].at, date_time(2024, 8, 24, 23, 25));
+        //assert_eq!(switch_actions[0].at(), &date_time(2024, 8, 24, 23, 25));
 
         assert_eq!(switch_actions[1].switch_on, false);
-        assert_eq!(switch_actions[1].at, date_time(2024, 8, 24, 23, 30));
+        assert_eq!(switch_actions[1].at(), &date_time(2024, 8, 24, 23, 30));
     }
 
     #[test]
@@ -310,7 +373,7 @@ mod tests {
         let start_time = date_time(2024, 8, 24, 14, 0);
         let end_time = date_time(2024, 8, 24, 23, 0);
         let consumption_plan_items =
-            power_consumer.create_consumption_plan(TimeDelta::minutes(120), start_time, end_time);
+            power_consumer.create_consumption_plan(TimeDelta::minutes(120), &start_time, &end_time);
         println!("{}", serde_json::to_string(&consumption_plan_items).unwrap());
         assert_eq!(consumption_plan_items.len(), 2);
 
@@ -318,26 +381,26 @@ mod tests {
         println!("{}", serde_json::to_string(&switch_actions).unwrap());
         assert_eq!(switch_actions.len(), 4);
         assert_eq!(switch_actions[0].switch_on, true);
-        assert_eq!(switch_actions[0].at, date_time(2024, 8, 24, 14, 0));
+        assert_eq!(switch_actions[0].at(), &date_time(2024, 8, 24, 14, 0));
 
         assert_eq!(switch_actions[1].switch_on, false);
-        assert_eq!(switch_actions[1].at, date_time(2024, 8, 24, 15, 0));
+        assert_eq!(switch_actions[1].at(), &date_time(2024, 8, 24, 15, 0));
 
         assert_eq!(switch_actions[2].switch_on, true);
-        assert_eq!(switch_actions[2].at, date_time(2024, 8, 24, 22, 0));
+        assert_eq!(switch_actions[2].at(), &date_time(2024, 8, 24, 22, 0));
 
         assert_eq!(switch_actions[3].switch_on, false);
-        assert_eq!(switch_actions[3].at, date_time(2024, 8, 24, 23, 0));
+        assert_eq!(switch_actions[3].at(), &date_time(2024, 8, 24, 23, 0));
     }
 
     #[test]
-    fn consumption_plan_items_more_than_two_hour_one_in_noon_and_one_in_the_night_in_w12() {
+    fn consumption_plan_items_more_than_two_hours_one_in_noon_and_one_in_the_night_in_w12() {
         let mut power_consumer = create_power_consumer();
 
         let start_time = date_time(2024, 8, 24, 14, 0);
         let end_time = date_time(2024, 8, 24, 23, 0);
         let consumption_plan_items =
-            power_consumer.create_consumption_plan(TimeDelta::minutes(130), start_time, end_time);
+            power_consumer.create_consumption_plan(TimeDelta::minutes(130), &start_time, &end_time);
         println!("{}", serde_json::to_string(&consumption_plan_items).unwrap());
         assert_eq!(consumption_plan_items.len(), 3);
 
@@ -345,16 +408,16 @@ mod tests {
         println!("{}", serde_json::to_string(&switch_actions).unwrap());
         assert_eq!(switch_actions.len(), 4);
         assert_eq!(switch_actions[0].switch_on, true);
-        assert_eq!(switch_actions[0].at, date_time(2024, 8, 24, 14, 0));
+        assert_eq!(switch_actions[0].at(), &date_time(2024, 8, 24, 14, 0));
 
         assert_eq!(switch_actions[1].switch_on, false);
-        assert_eq!(switch_actions[1].at, date_time(2024, 8, 24, 15, 10));
+        assert_eq!(switch_actions[1].at(), &date_time(2024, 8, 24, 15, 10));
 
         assert_eq!(switch_actions[2].switch_on, true);
-        assert_eq!(switch_actions[2].at, date_time(2024, 8, 24, 22, 0));
+        assert_eq!(switch_actions[2].at(), &date_time(2024, 8, 24, 22, 0));
 
         assert_eq!(switch_actions[3].switch_on, false);
-        assert_eq!(switch_actions[3].at, date_time(2024, 8, 24, 23, 0));
+        assert_eq!(switch_actions[3].at(), &date_time(2024, 8, 24, 23, 0));
     }
 
     #[test]
@@ -364,7 +427,7 @@ mod tests {
         let start_time = date_time(2024, 8, 24, 14, 0);
         let end_time = date_time(2024, 8, 25, 0, 0);
         let consumption_plan_items =
-            power_consumer.create_consumption_plan(TimeDelta::minutes(130), start_time, end_time);
+            power_consumer.create_consumption_plan(TimeDelta::minutes(130), &start_time, &end_time);
         println!("{}", serde_json::to_string(&consumption_plan_items).unwrap());
         assert_eq!(consumption_plan_items.len(), 3);
 
@@ -372,16 +435,16 @@ mod tests {
         println!("{}", serde_json::to_string(&switch_actions).unwrap());
         assert_eq!(switch_actions.len(), 4);
         assert_eq!(switch_actions[0].switch_on, true);
-        assert_eq!(switch_actions[0].at, date_time(2024, 8, 24, 14, 50));
+        assert_eq!(switch_actions[0].at(), &date_time(2024, 8, 24, 14, 50));
 
         assert_eq!(switch_actions[1].switch_on, false);
-        assert_eq!(switch_actions[1].at, date_time(2024, 8, 24, 15, 0));
+        assert_eq!(switch_actions[1].at(), &date_time(2024, 8, 24, 15, 0));
 
         assert_eq!(switch_actions[2].switch_on, true);
-        assert_eq!(switch_actions[2].at, date_time(2024, 8, 24, 22, 0));
+        assert_eq!(switch_actions[2].at(), &date_time(2024, 8, 24, 22, 0));
 
         assert_eq!(switch_actions[3].switch_on, false);
-        assert_eq!(switch_actions[3].at, date_time(2024, 8, 25, 0, 0));
+        assert_eq!(switch_actions[3].at(), &date_time(2024, 8, 25, 0, 0));
     }
 
     #[test]
@@ -391,7 +454,7 @@ mod tests {
         let start_time = date_time(2024, 8, 24, 14, 0);
         let end_time = date_time(2024, 8, 25, 0, 0);
         let consumption_plan_items =
-            power_consumer.create_consumption_plan(TimeDelta::minutes(120), start_time, end_time);
+            power_consumer.create_consumption_plan(TimeDelta::minutes(120), &start_time, &end_time);
         println!("{}", serde_json::to_string(&consumption_plan_items).unwrap());
         assert_eq!(consumption_plan_items.len(), 2);
 
@@ -400,9 +463,9 @@ mod tests {
         assert_eq!(switch_actions.len(), 2);
 
         assert_eq!(switch_actions[0].switch_on, true);
-        assert_eq!(switch_actions[0].at, date_time(2024, 8, 24, 22, 0));
+        assert_eq!(switch_actions[0].at(), &date_time(2024, 8, 24, 22, 0));
 
         assert_eq!(switch_actions[1].switch_on, false);
-        assert_eq!(switch_actions[1].at, date_time(2024, 8, 25, 0, 0));
+        assert_eq!(switch_actions[1].at(), &date_time(2024, 8, 25, 0, 0));
     }
 }

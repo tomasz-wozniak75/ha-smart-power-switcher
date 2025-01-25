@@ -1,4 +1,4 @@
-use std::{collections::HashMap, rc::Rc, sync::Arc};
+use std::{collections::HashMap, sync::Arc};
 
 use crate::{
     model::{AppError, PowerConsumerModel},
@@ -52,12 +52,12 @@ impl PowerConsumersService {
         &mut self,
         power_consumer_id: String,
         consumption_duration: TimeDelta,
-        finish_at: DateTime<Utc>,
+        finish_at: &DateTime<Utc>,
     ) -> Result<PowerConsumerModel, AppError> {
         let power_consumer = self.power_consumers.get_mut(&power_consumer_id);
         power_consumer
             .map(|pc| {
-                pc.schedule_consumption_plan(consumption_duration, Utc::now(), finish_at);
+                pc.schedule_consumption_plan(consumption_duration, &Utc::now(), finish_at);
                 pc
             })
             .map(|power_consumer| power_consumer.to_power_consumer_model())
