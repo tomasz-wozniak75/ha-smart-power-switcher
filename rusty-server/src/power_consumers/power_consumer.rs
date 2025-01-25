@@ -1,18 +1,37 @@
+use std::{rc::Rc, sync::Arc};
+
 use chrono::{DateTime, Datelike, Local, TimeDelta, TimeZone, Timelike, Utc};
 use uuid::Uuid;
 
-use crate::model::{
-    ConsumptionPlan, ConsumptionPlanItem, ConsumptionPlanState, PowerConsumerModel, SwitchAction, SwitchActionState,
+use crate::{
+    model::{
+        ConsumptionPlan, ConsumptionPlanItem, ConsumptionPlanState, PowerConsumerModel, SwitchAction, SwitchActionState,
+    },
+    price_list_providers::TimePeriodPriceListService,
 };
 
 #[derive(Clone)]
 pub struct PowerConsumer {
     ha_device_name: String,
     name: String,
+    time_period_price_list_service: Arc<TimePeriodPriceListService>,
     consumption_plan: Option<ConsumptionPlan>,
 }
 
 impl PowerConsumer {
+    pub fn new(
+        ha_device_name: String,
+        name: String,
+        time_period_price_list_service: Arc<TimePeriodPriceListService>,
+    ) -> Self {
+        Self {
+            ha_device_name,
+            name,
+            consumption_plan: None,
+            time_period_price_list_service,
+        }
+    }
+
     fn get_default_charging_finish_time() -> DateTime<Utc> {
         let now = Local::now();
         let default_finis_at = if now.hour() < 16 {
@@ -24,14 +43,6 @@ impl PowerConsumer {
                 .unwrap()
         };
         default_finis_at.with_timezone(&Utc)
-    }
-
-    pub fn new(ha_device_name: String, name: String) -> Self {
-        Self {
-            ha_device_name,
-            name,
-            consumption_plan: None,
-        }
     }
 
     pub fn id(&self) -> &str {
@@ -110,14 +121,25 @@ impl PowerConsumer {
 
 #[cfg(test)]
 mod tests {
+    use std::sync::Arc;
+
     use chrono::{DateTime, Local, TimeDelta, TimeZone, Utc};
 
-    use crate::model::{ConsumptionPlanItem, SwitchAction};
+    use crate::{
+        model::{ConsumptionPlanItem, SwitchAction},
+        price_list_providers::{TariffSelectorPricelist, TariffTypes, TimePeriodPriceListService},
+    };
 
     use super::PowerConsumer;
 
     fn create_power_consumer() -> PowerConsumer {
-        todo!();
+        PowerConsumer::new(
+            "test.device".to_owned(),
+            "Smart switch".to_owned(),
+            Arc::new(TimePeriodPriceListService::new(Arc::new(TariffSelectorPricelist::new(
+                TariffTypes::W12,
+            )))),
+        )
     }
 
     fn date_time(year: i32, month: u32, day: u32, hour: u32, min: u32) -> DateTime<Utc> {
