@@ -101,26 +101,6 @@ impl PowerConsumer {
         self.to_power_consumer_model()
     }
 
-    pub fn create_consumption_plan(
-        &mut self,
-        consumption_duration: TimeDelta,
-        start_from: DateTime<Utc>,
-        finish_at: DateTime<Utc>,
-    ) -> Vec<ConsumptionPlanItem> {
-        let sorted_consumption_plan_items =
-            self.select_price_list_items_for_consumption_plan(consumption_duration, start_from, finish_at);
-        self.consumption_plan = Some(ConsumptionPlan {
-            id: Uuid::new_v4(),
-            created_at: Utc::now(),
-            consumption_duration,
-            finish_at,
-            consumption_plan_items: Vec::new(),
-            state: ConsumptionPlanState::Processing,
-        });
-
-        vec![]
-    }
-
     fn compare_by_price_weight_and_start_at(a: &PricelistItem, b: &PricelistItem) -> Ordering {
         match a.price().cmp(&b.price()) {
             Ordering::Equal => match a.weight().cmp(&b.weight()) {
@@ -133,6 +113,22 @@ impl PowerConsumer {
 
     fn compare_by_start_at(a: &ConsumptionPlanItem, b: &ConsumptionPlanItem) -> Ordering {
         a.price_list_item().starts_at().cmp(&b.price_list_item().starts_at())
+    }
+
+    fn apply_constraints_to_duration(
+        price_list_item: &PricelistItem,
+        start_from: &DateTime<Utc>,
+        finish_at: &DateTime<Utc>,
+    ) -> TimeDelta {
+        let mut starts_at = price_list_item.starts_at();
+        let mut end_at = &(*price_list_item.starts_at() + *price_list_item.duration());
+        if starts_at < start_from && start_from < end_at {
+            starts_at = start_from;
+        }
+        if starts_at < finish_at && finish_at < end_at {
+            end_at = finish_at;
+        }
+        *end_at - *starts_at
     }
 
     fn select_price_list_items_for_consumption_plan(
@@ -170,20 +166,35 @@ impl PowerConsumer {
         consumption_plan
     }
 
-    fn apply_constraints_to_duration(
-        price_list_item: &PricelistItem,
-        start_from: &DateTime<Utc>,
-        finish_at: &DateTime<Utc>,
-    ) -> TimeDelta {
-        let mut starts_at = price_list_item.starts_at();
-        let mut end_at = &(*price_list_item.starts_at() + *price_list_item.duration());
-        if starts_at < start_from && start_from < end_at {
-            starts_at = start_from;
-        }
-        if starts_at < finish_at && finish_at < end_at {
-            end_at = finish_at;
-        }
-        *end_at - *starts_at
+    fn create_consumption_plan(
+        &mut self,
+        consumption_duration: TimeDelta,
+        start_from: DateTime<Utc>,
+        finish_at: DateTime<Utc>,
+    ) -> Vec<ConsumptionPlanItem> {
+        let consumption_plan_items =
+            self.select_price_list_items_for_consumption_plan(consumption_duration, start_from, finish_at);
+
+        consumption_plan_items
+    }
+
+    pub fn schedule_consumption_plan(
+        &mut self,
+        consumption_duration: TimeDelta,
+        start_from: DateTime<Utc>,
+        finish_at: DateTime<Utc>,
+    ) -> PowerConsumerModel {
+        let consumption_plan_items = self.create_consumption_plan(consumption_duration, start_from, finish_at);
+        self.consumption_plan = Some(ConsumptionPlan {
+            id: Uuid::new_v4(),
+            created_at: Utc::now(),
+            consumption_duration,
+            finish_at,
+            consumption_plan_items: consumption_plan_items,
+            state: ConsumptionPlanState::Processing,
+        });
+
+        self.to_power_consumer_model()
     }
 }
 
