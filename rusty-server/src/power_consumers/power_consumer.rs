@@ -74,7 +74,7 @@ impl PowerConsumer {
                 let switch_actions = consumption_plan
                     .consumption_plan_items
                     .iter_mut()
-                    .flat_map(|consumption_pan_item| &mut consumption_pan_item.switch_actions)
+                    .flat_map(|consumption_plan_item| &mut consumption_plan_item.switch_actions)
                     .collect::<Vec<&mut SwitchAction>>();
 
                 let consumption_plan_has_been_started = switch_actions[0].state == SwitchActionState::Executed;
@@ -131,25 +131,25 @@ mod tests {
         date_time(year, month, day, 0, 0)
     }
 
-    fn collect_switch_actions<'a>(consumption_pan_items: &'a Vec<ConsumptionPlanItem>) -> Vec<&'a SwitchAction> {
-        consumption_pan_items
+    fn collect_switch_actions<'a>(consumption_plan_items: &'a Vec<ConsumptionPlanItem>) -> Vec<&'a SwitchAction> {
+        consumption_plan_items
             .iter()
             .flat_map(|cp| cp.switch_actions.iter())
             .collect()
     }
 
     #[test]
-    fn consumption_pan_items_two_hours_in_the_night_in_w12() {
+    fn consumption_plan_items_two_hours_in_the_night_in_w12() {
         let mut power_consumer = create_power_consumer();
 
         let start_time = date_time(2024, 8, 24, 19, 30);
         let end_time = date(2024, 8, 25);
-        let consumption_pan_items =
+        let consumption_plan_items =
             power_consumer.create_consumption_plan(TimeDelta::minutes(90), start_time, end_time);
-        println!("{}", serde_json::to_string(&consumption_pan_items).unwrap());
-        assert_eq!(consumption_pan_items.len(), 2);
+        println!("{}", serde_json::to_string(&consumption_plan_items).unwrap());
+        assert_eq!(consumption_plan_items.len(), 2);
 
-        let switch_actions = collect_switch_actions(&consumption_pan_items);
+        let switch_actions = collect_switch_actions(&consumption_plan_items);
         println!("{}", serde_json::to_string(&switch_actions).unwrap());
         assert_eq!(switch_actions.len(), 2);
         assert_eq!(switch_actions[0].switch_on, true);
@@ -160,18 +160,18 @@ mod tests {
     }
 
     #[test]
-    fn consumption_pan_items_one_hour_in_the_night_in_w12() {
+    fn consumption_plan_items_one_hour_in_the_night_in_w12() {
         let mut power_consumer = create_power_consumer();
 
         let start_time = date_time(2024, 8, 24, 19, 30);
         let end_time = date_time(2024, 8, 24, 23, 0);
-        let consumption_pan_items =
+        let consumption_plan_items =
             power_consumer.create_consumption_plan(TimeDelta::minutes(60), start_time, end_time);
-        println!("{}", serde_json::to_string(&consumption_pan_items).unwrap());
-        assert_eq!(consumption_pan_items.len(), 1);
-        assert_eq!(consumption_pan_items.len(), 1);
+        println!("{}", serde_json::to_string(&consumption_plan_items).unwrap());
+        assert_eq!(consumption_plan_items.len(), 1);
+        assert_eq!(consumption_plan_items.len(), 1);
 
-        let switch_actions = collect_switch_actions(&consumption_pan_items);
+        let switch_actions = collect_switch_actions(&consumption_plan_items);
         println!("{}", serde_json::to_string(&switch_actions).unwrap());
         assert_eq!(switch_actions.len(), 2);
         assert_eq!(switch_actions[0].switch_on, true);
@@ -182,16 +182,17 @@ mod tests {
     }
 
     #[test]
-    fn consumption_pan_items_do_not_start_in_the_past() {
+    fn consumption_plan_items_do_not_start_in_the_past() {
         let mut power_consumer = create_power_consumer();
 
         let start_time = date_time(2024, 8, 24, 23, 20);
         let end_time = date_time(2024, 8, 24, 23, 30);
-        let consumption_pan_items = power_consumer.create_consumption_plan(TimeDelta::minutes(5), start_time, end_time);
-        println!("{}", serde_json::to_string(&consumption_pan_items).unwrap());
-        assert_eq!(consumption_pan_items.len(), 1);
+        let consumption_plan_items =
+            power_consumer.create_consumption_plan(TimeDelta::minutes(5), start_time, end_time);
+        println!("{}", serde_json::to_string(&consumption_plan_items).unwrap());
+        assert_eq!(consumption_plan_items.len(), 1);
 
-        let switch_actions = collect_switch_actions(&consumption_pan_items);
+        let switch_actions = collect_switch_actions(&consumption_plan_items);
         println!("{}", serde_json::to_string(&switch_actions).unwrap());
         assert_eq!(switch_actions.len(), 2);
         assert_eq!(switch_actions[0].switch_on, true);
@@ -202,17 +203,17 @@ mod tests {
     }
 
     #[test]
-    fn consumption_pan_items_two_hours_one_in_the_noon_and_one_in_the_night_in_w12() {
+    fn consumption_plan_items_two_hours_one_in_the_noon_and_one_in_the_night_in_w12() {
         let mut power_consumer = create_power_consumer();
 
         let start_time = date_time(2024, 8, 24, 14, 0);
         let end_time = date_time(2024, 8, 24, 23, 0);
-        let consumption_pan_items =
+        let consumption_plan_items =
             power_consumer.create_consumption_plan(TimeDelta::minutes(120), start_time, end_time);
-        println!("{}", serde_json::to_string(&consumption_pan_items).unwrap());
-        assert_eq!(consumption_pan_items.len(), 2);
+        println!("{}", serde_json::to_string(&consumption_plan_items).unwrap());
+        assert_eq!(consumption_plan_items.len(), 2);
 
-        let switch_actions = collect_switch_actions(&consumption_pan_items);
+        let switch_actions = collect_switch_actions(&consumption_plan_items);
         println!("{}", serde_json::to_string(&switch_actions).unwrap());
         assert_eq!(switch_actions.len(), 4);
         assert_eq!(switch_actions[0].switch_on, true);
@@ -229,17 +230,17 @@ mod tests {
     }
 
     #[test]
-    fn consumption_pan_items_more_than_two_hour_one_in_noon_and_one_in_the_night_in_w12() {
+    fn consumption_plan_items_more_than_two_hour_one_in_noon_and_one_in_the_night_in_w12() {
         let mut power_consumer = create_power_consumer();
 
         let start_time = date_time(2024, 8, 24, 14, 0);
         let end_time = date_time(2024, 8, 24, 23, 0);
-        let consumption_pan_items =
+        let consumption_plan_items =
             power_consumer.create_consumption_plan(TimeDelta::minutes(130), start_time, end_time);
-        println!("{}", serde_json::to_string(&consumption_pan_items).unwrap());
-        assert_eq!(consumption_pan_items.len(), 3);
+        println!("{}", serde_json::to_string(&consumption_plan_items).unwrap());
+        assert_eq!(consumption_plan_items.len(), 3);
 
-        let switch_actions = collect_switch_actions(&consumption_pan_items);
+        let switch_actions = collect_switch_actions(&consumption_plan_items);
         println!("{}", serde_json::to_string(&switch_actions).unwrap());
         assert_eq!(switch_actions.len(), 4);
         assert_eq!(switch_actions[0].switch_on, true);
@@ -256,17 +257,17 @@ mod tests {
     }
 
     #[test]
-    fn consumption_pan_items_more_than_two_hours_two_in_the_night_in_w12_ten_in_the_noon() {
+    fn consumption_plan_items_more_than_two_hours_two_in_the_night_in_w12_ten_in_the_noon() {
         let mut power_consumer = create_power_consumer();
 
         let start_time = date_time(2024, 8, 24, 14, 0);
         let end_time = date_time(2024, 8, 25, 0, 0);
-        let consumption_pan_items =
+        let consumption_plan_items =
             power_consumer.create_consumption_plan(TimeDelta::minutes(130), start_time, end_time);
-        println!("{}", serde_json::to_string(&consumption_pan_items).unwrap());
-        assert_eq!(consumption_pan_items.len(), 3);
+        println!("{}", serde_json::to_string(&consumption_plan_items).unwrap());
+        assert_eq!(consumption_plan_items.len(), 3);
 
-        let switch_actions = collect_switch_actions(&consumption_pan_items);
+        let switch_actions = collect_switch_actions(&consumption_plan_items);
         println!("{}", serde_json::to_string(&switch_actions).unwrap());
         assert_eq!(switch_actions.len(), 4);
         assert_eq!(switch_actions[0].switch_on, true);
@@ -283,17 +284,17 @@ mod tests {
     }
 
     #[test]
-    fn consumption_pan_items_more_than_two_hours_both_in_the_night_in_w12() {
+    fn consumption_plan_items_more_than_two_hours_both_in_the_night_in_w12() {
         let mut power_consumer = create_power_consumer();
 
         let start_time = date_time(2024, 8, 24, 14, 0);
         let end_time = date_time(2024, 8, 25, 0, 0);
-        let consumption_pan_items =
+        let consumption_plan_items =
             power_consumer.create_consumption_plan(TimeDelta::minutes(120), start_time, end_time);
-        println!("{}", serde_json::to_string(&consumption_pan_items).unwrap());
-        assert_eq!(consumption_pan_items.len(), 2);
+        println!("{}", serde_json::to_string(&consumption_plan_items).unwrap());
+        assert_eq!(consumption_plan_items.len(), 2);
 
-        let switch_actions = collect_switch_actions(&consumption_pan_items);
+        let switch_actions = collect_switch_actions(&consumption_plan_items);
         println!("{}", serde_json::to_string(&switch_actions).unwrap());
         assert_eq!(switch_actions.len(), 2);
 
