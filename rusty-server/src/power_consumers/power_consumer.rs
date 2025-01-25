@@ -1,11 +1,12 @@
-use std::{rc::Rc, sync::Arc};
+use std::{cmp::Ordering, sync::Arc};
 
 use chrono::{DateTime, Datelike, Local, TimeDelta, TimeZone, Timelike, Utc};
 use uuid::Uuid;
 
 use crate::{
     model::{
-        ConsumptionPlan, ConsumptionPlanItem, ConsumptionPlanState, PowerConsumerModel, SwitchAction, SwitchActionState,
+        ConsumptionPlan, ConsumptionPlanItem, ConsumptionPlanState, PowerConsumerModel, PricelistItem, SwitchAction,
+        SwitchActionState,
     },
     price_list_providers::TimePeriodPriceListService,
 };
@@ -59,24 +60,6 @@ impl PowerConsumer {
         )
     }
 
-    pub fn create_consumption_plan(
-        &mut self,
-        consumption_duration: TimeDelta,
-        start_at: DateTime<Utc>,
-        finish_at: DateTime<Utc>,
-    ) -> Vec<ConsumptionPlanItem> {
-        self.consumption_plan = Some(ConsumptionPlan {
-            id: Uuid::new_v4(),
-            created_at: Utc::now(),
-            consumption_duration,
-            finish_at,
-            consumption_plan_items: Vec::new(),
-            state: ConsumptionPlanState::Processing,
-        });
-
-        vec![]
-    }
-
     pub fn cancel_consumption_plan(&mut self) -> PowerConsumerModel {
         use SwitchActionState::*;
 
@@ -116,6 +99,50 @@ impl PowerConsumer {
             }
         }
         self.to_power_consumer_model()
+    }
+
+    pub fn create_consumption_plan(
+        &mut self,
+        consumption_duration: TimeDelta,
+        start_from: DateTime<Utc>,
+        finish_at: DateTime<Utc>,
+    ) -> Vec<ConsumptionPlanItem> {
+        let sorted_consumption_plan_items =
+            self.select_price_list_items_for_consumption_plan(consumption_duration, start_from, finish_at);
+        self.consumption_plan = Some(ConsumptionPlan {
+            id: Uuid::new_v4(),
+            created_at: Utc::now(),
+            consumption_duration,
+            finish_at,
+            consumption_plan_items: Vec::new(),
+            state: ConsumptionPlanState::Processing,
+        });
+
+        vec![]
+    }
+
+    fn compare_by_price_weight_and_start_at(a: &PricelistItem, b: &PricelistItem) -> Ordering {
+        match a.price().cmp(&b.price()) {
+            Ordering::Equal => match a.weight().cmp(&b.weight()) {
+                Ordering::Equal => a.starts_at().cmp(&b.starts_at()),
+                ordering_result => ordering_result,
+            },
+            ordering_result => ordering_result,
+        }
+    }
+
+    fn select_price_list_items_for_consumption_plan(
+        &self,
+        consumption_duration: TimeDelta,
+        start_from: DateTime<Utc>,
+        finish_at: DateTime<Utc>,
+    ) -> Vec<ConsumptionPlanItem> {
+        let mut price_list = self
+            .time_period_price_list_service
+            .get_price_list(start_from, finish_at);
+        price_list.sort_by(PowerConsumer::compare_by_price_weight_and_start_at);
+
+        vec![]
     }
 }
 
