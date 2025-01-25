@@ -13,11 +13,11 @@ use chrono::TimeDelta;
 use chrono::{DateTime, Utc};
 use model::AppError;
 use power_consumers::PowerConsumersService;
-use price_list_providers::{SingleDayPricelist, W12PricelistProvider};
+use price_list_providers::{SingleDayPricelist, TariffSelectorPricelist};
 use serde::Deserialize;
 
 pub struct AppState {
-    pub single_day_pricelist: W12PricelistProvider,
+    pub single_day_pricelist: TariffSelectorPricelist,
     pub power_consumers_service: PowerConsumersService,
 }
 
