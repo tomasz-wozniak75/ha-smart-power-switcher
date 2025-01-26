@@ -1,13 +1,27 @@
-GET http://127.0.0.1:3000/pricelist/01-01-2025
+// to run following requests you need to intall vscode extension https://marketplace.visualstudio.com/items?itemName=humao.rest-client
+
+@tuya_switch_name = switch.audi_charger_breaker_switch
+@server_address = http://127.0.0.1:3000
+
+###
+//Returns today pricelist
+GET {{server_address}}/pricelist/{{$localDatetime 'DD-MM-YYYY'}}
 
 ###
 
-GET http://127.0.0.1:3000/power-consumer
 
 ###
-
-POST http://127.0.0.1:3000/power-consumer/switch.audi_charger_breaker_switch/consumption-plan?consumptionDuration=-12&finishAt=1737500232225
+// Retururns list of configured power consumers, power consumer represents single Tuya switch
+GET {{server_address}}/power-consumer
 
 ###
+// Create consumption plan for selected switch, 
+//charing for 60 minutes which shuold end three hours from now in UTC timezone - timestamp var is giving UTC timestamp 
 
-DELETE http://127.0.0.1:3000/power-consumer/switch.audi_charger_breaker_switch/consumption-plan
+POST {{server_address}}/power-consumer/{{tuya_switch_name}}/consumption-plan
+    ?consumptionDuration=3600000
+    &finishAt={{$timestamp 3 h}}000
+
+###
+//Cancel current consumption plan
+DELETE {{server_address}}/power-consumer/{{tuya_switch_name}}/consumption-plan
