@@ -8,7 +8,7 @@ use axum::{
 use rusty_server::{
     cancel_consumption_plan, get_power_consumers, get_price_list,
     power_consumers::PowerConsumersService,
-    price_list_providers::{TariffSelectorPricelist, TariffTypes, W12PricelistProvider},
+    price_list_providers::{TariffSelectorPricelist, TariffTypes},
     schedule_consumption_plan, AppState,
 };
 
