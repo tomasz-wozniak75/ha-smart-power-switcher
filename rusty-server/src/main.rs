@@ -20,6 +20,8 @@ async fn main() {
         power_consumers_service: PowerConsumersService::new(tariff_selector_pricelist.clone()),
     }));
 
+    tracing_subscriber::fmt().with_max_level(tracing::Level::DEBUG).init();
+
     let app = Router::new()
         .route("/pricelist/{date}", get(get_price_list))
         .route("/power-consumer", get(get_power_consumers))

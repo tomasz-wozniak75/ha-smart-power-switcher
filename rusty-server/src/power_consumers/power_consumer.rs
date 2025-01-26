@@ -301,12 +301,22 @@ impl PowerConsumer {
         }
 
         if *finish_at <= Utc::now() {
-            return Err(AppError::user_error("Finish at should be in the future!"));
+            return Err(AppError::user_error(
+                format!(
+                    "Finish at should be in the future! Requested finish time: {}",
+                    finish_at.format("%Y %m %d %H:%M:%S")
+                )
+                .as_str(),
+            ));
         }
 
         if Utc::now() > (*finish_at - consumption_duration) {
             return Err(AppError::user_error(
-                "Finish at is too early to execute required consumption duration time!",
+                format!(
+                    "Finish at is too early to execute required consumption duration time {} minutes!",
+                    consumption_duration.num_minutes()
+                )
+                .as_str(),
             ));
         }
         let consumption_plan_items = self.create_consumption_plan(&consumption_duration, start_from, finish_at);
