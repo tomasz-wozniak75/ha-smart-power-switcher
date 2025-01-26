@@ -31,8 +31,6 @@ should be turned on or off.
 If we have single continuous charging period application will plan single action to turn on switch and single action
 to turn off it, If charging period has breaks, we will have more switch actions.     
 
-Central point of the rust server is [PowerConsumersService](rusty-server/src/power_consumers/power_consumers_service.rs) and [PowerConsumer](rusty-server/src/power_consumers/power_consumer.rs)
-
 
 ## How it is implemented
 Server part initially was implemented as NodeJs server, but now it is being migrated to Rust application, which uses
@@ -44,6 +42,7 @@ which is based on NodeJs and Express.
 Server exposes REST API endpoints for ReactJs fronted application from module [web-app](./web-app). Endpoints exposed
 by server allow for fetching the price list and schedule charging. Charging planning and execution is performed by server. 
 
+Central point of the rust server is [PowerConsumersService](rusty-server/src/power_consumers/power_consumers_service.rs) and [PowerConsumer](rusty-server/src/power_consumers/power_consumer.rs)
 
 
 ## Deployment
