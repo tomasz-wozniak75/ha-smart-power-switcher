@@ -65,8 +65,8 @@ mod tests {
 
         let start_time = date_time(2024, 8, 24, 13, 30);
         let end_time = date_time(2024, 8, 24, 13, 45);
-        let end_time = time_period_price_list_service.get_price_list(&start_time, &end_time);
-        assert_eq!(end_time.len(), 1)
+        let price_list = time_period_price_list_service.get_price_list(&start_time, &end_time);
+        assert_eq!(price_list.len(), 1)
     }
 
     #[test]
@@ -75,8 +75,8 @@ mod tests {
 
         let start_time = date_time(2024, 8, 24, 13, 30);
         let end_time = date_time(2024, 8, 24, 14, 45);
-        let end_time = time_period_price_list_service.get_price_list(&start_time, &end_time);
-        assert_eq!(end_time.len(), 2)
+        let price_list = time_period_price_list_service.get_price_list(&start_time, &end_time);
+        assert_eq!(price_list.len(), 2)
     }
 
     #[test]
