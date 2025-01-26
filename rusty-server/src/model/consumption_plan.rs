@@ -3,7 +3,7 @@ use chrono::{DateTime, TimeDelta, Utc};
 use serde::Serialize;
 use uuid::Uuid;
 
-use super::PricelistItem;
+use super::PriceListItem;
 
 #[derive(Serialize, Debug, PartialEq, Clone)]
 #[serde(rename_all = "lowercase")]
@@ -13,6 +13,8 @@ pub enum SwitchActionState {
     Canceled,
 }
 
+/// Switch actions are connected to ConsumptionPlanItem,
+/// single switch action represents switch event
 #[derive(Serialize, Debug, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct SwitchAction {
@@ -65,16 +67,22 @@ impl SwitchAction {
     }
 }
 
+///ConsumptionPlanItem has one to one relation with price list item,
+/// its duration can not be longer than price lis item duration
+/// It could have switch action between 0 and 2, first consumption item
+/// for sure will have action to start charging, the last one to finish it,
+/// if consumption plan has breaks other consumption plan item could have switch
+/// action as well to handle breaks.
 #[derive(Serialize, Debug, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ConsumptionPlanItem {
-    price_list_item: PricelistItem,
+    price_list_item: PriceListItem,
     #[serde(serialize_with = "crate::model::serialize_time_delta")]
     duration: TimeDelta,
     switch_actions: Vec<SwitchAction>,
 }
 impl ConsumptionPlanItem {
-    pub fn new(price_list_item: PricelistItem, duration: TimeDelta) -> Self {
+    pub fn new(price_list_item: PriceListItem, duration: TimeDelta) -> Self {
         Self {
             price_list_item,
             duration,
@@ -82,7 +90,7 @@ impl ConsumptionPlanItem {
         }
     }
 
-    pub fn price_list_item(&self) -> &PricelistItem {
+    pub fn price_list_item(&self) -> &PriceListItem {
         &self.price_list_item
     }
 
@@ -107,6 +115,9 @@ pub enum ConsumptionPlanState {
     Canceled,
 }
 
+///ConsumptionPlan is composed from  ConsumptionPlanItems
+/// ConsumptionPlan duration should be equal to the sum of
+/// all its ConsumptionPlanItems durations
 #[derive(Serialize, Debug, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ConsumptionPlan {

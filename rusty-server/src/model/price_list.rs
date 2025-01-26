@@ -11,9 +11,12 @@ pub enum PriceCategory {
     Max,
 }
 
+/// 24 PriceListItem makes daily price list, it has starting time and duration
+/// duration is usually 1 hours, starting time + duration must be equal to the next
+/// price list item start time
 #[derive(Serialize, Debug, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct PricelistItem {
+pub struct PriceListItem {
     #[serde(with = "chrono::serde::ts_milliseconds")]
     starts_at: DateTime<Utc>,
     #[serde(serialize_with = "crate::model::serialize_time_delta")]
@@ -23,7 +26,7 @@ pub struct PricelistItem {
     category: PriceCategory,
 }
 
-impl PricelistItem {
+impl PriceListItem {
     pub fn new(starts_at: DateTime<Utc>, duration: TimeDelta, price: Currency, category: PriceCategory) -> Self {
         Self {
             starts_at,
@@ -65,11 +68,11 @@ mod tests {
     use chrono::{DateTime, TimeDelta};
     use serde_test::{assert_ser_tokens, Token};
 
-    use crate::model::price_list::{PriceCategory, PricelistItem};
+    use crate::model::price_list::{PriceCategory, PriceListItem};
 
     #[test]
     fn pricelist_item_ser_test() {
-        let pricelist_item = PricelistItem::new(
+        let pricelist_item = PriceListItem::new(
             DateTime::from_timestamp_millis(1737068749821).unwrap(),
             TimeDelta::milliseconds(12),
             1,
@@ -82,7 +85,7 @@ mod tests {
             &pricelist_item,
             &[
                 Token::Struct {
-                    name: "PricelistItem",
+                    name: "PriceListItem",
                     len: 5,
                 },
                 Token::Str("startsAt"),

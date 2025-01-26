@@ -1,9 +1,9 @@
 use chrono::{DateTime, Datelike, Local, TimeZone, Utc};
 
-use crate::model::PricelistItem;
+use crate::model::PriceListItem;
 
-pub trait SingleDayPricelist {
-    fn get_price_list(&self, for_day: &DateTime<Utc>) -> Vec<PricelistItem>;
+pub trait SingleDayPriceList {
+    fn get_price_list(&self, for_day: &DateTime<Utc>) -> Vec<PriceListItem>;
 }
 
 pub fn cut_off_time_from_date(date_time: &DateTime<Utc>) -> DateTime<Utc> {

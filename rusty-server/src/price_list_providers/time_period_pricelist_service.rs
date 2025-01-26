@@ -2,24 +2,31 @@ use std::sync::Arc;
 
 use chrono::{DateTime, TimeDelta, Utc};
 
-use crate::model::PricelistItem;
+use crate::model::PriceListItem;
 
-use super::{commons::cut_off_time_from_date, SingleDayPricelist, TariffSelectorPricelist};
+use super::{commons::cut_off_time_from_date, SingleDayPriceList, TariffSelectorPriceList};
 
+/// Price list providers returns price list for single required day,
+/// charging could span few days, this service takes as input time range
+/// and collects price list items from potentially few daily price list into
+/// one continuous price list which covers from_the_time - to_the_time.
+/// It uses TariffSelectorPriceList to get price list for required day.
+/// It returns copy of each selected price list item because scheduler
+/// applies weights to each price list item
 pub struct TimePeriodPriceListService {
-    single_day_price_list: Arc<TariffSelectorPricelist>,
+    single_day_price_list: Arc<TariffSelectorPriceList>,
 }
 
 impl TimePeriodPriceListService {
-    pub fn new(single_day_price_list: Arc<TariffSelectorPricelist>) -> Self {
+    pub fn new(single_day_price_list: Arc<TariffSelectorPriceList>) -> Self {
         Self { single_day_price_list }
     }
 
-    pub fn get_price_list(&self, from_the_time: &DateTime<Utc>, to_the_time: &DateTime<Utc>) -> Vec<PricelistItem> {
+    pub fn get_price_list(&self, from_the_time: &DateTime<Utc>, to_the_time: &DateTime<Utc>) -> Vec<PriceListItem> {
         let from_the_day = cut_off_time_from_date(from_the_time);
         let to_the_day = cut_off_time_from_date(to_the_time);
 
-        let mut price_list: Vec<PricelistItem> = Vec::new();
+        let mut price_list: Vec<PriceListItem> = Vec::new();
         let mut next_day = from_the_day.clone();
         while next_day <= to_the_day {
             let single_day_price_list = self.single_day_price_list.get_price_list(&next_day);
@@ -44,7 +51,7 @@ mod tests {
 
     use chrono::{DateTime, Local, TimeZone, Utc};
 
-    use crate::price_list_providers::{TariffSelectorPricelist, TariffTypes};
+    use crate::price_list_providers::{TariffSelectorPriceList, TariffTypes};
 
     use super::TimePeriodPriceListService;
 
@@ -56,7 +63,7 @@ mod tests {
     }
 
     fn create_time_period_price_list_service() -> TimePeriodPriceListService {
-        TimePeriodPriceListService::new(Arc::new(TariffSelectorPricelist::new(TariffTypes::W12)))
+        TimePeriodPriceListService::new(Arc::new(TariffSelectorPriceList::new(TariffTypes::W12)))
     }
 
     #[test]

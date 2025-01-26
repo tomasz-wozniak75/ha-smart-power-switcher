@@ -8,5 +8,9 @@
   "vs-code-prettier-eslint.prettierLast": false,
    "[rust]": {
     "editor.defaultFormatter": "rust-lang.rust-analyzer"
-  } // set as "true" to run 'prettier' last not first
+  },
+  "cSpell.words": [
+    "chrono",
+    "Tuya"
+  ] // set as "true" to run 'prettier' last not first
 }
