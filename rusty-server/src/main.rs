@@ -8,13 +8,13 @@ use axum::{
 use rusty_server::{
     cancel_consumption_plan, get_power_consumers, get_price_list,
     power_consumers::PowerConsumersService,
-    price_list_providers::{TariffSelectorPricelist, TariffTypes},
+    price_list_providers::{TariffSelectorPriceList, TariffTypes},
     schedule_consumption_plan, AppState,
 };
 
 #[tokio::main]
 async fn main() {
-    let tariff_selector_pricelist = Arc::new(TariffSelectorPricelist::new(TariffTypes::W12));
+    let tariff_selector_pricelist = Arc::new(TariffSelectorPriceList::new(TariffTypes::W12));
     let state = Arc::new(RwLock::new(AppState {
         single_day_pricelist: tariff_selector_pricelist.clone(),
         power_consumers_service: PowerConsumersService::new(tariff_selector_pricelist.clone()),

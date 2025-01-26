@@ -5,12 +5,17 @@ use uuid::Uuid;
 
 use crate::{
     model::{
-        AppError, ConsumptionPlan, ConsumptionPlanItem, ConsumptionPlanState, PowerConsumerModel, PricelistItem,
+        AppError, ConsumptionPlan, ConsumptionPlanItem, ConsumptionPlanState, PowerConsumerModel, PriceListItem,
         SwitchAction, SwitchActionState,
     },
     price_list_providers::TimePeriodPriceListService,
 };
 
+/// PowerConsumer is central point of the application, it represents a single Tuya switch
+/// It have three main tasks
+/// 1. Prepare ConsumptionPlan
+/// 2. Cancel ConsumptionPlan
+/// 3 Execute planed switch actions
 #[derive(Clone)]
 pub struct PowerConsumer {
     ha_device_name: String,
@@ -63,6 +68,9 @@ impl PowerConsumer {
         )
     }
 
+    /// if the execution of consumption plan has not been started we just cancel all switch actions
+    /// if it is partially executed we execute first unexecuted action if it is switch off action
+    /// or cancel it if it is switch on the next actions are canceled
     pub fn cancel_consumption_plan(&mut self, now: DateTime<Utc>) -> PowerConsumerModel {
         use SwitchActionState::*;
 
@@ -103,7 +111,8 @@ impl PowerConsumer {
         self.to_power_consumer_model()
     }
 
-    fn compare_by_price_weight_and_start_at(a: &PricelistItem, b: &PricelistItem) -> Ordering {
+    ///price list items are selected for consumption plan from the list which is sorted by price, weight and time
+    fn compare_by_price_weight_and_start_at(a: &PriceListItem, b: &PriceListItem) -> Ordering {
         match a.price().cmp(&b.price()) {
             Ordering::Equal => match b.weight().cmp(&a.weight()) {
                 Ordering::Equal => a.starts_at().cmp(&b.starts_at()),
@@ -113,12 +122,13 @@ impl PowerConsumer {
         }
     }
 
+    ///after consumption plan items are selected we need to sort them again according to the time
     fn compare_by_start_at(a: &ConsumptionPlanItem, b: &ConsumptionPlanItem) -> Ordering {
         a.price_list_item().starts_at().cmp(&b.price_list_item().starts_at())
     }
 
     fn apply_constraints_to_duration(
-        price_list_item: &PricelistItem,
+        price_list_item: &PriceListItem,
         start_from: &DateTime<Utc>,
         finish_at: &DateTime<Utc>,
     ) -> TimeDelta {
@@ -133,6 +143,10 @@ impl PowerConsumer {
         *end_at - *starts_at
     }
 
+    /// list items are sorted by price, weight and time
+    /// next we take as much price list items as it is needed to cover required charging duration
+    /// for each selected price list item there is created consumption plan item
+    /// next we sort consumption plan items according its related pice list items
     fn select_price_list_items_for_consumption_plan(
         &self,
         consumption_duration: &TimeDelta,
@@ -169,8 +183,9 @@ impl PowerConsumer {
         consumption_plan
     }
 
+    /// The price list item weight is proportional to the number of continuous price list items with the sme price to which belongs given price list item
     fn calculate_price_items_weights(
-        price_list: &mut Vec<PricelistItem>,
+        price_list: &mut Vec<PriceListItem>,
         start_from: &DateTime<Utc>,
         finish_at: &DateTime<Utc>,
     ) {
@@ -208,17 +223,19 @@ impl PowerConsumer {
             .for_each(|(i, weight)| price_list[i].set_weight(*weight));
     }
 
+    /// this method creates switch action for sorted collection of consumption plan items
     fn create_switch_actions(&self, consumption_plan_items: &mut Vec<ConsumptionPlanItem>, finish_at: &DateTime<Utc>) {
         let mut prev_consumption_plan_item: Option<&mut ConsumptionPlanItem> = None;
-        let mut prev_item_is_adjecent = false;
+        let mut prev_item_is_adjacent = false;
         for consumption_item in consumption_plan_items.iter_mut() {
             let price_list_item = consumption_item.price_list_item();
 
-            if let (Some(prev_consumption_plan_item), true) = (prev_consumption_plan_item, prev_item_is_adjecent) {
-                let prev_pricelist_item = prev_consumption_plan_item.price_list_item();
-                if (*prev_pricelist_item.starts_at() + *prev_pricelist_item.duration()) < *price_list_item.starts_at() {
-                    prev_item_is_adjecent = false;
-                    let start_at = *prev_pricelist_item.starts_at() + *prev_pricelist_item.duration();
+            if let (Some(prev_consumption_plan_item), true) = (prev_consumption_plan_item, prev_item_is_adjacent) {
+                let prev_price_list_item = prev_consumption_plan_item.price_list_item();
+                if (*prev_price_list_item.starts_at() + *prev_price_list_item.duration()) < *price_list_item.starts_at()
+                {
+                    prev_item_is_adjacent = false;
+                    let start_at = *prev_price_list_item.starts_at() + *prev_price_list_item.duration();
                     prev_consumption_plan_item
                         .switch_actions_mut()
                         .push(SwitchAction::new(start_at, false));
@@ -226,12 +243,12 @@ impl PowerConsumer {
             }
 
             if consumption_item.duration() < price_list_item.duration() {
-                if prev_item_is_adjecent {
+                if prev_item_is_adjacent {
                     let start_at = *price_list_item.starts_at() + *consumption_item.duration();
                     consumption_item
                         .switch_actions_mut()
                         .push(SwitchAction::new(start_at, false));
-                    prev_item_is_adjecent = false;
+                    prev_item_is_adjacent = false;
                 } else {
                     let pricelist_item_end = &(*price_list_item.starts_at() + *price_list_item.duration());
                     let forced_pricelist_item_end = if finish_at < pricelist_item_end {
@@ -243,13 +260,13 @@ impl PowerConsumer {
                     consumption_item
                         .switch_actions_mut()
                         .push(SwitchAction::new(start_at, true));
-                    prev_item_is_adjecent = true;
+                    prev_item_is_adjacent = true;
                 }
             } else {
-                if !prev_item_is_adjecent {
+                if !prev_item_is_adjacent {
                     let at = price_list_item.starts_at().clone();
                     consumption_item.switch_actions_mut().push(SwitchAction::new(at, true));
-                    prev_item_is_adjecent = true;
+                    prev_item_is_adjacent = true;
                 }
             }
             prev_consumption_plan_item = Some(consumption_item);
@@ -398,7 +415,7 @@ mod tests {
 
     use crate::{
         model::{ConsumptionPlanItem, ConsumptionPlanState, SwitchAction, SwitchActionState},
-        price_list_providers::{TariffSelectorPricelist, TariffTypes, TimePeriodPriceListService},
+        price_list_providers::{TariffSelectorPriceList, TariffTypes, TimePeriodPriceListService},
     };
 
     use super::PowerConsumer;
@@ -407,7 +424,7 @@ mod tests {
         PowerConsumer::new(
             "test.device".to_owned(),
             "Smart switch".to_owned(),
-            Arc::new(TimePeriodPriceListService::new(Arc::new(TariffSelectorPricelist::new(
+            Arc::new(TimePeriodPriceListService::new(Arc::new(TariffSelectorPriceList::new(
                 TariffTypes::W12,
             )))),
         )
