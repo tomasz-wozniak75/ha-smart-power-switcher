@@ -5,8 +5,8 @@ use uuid::Uuid;
 
 use crate::{
     model::{
-        ConsumptionPlan, ConsumptionPlanItem, ConsumptionPlanState, PowerConsumerModel, PricelistItem, SwitchAction,
-        SwitchActionState,
+        AppError, ConsumptionPlan, ConsumptionPlanItem, ConsumptionPlanState, PowerConsumerModel, PricelistItem,
+        SwitchAction, SwitchActionState,
     },
     price_list_providers::TimePeriodPriceListService,
 };
@@ -287,7 +287,28 @@ impl PowerConsumer {
         consumption_duration: TimeDelta,
         start_from: &DateTime<Utc>,
         finish_at: &DateTime<Utc>,
-    ) -> PowerConsumerModel {
+    ) -> Result<PowerConsumerModel, AppError> {
+        if let Some(ConsumptionPlan {
+            state: ConsumptionPlanState::Processing,
+            ..
+        }) = self.consumption_plan
+        {
+            return Err(AppError::user_error("Current plan needs to be canceled!"));
+        }
+
+        if consumption_duration.num_milliseconds() <= 0 {
+            return Err(AppError::user_error("Consumption duration should be grater than zero!"));
+        }
+
+        if *finish_at <= Utc::now() {
+            return Err(AppError::user_error("Finish at should be in the future!"));
+        }
+
+        if Utc::now() > (*finish_at - consumption_duration) {
+            return Err(AppError::user_error(
+                "Finish at is too early to execute required consumption duration time!",
+            ));
+        }
         let consumption_plan_items = self.create_consumption_plan(&consumption_duration, start_from, finish_at);
         self.consumption_plan = Some(ConsumptionPlan {
             id: Uuid::new_v4(),
@@ -298,7 +319,7 @@ impl PowerConsumer {
             state: ConsumptionPlanState::Processing,
         });
 
-        self.to_power_consumer_model()
+        Ok(self.to_power_consumer_model())
     }
 }
 
