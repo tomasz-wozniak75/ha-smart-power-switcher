@@ -54,20 +54,18 @@ impl PowerConsumersService {
         consumption_duration: TimeDelta,
         finish_at: &DateTime<Utc>,
     ) -> Result<PowerConsumerModel, AppError> {
-        let power_consumer = self.power_consumers.get_mut(&power_consumer_id);
-        power_consumer
-            .map(|pc| {
-                pc.schedule_consumption_plan(consumption_duration, &Utc::now(), finish_at);
-                pc
-            })
-            .map(|power_consumer| power_consumer.to_power_consumer_model())
-            .ok_or(AppError::not_found("Power consumer not found"))
+        let power_consumer = self
+            .power_consumers
+            .get_mut(&power_consumer_id)
+            .ok_or(AppError::not_found("Power consumer not found"))?;
+        power_consumer.schedule_consumption_plan(consumption_duration, &Utc::now(), finish_at)
     }
 
     pub fn cancel_consumption_plan(&mut self, power_consumer_id: String) -> Result<PowerConsumerModel, AppError> {
-        self.power_consumers
+        let power_consumer = self
+            .power_consumers
             .get_mut(&power_consumer_id)
-            .map(|pc| pc.cancel_consumption_plan())
-            .ok_or(AppError::not_found("Power consumer not found"))
+            .ok_or(AppError::not_found("Power consumer not found"))?;
+        Ok(power_consumer.cancel_consumption_plan())
     }
 }
