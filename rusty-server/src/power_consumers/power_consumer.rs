@@ -291,6 +291,61 @@ impl PowerConsumer {
         });
     }
 
+    fn switch_consumption_plan_state(consumption_plan: &mut ConsumptionPlan) {
+        use ConsumptionPlanState::*;
+
+        if consumption_plan.state == Processing {
+            let mut has_scheduled_action = false;
+            let all_switch_actions = consumption_plan
+                .consumption_plan_items
+                .iter_mut()
+                .flat_map(|consumption_plan_item| consumption_plan_item.switch_actions_mut());
+
+            for next_switch_action in all_switch_actions {
+                if *next_switch_action.state() == SwitchActionState::Scheduled {
+                    has_scheduled_action = true;
+                    break;
+                }
+            }
+            if !has_scheduled_action {
+                consumption_plan.state = Executed;
+            }
+        }
+    }
+
+    fn execute_switch_action(switchAction: &mut SwitchAction) {
+        use SwitchActionState::*;
+        if *switchAction.state() == Scheduled {
+            switchAction.set_state(Executed);
+            //TODO self.homeAsistantService.switchDevice(this.haDeviceName, switchAction.switchOn);
+            switchAction.set_result(Some("OK".to_owned()));
+            println!("Switch action executed at {}", Utc::now().format("%Y %m %d %H:%M:%S"));
+            //in case of call errorswitchAction.result = error.message;
+        }
+    }
+
+    fn schedule_switch_actions(&mut self, now: &DateTime<Utc>) {
+        let scheduling_threshold = *now + TimeDelta::minutes(1);
+
+        let switch_actions: Vec<&mut SwitchAction> = self
+            .consumption_plan
+            .iter_mut()
+            .flat_map(|cp| &mut cp.consumption_plan_items)
+            .flat_map(|cpi| cpi.switch_actions_mut())
+            .collect();
+
+        for switch_action in switch_actions {
+            if *switch_action.at() < scheduling_threshold {
+                switch_action.set_at(now.clone());
+                Self::execute_switch_action(switch_action);
+                // Self::switch_consumption_plan_state(&mut self.consumption_plan.unwrap());
+            } else {
+                Self::execute_switch_action(switch_action);
+                // Self::switch_consumption_plan_state(&mut self.consumption_plan.unwrap());
+            }
+        }
+    }
+
     pub fn schedule_consumption_plan(
         &mut self,
         consumption_duration: TimeDelta,
@@ -329,6 +384,7 @@ impl PowerConsumer {
             ));
         }
         self.create_consumption_plan(&consumption_duration, start_from, finish_at);
+        self.schedule_switch_actions(start_from);
 
         Ok(self.to_power_consumer_model())
     }

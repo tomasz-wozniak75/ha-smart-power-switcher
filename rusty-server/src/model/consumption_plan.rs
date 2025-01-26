@@ -59,6 +59,10 @@ impl SwitchAction {
     pub(crate) fn set_state(&mut self, state: SwitchActionState) {
         self.state = state;
     }
+
+    pub(crate) fn set_at(&mut self, at: DateTime<Utc>) {
+        self.at = at;
+    }
 }
 
 #[derive(Serialize, Debug, PartialEq, Clone)]
