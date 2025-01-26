@@ -10,8 +10,9 @@ use super::power_consumer::PowerConsumer;
 
 /// PowerConsumersService has a map of PowerConsumers
 /// Each PowerConsumer represents single Tuya switch.
-/// PowerConsumersService serves request to schedule consumption plan or to cancel it,
-/// by selecting required power consumer and delegating request. Scheduling is done by PowerConsumer  
+/// PowerConsumersService handles request to schedule consumption plan or to cancel it
+/// by selecting required power consumer and delegating request to it. Scheduling is done by PowerConsumer  
+///
 pub struct PowerConsumersService {
     time_period_price_list_service: Arc<TimePeriodPriceListService>,
     power_consumers: HashMap<String, PowerConsumer>,
