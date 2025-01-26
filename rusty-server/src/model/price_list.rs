@@ -1,7 +1,7 @@
 use chrono::{DateTime, TimeDelta, Utc};
 use serde::Serialize;
 
-pub type Currency = u32;
+pub type Currency = i32;
 
 #[derive(Serialize, Debug, PartialEq, Clone)]
 #[serde(rename_all = "lowercase")]
@@ -19,7 +19,7 @@ pub struct PricelistItem {
     #[serde(serialize_with = "crate::model::serialize_time_delta")]
     duration: TimeDelta,
     price: Currency,
-    weight: Option<u32>,
+    weight: i64,
     category: PriceCategory,
 }
 
@@ -29,7 +29,7 @@ impl PricelistItem {
             starts_at,
             duration,
             price,
-            weight: None,
+            weight: 0,
             category,
         }
     }
@@ -46,8 +46,17 @@ impl PricelistItem {
         self.price
     }
 
-    pub fn weight(&self) -> Option<u32> {
+    pub fn price_as_float(&self) -> f32 {
+        let shift = 100000f32;
+        ((self.price as f32 / shift * 100f32) as i32) as f32 / 100.0
+    }
+
+    pub fn weight(&self) -> i64 {
         self.weight
+    }
+
+    pub fn set_weight(&mut self, weight: i64) {
+        self.weight = weight;
     }
 }
 
@@ -81,9 +90,9 @@ mod tests {
                 Token::Str("duration"),
                 Token::I64(12),
                 Token::Str("price"),
-                Token::U32(1),
+                Token::I32(1),
                 Token::Str("weight"),
-                Token::None,
+                Token::I64(0),
                 Token::Str("category"),
                 Token::UnitVariant {
                     name: "PriceCategory",

@@ -103,7 +103,7 @@ impl PowerConsumer {
 
     fn compare_by_price_weight_and_start_at(a: &PricelistItem, b: &PricelistItem) -> Ordering {
         match a.price().cmp(&b.price()) {
-            Ordering::Equal => match a.weight().cmp(&b.weight()) {
+            Ordering::Equal => match b.weight().cmp(&a.weight()) {
                 Ordering::Equal => a.starts_at().cmp(&b.starts_at()),
                 ordering_result => ordering_result,
             },
@@ -140,6 +140,7 @@ impl PowerConsumer {
         let mut price_list = self
             .time_period_price_list_service
             .get_price_list(start_from, finish_at);
+        Self::calculate_price_items_weights(&mut price_list, start_from, finish_at);
         price_list.sort_by(Self::compare_by_price_weight_and_start_at);
         let mut current_consumption_duration = TimeDelta::milliseconds(0);
         let mut consumption_plan: Vec<ConsumptionPlanItem> = Vec::new();
@@ -164,6 +165,45 @@ impl PowerConsumer {
         consumption_plan.sort_by(Self::compare_by_start_at);
 
         consumption_plan
+    }
+
+    fn calculate_price_items_weights(
+        price_list: &mut Vec<PricelistItem>,
+        start_from: &DateTime<Utc>,
+        finish_at: &DateTime<Utc>,
+    ) {
+        let mut weights: Vec<i64> = vec![0i64; price_list.len()];
+        let mut current_price_min = 0.0;
+        let mut current_price_max = 0.0;
+        let mut weight = 0i64;
+        let mut weight_change_index = 0;
+
+        let mut apply_weight = |from: usize, to: usize, weight: i64| {
+            for j in from..to {
+                weights[j] = weight;
+            }
+        };
+
+        for i in 0..price_list.len() {
+            let pricelist_item = &price_list[i];
+            let item_price = pricelist_item.price_as_float();
+            if current_price_min <= item_price && item_price <= current_price_max {
+                weight += Self::apply_constraints_to_duration(pricelist_item, start_from, finish_at).num_minutes();
+            } else {
+                if i > 0 {
+                    apply_weight(weight_change_index, i - 1, weight);
+                }
+                current_price_min = pricelist_item.price_as_float();
+                current_price_max = current_price_min;
+                weight_change_index = i;
+                weight = Self::apply_constraints_to_duration(pricelist_item, start_from, finish_at).num_minutes();
+            }
+        }
+        apply_weight(weight_change_index, price_list.len(), weight);
+        weights
+            .iter()
+            .enumerate()
+            .for_each(|(i, weight)| price_list[i].set_weight(*weight));
     }
 
     fn create_switch_actions(&self, consumption_plan_items: &mut Vec<ConsumptionPlanItem>, finish_at: &DateTime<Utc>) {
@@ -215,7 +255,9 @@ impl PowerConsumer {
 
         //there is at least one consumption plan item
         let last_consumption_plan_item = consumption_plan_items.last_mut().unwrap();
-        if let Some(SwitchAction { switch_on: true, .. }) = last_consumption_plan_item.switch_actions_mut().last() {
+        if last_consumption_plan_item.switch_actions().is_empty()
+            || last_consumption_plan_item.switch_actions().last().unwrap().switch_on()
+        {
             let mut item_start_from = last_consumption_plan_item.price_list_item().starts_at();
             if last_consumption_plan_item.switch_actions().len() == 1 {
                 item_start_from = last_consumption_plan_item.switch_actions_mut().first().unwrap().at();
@@ -338,7 +380,7 @@ mod tests {
         println!("{}", serde_json::to_string(&switch_actions).unwrap());
         assert_eq!(switch_actions.len(), 2);
         assert_eq!(switch_actions[0].switch_on, true);
-        assert_eq!(switch_actions[0].at(), &date_time(2024, 8, 24, 0, 0));
+        assert_eq!(switch_actions[0].at(), &date_time(2024, 8, 24, 22, 0));
 
         assert_eq!(switch_actions[1].switch_on, false);
         assert_eq!(switch_actions[1].at(), &date_time(2024, 8, 24, 23, 0));
