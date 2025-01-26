@@ -1,0 +1,76 @@
+use std::{collections::HashMap, sync::Arc};
+
+use crate::{
+    model::{AppError, PowerConsumerModel},
+    price_list_providers::{TariffSelectorPriceList, TimePeriodPriceListService},
+};
+use chrono::{DateTime, TimeDelta, Utc};
+
+use super::power_consumer::PowerConsumer;
+
+/// PowerConsumersService has a map of PowerConsumers
+/// Each PowerConsumer represents single Tuya switch.
+/// PowerConsumersService handles request to schedule consumption plan or to cancel it
+/// by selecting required power consumer and delegating request to it. Scheduling is done by PowerConsumer  
+///
+pub struct PowerConsumersService {
+    time_period_price_list_service: Arc<TimePeriodPriceListService>,
+    power_consumers: HashMap<String, PowerConsumer>,
+}
+
+impl PowerConsumersService {
+    pub fn new(tariff_selector_pricelist: Arc<TariffSelectorPriceList>) -> Self {
+        let mut this = Self {
+            time_period_price_list_service: Arc::new(TimePeriodPriceListService::new(tariff_selector_pricelist)),
+            power_consumers: HashMap::new(),
+        };
+
+        let audi_charger_id = "switch.audi_charger_breaker_switch".to_owned();
+        let audi_power_consumer = PowerConsumer::new(
+            audi_charger_id,
+            "Audi charger".to_owned(),
+            this.time_period_price_list_service.clone(),
+        );
+        this.power_consumers
+            .insert(audi_power_consumer.id().to_owned(), audi_power_consumer);
+
+        let one_phase_switch_id = "switch.smart_plug_socket_1".to_owned();
+        let one_phase_switch = PowerConsumer::new(
+            one_phase_switch_id,
+            "One phase switch".to_owned(),
+            this.time_period_price_list_service.clone(),
+        );
+        this.power_consumers
+            .insert(one_phase_switch.id().to_owned(), one_phase_switch);
+
+        this
+    }
+
+    pub fn get_power_consumers_model_list(&self) -> Vec<PowerConsumerModel> {
+        self.power_consumers
+            .iter()
+            .map(|(_, v)| v.to_power_consumer_model())
+            .collect()
+    }
+
+    pub fn schedule_consumption_plan(
+        &mut self,
+        power_consumer_id: String,
+        consumption_duration: TimeDelta,
+        finish_at: &DateTime<Utc>,
+    ) -> Result<PowerConsumerModel, AppError> {
+        let power_consumer = self
+            .power_consumers
+            .get_mut(&power_consumer_id)
+            .ok_or(AppError::not_found("Power consumer not found"))?;
+        power_consumer.schedule_consumption_plan(consumption_duration, &Utc::now(), finish_at)
+    }
+
+    pub fn cancel_consumption_plan(&mut self, power_consumer_id: String) -> Result<PowerConsumerModel, AppError> {
+        let power_consumer = self
+            .power_consumers
+            .get_mut(&power_consumer_id)
+            .ok_or(AppError::not_found("Power consumer not found"))?;
+        Ok(power_consumer.cancel_consumption_plan(Utc::now()))
+    }
+}
