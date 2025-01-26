@@ -12,10 +12,11 @@ use crate::{
 };
 
 /// PowerConsumer is central point of the application, it represents a single Tuya switch
-/// It have three main tasks
+/// It has three main tasks
 /// 1. Prepare ConsumptionPlan
 /// 2. Cancel ConsumptionPlan
 /// 3 Execute planed switch actions
+///
 #[derive(Clone)]
 pub struct PowerConsumer {
     ha_device_name: String,
