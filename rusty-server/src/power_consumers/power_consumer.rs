@@ -32,6 +32,9 @@ impl PowerConsumer {
             time_period_price_list_service,
         }
     }
+    pub fn consumption_plan(&self) -> Option<&ConsumptionPlan> {
+        self.consumption_plan.as_ref()
+    }
 
     fn get_default_charging_finish_time() -> DateTime<Utc> {
         let now = Local::now();
@@ -60,7 +63,7 @@ impl PowerConsumer {
         )
     }
 
-    pub fn cancel_consumption_plan(&mut self) -> PowerConsumerModel {
+    pub fn cancel_consumption_plan(&mut self, now: DateTime<Utc>) -> PowerConsumerModel {
         use SwitchActionState::*;
 
         if let Some(consumption_plan) = &mut self.consumption_plan {
@@ -74,9 +77,8 @@ impl PowerConsumer {
                 let consumption_plan_has_been_started = *switch_actions[0].state() == SwitchActionState::Executed;
                 let previous_action_executed = consumption_plan_has_been_started;
                 for switch_action in switch_actions {
-                    if *switch_action.state() == Executed {
+                    if *switch_action.state() != Executed {
                         if previous_action_executed && !switch_action.switch_on {
-                            let now = Utc::now();
                             switch_action.set_result(Some(
                                 format!("Canceled at {}", now.with_timezone(&Local).format("%H:%M:%S")).to_owned(),
                             ));
@@ -274,12 +276,19 @@ impl PowerConsumer {
         consumption_duration: &TimeDelta,
         start_from: &DateTime<Utc>,
         finish_at: &DateTime<Utc>,
-    ) -> Vec<ConsumptionPlanItem> {
+    ) {
         let mut consumption_plan_items =
             self.select_price_list_items_for_consumption_plan(consumption_duration, start_from, finish_at);
         self.create_switch_actions(&mut consumption_plan_items, finish_at);
 
-        consumption_plan_items
+        self.consumption_plan = Some(ConsumptionPlan {
+            id: Uuid::new_v4(),
+            created_at: start_from.clone(),
+            consumption_duration: consumption_duration.clone(),
+            finish_at: finish_at.clone(),
+            consumption_plan_items: consumption_plan_items,
+            state: ConsumptionPlanState::Processing,
+        });
     }
 
     pub fn schedule_consumption_plan(
@@ -319,15 +328,7 @@ impl PowerConsumer {
                 .as_str(),
             ));
         }
-        let consumption_plan_items = self.create_consumption_plan(&consumption_duration, start_from, finish_at);
-        self.consumption_plan = Some(ConsumptionPlan {
-            id: Uuid::new_v4(),
-            created_at: Utc::now(),
-            consumption_duration,
-            finish_at: finish_at.clone(),
-            consumption_plan_items: consumption_plan_items,
-            state: ConsumptionPlanState::Processing,
-        });
+        self.create_consumption_plan(&consumption_duration, start_from, finish_at);
 
         Ok(self.to_power_consumer_model())
     }
@@ -340,7 +341,7 @@ mod tests {
     use chrono::{DateTime, Local, TimeDelta, TimeZone, Utc};
 
     use crate::{
-        model::{ConsumptionPlanItem, SwitchAction},
+        model::{ConsumptionPlanItem, ConsumptionPlanState, SwitchAction, SwitchActionState},
         price_list_providers::{TariffSelectorPricelist, TariffTypes, TimePeriodPriceListService},
     };
 
@@ -380,8 +381,9 @@ mod tests {
 
         let start_time = date_time(2024, 8, 24, 19, 30);
         let end_time = date(2024, 8, 25);
-        let consumption_plan_items =
-            power_consumer.create_consumption_plan(&TimeDelta::minutes(90), &start_time, &end_time);
+        power_consumer.create_consumption_plan(&TimeDelta::minutes(90), &start_time, &end_time);
+        let consumption_plan_items = &power_consumer.consumption_plan().unwrap().consumption_plan_items;
+
         println!("{}", serde_json::to_string(&consumption_plan_items).unwrap());
         assert_eq!(consumption_plan_items.len(), 2);
 
@@ -401,8 +403,8 @@ mod tests {
 
         let start_time = date_time(2024, 8, 24, 19, 30);
         let end_time = date_time(2024, 8, 24, 23, 0);
-        let consumption_plan_items =
-            power_consumer.create_consumption_plan(&TimeDelta::minutes(60), &start_time, &end_time);
+        power_consumer.create_consumption_plan(&TimeDelta::minutes(60), &start_time, &end_time);
+        let consumption_plan_items = &power_consumer.consumption_plan().unwrap().consumption_plan_items;
         println!("{}", serde_json::to_string(&consumption_plan_items).unwrap());
         assert_eq!(consumption_plan_items.len(), 1);
         assert_eq!(consumption_plan_items.len(), 1);
@@ -423,8 +425,8 @@ mod tests {
 
         let start_time = date_time(2024, 8, 24, 23, 20);
         let end_time = date_time(2024, 8, 24, 23, 30);
-        let consumption_plan_items =
-            power_consumer.create_consumption_plan(&TimeDelta::minutes(5), &start_time, &end_time);
+        power_consumer.create_consumption_plan(&TimeDelta::minutes(5), &start_time, &end_time);
+        let consumption_plan_items = &power_consumer.consumption_plan().unwrap().consumption_plan_items;
         println!("{}", serde_json::to_string(&consumption_plan_items).unwrap());
         assert_eq!(consumption_plan_items.len(), 1);
 
@@ -444,8 +446,8 @@ mod tests {
 
         let start_time = date_time(2024, 8, 24, 14, 0);
         let end_time = date_time(2024, 8, 24, 23, 0);
-        let consumption_plan_items =
-            power_consumer.create_consumption_plan(&TimeDelta::minutes(120), &start_time, &end_time);
+        power_consumer.create_consumption_plan(&TimeDelta::minutes(120), &start_time, &end_time);
+        let consumption_plan_items = &power_consumer.consumption_plan().unwrap().consumption_plan_items;
         println!("{}", serde_json::to_string(&consumption_plan_items).unwrap());
         assert_eq!(consumption_plan_items.len(), 2);
 
@@ -471,8 +473,8 @@ mod tests {
 
         let start_time = date_time(2024, 8, 24, 14, 0);
         let end_time = date_time(2024, 8, 24, 23, 0);
-        let consumption_plan_items =
-            power_consumer.create_consumption_plan(&TimeDelta::minutes(130), &start_time, &end_time);
+        power_consumer.create_consumption_plan(&TimeDelta::minutes(130), &start_time, &end_time);
+        let consumption_plan_items = &power_consumer.consumption_plan().unwrap().consumption_plan_items;
         println!("{}", serde_json::to_string(&consumption_plan_items).unwrap());
         assert_eq!(consumption_plan_items.len(), 3);
 
@@ -498,8 +500,8 @@ mod tests {
 
         let start_time = date_time(2024, 8, 24, 14, 0);
         let end_time = date_time(2024, 8, 25, 0, 0);
-        let consumption_plan_items =
-            power_consumer.create_consumption_plan(&TimeDelta::minutes(130), &start_time, &end_time);
+        power_consumer.create_consumption_plan(&TimeDelta::minutes(130), &start_time, &end_time);
+        let consumption_plan_items = &power_consumer.consumption_plan().unwrap().consumption_plan_items;
         println!("{}", serde_json::to_string(&consumption_plan_items).unwrap());
         assert_eq!(consumption_plan_items.len(), 3);
 
@@ -525,8 +527,9 @@ mod tests {
 
         let start_time = date_time(2024, 8, 24, 14, 0);
         let end_time = date_time(2024, 8, 25, 0, 0);
-        let consumption_plan_items =
-            power_consumer.create_consumption_plan(&TimeDelta::minutes(120), &start_time, &end_time);
+
+        power_consumer.create_consumption_plan(&TimeDelta::minutes(120), &start_time, &end_time);
+        let consumption_plan_items = &power_consumer.consumption_plan().unwrap().consumption_plan_items;
         println!("{}", serde_json::to_string(&consumption_plan_items).unwrap());
         assert_eq!(consumption_plan_items.len(), 2);
 
@@ -538,6 +541,28 @@ mod tests {
         assert_eq!(switch_actions[0].at(), &date_time(2024, 8, 24, 22, 0));
 
         assert_eq!(switch_actions[1].switch_on, false);
+        assert_eq!(switch_actions[1].at(), &date_time(2024, 8, 25, 0, 0));
+    }
+
+    #[test]
+    fn cancel_consumption_plan_which_is_waiting_for_execution() {
+        let mut power_consumer = create_power_consumer();
+
+        let start_time = date_time(2024, 8, 24, 14, 0);
+        let end_time = date_time(2024, 8, 25, 0, 0);
+        power_consumer.create_consumption_plan(&TimeDelta::minutes(120), &start_time, &end_time);
+
+        power_consumer.cancel_consumption_plan(date_time(2024, 8, 24, 12, 0));
+        let consumption_plan = power_consumer.consumption_plan().unwrap();
+        assert_eq!(consumption_plan.state, ConsumptionPlanState::Canceled);
+
+        let switch_actions = collect_switch_actions(&consumption_plan.consumption_plan_items);
+        assert_eq!(switch_actions.len(), 2);
+
+        assert_eq!(*switch_actions[0].state(), SwitchActionState::Canceled);
+        assert_eq!(switch_actions[0].at(), &date_time(2024, 8, 24, 22, 0));
+
+        assert_eq!(*switch_actions[0].state(), SwitchActionState::Canceled);
         assert_eq!(switch_actions[1].at(), &date_time(2024, 8, 25, 0, 0));
     }
 }

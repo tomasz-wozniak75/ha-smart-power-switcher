@@ -66,6 +66,6 @@ impl PowerConsumersService {
             .power_consumers
             .get_mut(&power_consumer_id)
             .ok_or(AppError::not_found("Power consumer not found"))?;
-        Ok(power_consumer.cancel_consumption_plan())
+        Ok(power_consumer.cancel_consumption_plan(Utc::now()))
     }
 }
