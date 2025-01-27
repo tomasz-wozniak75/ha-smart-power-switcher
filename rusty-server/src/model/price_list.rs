@@ -28,13 +28,7 @@ pub struct PriceListItem {
 
 impl PriceListItem {
     pub fn new(starts_at: DateTime<Utc>, duration: TimeDelta, price: Currency, category: PriceCategory) -> Self {
-        Self {
-            starts_at,
-            duration,
-            price,
-            weight: 0,
-            category,
-        }
+        Self { starts_at, duration, price, weight: 0, category }
     }
 
     pub fn starts_at(&self) -> &DateTime<Utc> {
@@ -71,23 +65,20 @@ mod tests {
     use crate::model::price_list::{PriceCategory, PriceListItem};
 
     #[test]
-    fn pricelist_item_ser_test() {
-        let pricelist_item = PriceListItem::new(
+    fn price_list_item_ser_test() {
+        let price_list_item = PriceListItem::new(
             DateTime::from_timestamp_millis(1737068749821).unwrap(),
             TimeDelta::milliseconds(12),
             1,
             PriceCategory::Medium,
         );
-        let serialized = serde_json::to_string(&pricelist_item).unwrap();
+        let serialized = serde_json::to_string(&price_list_item).unwrap();
         println!("Serialized object: {}", serialized);
 
         assert_ser_tokens(
-            &pricelist_item,
+            &price_list_item,
             &[
-                Token::Struct {
-                    name: "PriceListItem",
-                    len: 5,
-                },
+                Token::Struct { name: "PriceListItem", len: 5 },
                 Token::Str("startsAt"),
                 Token::I64(1737068749821),
                 Token::Str("duration"),
@@ -97,10 +88,7 @@ mod tests {
                 Token::Str("weight"),
                 Token::I64(0),
                 Token::Str("category"),
-                Token::UnitVariant {
-                    name: "PriceCategory",
-                    variant: "medium",
-                },
+                Token::UnitVariant { name: "PriceCategory", variant: "medium" },
                 Token::StructEnd,
             ],
         );

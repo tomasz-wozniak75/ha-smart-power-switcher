@@ -2,7 +2,8 @@ pub mod model;
 pub mod power_consumers;
 pub mod price_list_providers;
 
-use std::sync::{Arc, RwLock};
+use std::sync::Arc;
+use tokio::sync::RwLock;
 
 use axum::{
     extract::{Path, Query, State},
@@ -17,22 +18,22 @@ use price_list_providers::{SingleDayPriceList, TariffSelectorPriceList};
 use serde::Deserialize;
 
 pub struct AppState {
-    pub single_day_pricelist: Arc<TariffSelectorPriceList>,
+    pub single_day_price_list: Arc<TariffSelectorPriceList>,
     pub power_consumers_service: PowerConsumersService,
 }
 
 pub type SharedState = Arc<RwLock<AppState>>;
 
 pub async fn get_price_list(Path(date): Path<String>, State(state): State<SharedState>) -> Response {
-    println!("date: {}", date);
+    let app_state = state.read().await;
     match parse_date_path_param(date) {
-        Ok(date) => Json(&state.read().unwrap().single_day_pricelist.get_price_list(&date)).into_response(),
+        Ok(date) => Json(app_state.single_day_price_list.get_price_list(&date)).into_response(),
         Err(error) => (error.code(), Json(error)).into_response(),
     }
 }
 
 pub async fn get_power_consumers(State(state): State<SharedState>) -> Response {
-    let app_state = state.read().unwrap();
+    let app_state = state.read().await;
     let power_consumers_model_list = &app_state.power_consumers_service.get_power_consumers_model_list();
     (StatusCode::OK, Json(power_consumers_model_list)).into_response()
 }
@@ -48,15 +49,12 @@ pub struct ScheduleConsumptionPlanParams {
 
 pub async fn schedule_consumption_plan(
     Path(power_consumer_id): Path<String>,
-    Query(ScheduleConsumptionPlanParams {
-        consumption_duration,
-        finish_at,
-    }): Query<ScheduleConsumptionPlanParams>,
+    Query(ScheduleConsumptionPlanParams { consumption_duration, finish_at }): Query<ScheduleConsumptionPlanParams>,
     State(state): State<SharedState>,
 ) -> Response {
     state
         .write()
-        .unwrap()
+        .await
         .power_consumers_service
         .schedule_consumption_plan(power_consumer_id, consumption_duration, &finish_at)
         .map(|pcm| (StatusCode::OK, Json(pcm)))
@@ -70,7 +68,7 @@ pub async fn cancel_consumption_plan(
 ) -> Response {
     state
         .write()
-        .unwrap()
+        .await
         .power_consumers_service
         .cancel_consumption_plan(power_consumer_id)
         .map(|pcm| (StatusCode::OK, Json(pcm)))
@@ -92,10 +90,7 @@ mod tests {
 
     #[test]
     fn parse_date_path_param_test() {
-        println!(
-            "parsed date : {}",
-            parse_date_path_param("12-12-2024".to_owned()).unwrap()
-        );
+        println!("parsed date : {}", parse_date_path_param("12-12-2024".to_owned()).unwrap());
         assert_eq!(
             parse_date_path_param("12-12-2024".to_owned()).unwrap(),
             Utc.with_ymd_and_hms(2024, 12, 12, 0, 0, 0).unwrap(),

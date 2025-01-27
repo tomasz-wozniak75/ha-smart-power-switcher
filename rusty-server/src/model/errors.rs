@@ -19,30 +19,21 @@ pub enum AppError {
 
 impl AppError {
     pub fn user_error(message: &str) -> Self {
-        Self::UserError {
-            message: message.to_owned(),
-            code: StatusCode::BAD_REQUEST,
-        }
+        Self::UserError { message: message.to_owned(), code: StatusCode::BAD_REQUEST }
     }
 
     pub fn not_found(message: &str) -> Self {
-        Self::UserError {
-            message: message.to_owned(),
-            code: StatusCode::NOT_FOUND,
-        }
+        Self::UserError { message: message.to_owned(), code: StatusCode::NOT_FOUND }
     }
 
     pub fn new_system_error(message: &str) -> Self {
-        Self::SystemError {
-            message: message.to_owned(),
-            code: StatusCode::INTERNAL_SERVER_ERROR,
-        }
+        Self::SystemError { message: message.to_owned(), code: StatusCode::INTERNAL_SERVER_ERROR }
     }
 
     pub fn code(&self) -> StatusCode {
         match self {
-            AppError::UserError { message: _, code } => code.clone(),
-            AppError::SystemError { message: _, code } => code.clone(),
+            AppError::UserError { message: _, code } => *code,
+            AppError::SystemError { message: _, code } => *code,
         }
     }
 }
