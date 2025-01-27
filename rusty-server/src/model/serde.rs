@@ -14,7 +14,7 @@ pub fn deserialize_time_delta<'de, D>(deserializer: D) -> Result<TimeDelta, D::E
 where
     D: Deserializer<'de>,
 {
-    i64::deserialize(deserializer).map(|milisec| TimeDelta::milliseconds(milisec))
+    i64::deserialize(deserializer).map(TimeDelta::milliseconds)
 }
 
 pub fn serialize_uuid<S>(uuid_value: &Uuid, serializer: S) -> Result<S::Ok, S::Error>

@@ -6,7 +6,7 @@ use crate::{
 };
 use chrono::{DateTime, TimeDelta, Utc};
 
-use super::power_consumer::PowerConsumer;
+use super::{power_consumer::PowerConsumer, SwitchActionsScheduler};
 
 /// PowerConsumersService has a map of PowerConsumers
 /// Each PowerConsumer represents single Tuya switch.
@@ -15,24 +15,22 @@ use super::power_consumer::PowerConsumer;
 ///
 pub struct PowerConsumersService {
     time_period_price_list_service: Arc<TimePeriodPriceListService>,
+    switch_actions_scheduler: Option<Arc<SwitchActionsScheduler>>,
     power_consumers: HashMap<String, PowerConsumer>,
 }
 
 impl PowerConsumersService {
-    pub fn new(tariff_selector_pricelist: Arc<TariffSelectorPriceList>) -> Self {
+    pub fn new(tariff_selector_price_list: Arc<TariffSelectorPriceList>) -> Self {
         let mut this = Self {
-            time_period_price_list_service: Arc::new(TimePeriodPriceListService::new(tariff_selector_pricelist)),
+            time_period_price_list_service: Arc::new(TimePeriodPriceListService::new(tariff_selector_price_list)),
+            switch_actions_scheduler: None,
             power_consumers: HashMap::new(),
         };
 
         let audi_charger_id = "switch.audi_charger_breaker_switch".to_owned();
-        let audi_power_consumer = PowerConsumer::new(
-            audi_charger_id,
-            "Audi charger".to_owned(),
-            this.time_period_price_list_service.clone(),
-        );
-        this.power_consumers
-            .insert(audi_power_consumer.id().to_owned(), audi_power_consumer);
+        let audi_power_consumer =
+            PowerConsumer::new(audi_charger_id, "Audi charger".to_owned(), this.time_period_price_list_service.clone());
+        this.power_consumers.insert(audi_power_consumer.id().to_owned(), audi_power_consumer);
 
         let one_phase_switch_id = "switch.smart_plug_socket_1".to_owned();
         let one_phase_switch = PowerConsumer::new(
@@ -40,17 +38,25 @@ impl PowerConsumersService {
             "One phase switch".to_owned(),
             this.time_period_price_list_service.clone(),
         );
-        this.power_consumers
-            .insert(one_phase_switch.id().to_owned(), one_phase_switch);
+        this.power_consumers.insert(one_phase_switch.id().to_owned(), one_phase_switch);
 
         this
     }
 
+    pub fn switch_actions_scheduler(&self) -> Option<&Arc<SwitchActionsScheduler>> {
+        self.switch_actions_scheduler.as_ref()
+    }
+
+    pub fn set_switch_actions_scheduler(&mut self, switch_actions_scheduler: Option<Arc<SwitchActionsScheduler>>) {
+        self.switch_actions_scheduler = switch_actions_scheduler;
+    }
+
+    pub fn get_power_consumer_mut(&mut self, power_consumer_id: &str) -> Option<&mut PowerConsumer> {
+        self.power_consumers.get_mut(power_consumer_id)
+    }
+
     pub fn get_power_consumers_model_list(&self) -> Vec<PowerConsumerModel> {
-        self.power_consumers
-            .iter()
-            .map(|(_, v)| v.to_power_consumer_model())
-            .collect()
+        self.power_consumers.values().map(|v| v.to_power_consumer_model()).collect()
     }
 
     pub fn schedule_consumption_plan(
@@ -59,18 +65,15 @@ impl PowerConsumersService {
         consumption_duration: TimeDelta,
         finish_at: &DateTime<Utc>,
     ) -> Result<PowerConsumerModel, AppError> {
-        let power_consumer = self
-            .power_consumers
-            .get_mut(&power_consumer_id)
-            .ok_or(AppError::not_found("Power consumer not found"))?;
-        power_consumer.schedule_consumption_plan(consumption_duration, &Utc::now(), finish_at)
+        let switch_actions_scheduler = self.switch_actions_scheduler.as_ref().unwrap().clone();
+        let power_consumer =
+            self.power_consumers.get_mut(&power_consumer_id).ok_or(AppError::not_found("Power consumer not found"))?;
+        power_consumer.schedule_consumption_plan(switch_actions_scheduler, consumption_duration, &Utc::now(), finish_at)
     }
 
     pub fn cancel_consumption_plan(&mut self, power_consumer_id: String) -> Result<PowerConsumerModel, AppError> {
-        let power_consumer = self
-            .power_consumers
-            .get_mut(&power_consumer_id)
-            .ok_or(AppError::not_found("Power consumer not found"))?;
+        let power_consumer =
+            self.power_consumers.get_mut(&power_consumer_id).ok_or(AppError::not_found("Power consumer not found"))?;
         Ok(power_consumer.cancel_consumption_plan(Utc::now()))
     }
 }

@@ -11,6 +11,9 @@
   },
   "cSpell.words": [
     "chrono",
+    "Datelike",
+    "Timelike",
     "Tuya"
-  ] // set as "true" to run 'prettier' last not first
+  ],
+  "rust-analyzer.check.command": "clippy" // set as "true" to run 'prettier' last not first
 }

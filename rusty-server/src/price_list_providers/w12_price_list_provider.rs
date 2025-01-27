@@ -33,12 +33,10 @@ impl SingleDayPriceList for W12PriceListProvider {
 
         if for_day.weekday() == Sat || for_day.weekday() == Sun {
             (0..24)
-                .into_iter()
                 .map(|h| PriceListItem::new(for_day + ONE_HOUR * h, ONE_HOUR, OFF_PEAK_PRICE, PriceCategory::Min))
                 .collect()
         } else {
             (0..24)
-                .into_iter()
                 .map(|h| {
                     let (price, category) = self.map_hour_to_price(h);
                     PriceListItem::new(for_day + ONE_HOUR * h, ONE_HOUR, price, category)

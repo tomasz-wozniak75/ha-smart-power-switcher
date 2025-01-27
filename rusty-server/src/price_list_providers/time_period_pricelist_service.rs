@@ -27,7 +27,7 @@ impl TimePeriodPriceListService {
         let to_the_day = cut_off_time_from_date(to_the_time);
 
         let mut price_list: Vec<PriceListItem> = Vec::new();
-        let mut next_day = from_the_day.clone();
+        let mut next_day = from_the_day;
         while next_day <= to_the_day {
             let single_day_price_list = self.single_day_price_list.get_price_list(&next_day);
             price_list.extend(
@@ -36,7 +36,7 @@ impl TimePeriodPriceListService {
                     .filter(|item| {
                         (*item.starts_at() + *item.duration()) > *from_the_time && *item.starts_at() < *to_the_time
                     })
-                    .map(|item| item.clone()),
+                    .cloned(),
             );
             next_day += TimeDelta::days(1);
         }
@@ -56,10 +56,7 @@ mod tests {
     use super::TimePeriodPriceListService;
 
     fn date_time(year: i32, month: u32, day: u32, hour: u32, min: u32) -> DateTime<Utc> {
-        Local
-            .with_ymd_and_hms(year, month, day, hour, min, 0)
-            .map(|dt| dt.with_timezone(&Utc))
-            .unwrap()
+        Local.with_ymd_and_hms(year, month, day, hour, min, 0).map(|dt| dt.with_timezone(&Utc)).unwrap()
     }
 
     fn create_time_period_price_list_service() -> TimePeriodPriceListService {
@@ -67,7 +64,7 @@ mod tests {
     }
 
     #[test]
-    fn time_period_pricelist_should_return_pricelist_for_the_requested_period_in_single_day_pricelist() {
+    fn should_return_price_list_for_the_requested_period_in_single_day_price_list() {
         let time_period_price_list_service = create_time_period_price_list_service();
 
         let start_time = date_time(2024, 8, 24, 13, 30);
@@ -77,7 +74,7 @@ mod tests {
     }
 
     #[test]
-    fn time_period_pricelist_should_return_pricelist_for_the_requested_period_spaning_two_single_day_pricelists() {
+    fn should_return_price_list_for_the_requested_period_spanning_two_single_day_price_lists() {
         let time_period_price_list_service = create_time_period_price_list_service();
 
         let start_time = date_time(2024, 8, 24, 13, 30);
@@ -87,7 +84,7 @@ mod tests {
     }
 
     #[test]
-    fn time_period_pricelist_should_return_pricelist_for_the_requested_one_day_period() {
+    fn should_return_price_list_for_the_requested_one_day_period() {
         let time_period_price_list_service = create_time_period_price_list_service();
 
         let start_time = date_time(2024, 8, 24, 13, 0);
