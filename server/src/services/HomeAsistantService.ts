@@ -1,6 +1,6 @@
 
 
-export class HomeAsistantService {
+export class HomeAssistantService {
     private haToken: string | null;
     private haUrl: string | null;
 

@@ -18,6 +18,8 @@ pub enum SwitchActionState {
 #[derive(Serialize, Debug, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct SwitchAction {
+    #[serde(serialize_with = "crate::model::serialize_uuid")]
+    id: Uuid,
     #[serde(with = "chrono::serde::ts_milliseconds")]
     at: DateTime<Utc>,
     pub switch_on: bool,
@@ -29,13 +31,11 @@ pub struct SwitchAction {
 
 impl SwitchAction {
     pub fn new(at: DateTime<Utc>, switch_on: bool) -> Self {
-        Self {
-            at: at,
-            switch_on,
-            state: SwitchActionState::Scheduled,
-            executed_at: None,
-            result: None,
-        }
+        Self { id: Uuid::new_v4(), at, switch_on, state: SwitchActionState::Scheduled, executed_at: None, result: None }
+    }
+
+    pub fn id(&self) -> &Uuid {
+        &self.id
     }
 
     pub fn at(&self) -> &DateTime<Utc> {
@@ -54,15 +54,15 @@ impl SwitchAction {
         self.result = result;
     }
 
-    pub(crate) fn set_executed_at(&mut self, executed_at: Option<DateTime<Utc>>) {
+    pub fn set_executed_at(&mut self, executed_at: Option<DateTime<Utc>>) {
         self.executed_at = executed_at;
     }
 
-    pub(crate) fn set_state(&mut self, state: SwitchActionState) {
+    pub fn set_state(&mut self, state: SwitchActionState) {
         self.state = state;
     }
 
-    pub(crate) fn set_at(&mut self, at: DateTime<Utc>) {
+    pub fn set_at(&mut self, at: DateTime<Utc>) {
         self.at = at;
     }
 }
@@ -83,11 +83,7 @@ pub struct ConsumptionPlanItem {
 }
 impl ConsumptionPlanItem {
     pub fn new(price_list_item: PriceListItem, duration: TimeDelta) -> Self {
-        Self {
-            price_list_item,
-            duration,
-            switch_actions: Vec::new(),
-        }
+        Self { price_list_item, duration, switch_actions: Vec::new() }
     }
 
     pub fn price_list_item(&self) -> &PriceListItem {
@@ -133,6 +129,24 @@ pub struct ConsumptionPlan {
     pub state: ConsumptionPlanState,
 }
 
+impl ConsumptionPlan {
+    pub fn id(&self) -> Uuid {
+        self.id
+    }
+
+    pub fn flat_switch_actions(&self) -> Vec<&SwitchAction> {
+        self.consumption_plan_items.iter().flat_map(|cpi| cpi.switch_actions()).collect()
+    }
+    pub fn flat_switch_actions_mut(&mut self) -> Vec<&mut SwitchAction> {
+        self.consumption_plan_items.iter_mut().flat_map(|cpi| cpi.switch_actions_mut()).collect()
+    }
+
+    pub fn get_switch_action_by_id_mut(&mut self, switch_action_id: &str) -> Option<&mut SwitchAction> {
+        let id = Uuid::parse_str(switch_action_id).unwrap();
+        self.flat_switch_actions_mut().into_iter().find(|sa| *sa.id() == id)
+    }
+}
+
 #[derive(Serialize, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct PowerConsumerModel<'a> {
@@ -156,7 +170,7 @@ impl<'a> PowerConsumerModel<'a> {
         Self {
             id,
             name,
-            default_consumption_duration: default_consumption_duration,
+            default_consumption_duration,
             default_finish_at: Some(default_finish_at),
             charging_status_url: None,
             consumption_plan,
@@ -189,10 +203,7 @@ mod tests {
         assert_ser_tokens(
             &consumption_plan,
             &[
-                Token::Struct {
-                    name: "ConsumptionPlan",
-                    len: 6,
-                },
+                Token::Struct { name: "ConsumptionPlan", len: 6 },
                 Token::Str("id"),
                 Token::Str(ID),
                 Token::Str("createdAt"),
@@ -205,10 +216,7 @@ mod tests {
                 Token::Seq { len: Some(0) },
                 Token::SeqEnd,
                 Token::Str("state"),
-                Token::UnitVariant {
-                    name: "ConsumptionPlanState",
-                    variant: "processing",
-                },
+                Token::UnitVariant { name: "ConsumptionPlanState", variant: "processing" },
                 Token::StructEnd,
             ],
         );
