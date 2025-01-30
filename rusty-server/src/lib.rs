@@ -1,6 +1,7 @@
 pub mod model;
 pub mod power_consumers;
 pub mod price_list_providers;
+pub mod settings;
 
 use std::sync::Arc;
 use tokio::sync::RwLock;

@@ -15,8 +15,8 @@ pub struct SwitchActionsScheduler {
 }
 
 impl SwitchActionsScheduler {
-    pub fn new() -> Self {
-        Self { state: None, home_assistant_service: Arc::new(HomeAssistantService::new()) }
+    pub fn new(home_assistant_service: Arc<HomeAssistantService>) -> Self {
+        Self { state: None, home_assistant_service }
     }
 
     pub fn set_state(&mut self, state: Option<SharedState>) {

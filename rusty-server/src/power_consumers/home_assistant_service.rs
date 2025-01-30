@@ -1,12 +1,12 @@
-use crate::model::AppError;
+use crate::{model::AppError, settings::HttpCallConfig};
 
 pub struct HomeAssistantService {
-    ha_token: Option<String>,
-    ha_url: Option<String>,
+    token: String,
+    base_url: String,
 }
 impl HomeAssistantService {
-    pub fn new() -> Self {
-        Self { ha_token: None, ha_url: None }
+    pub fn new(home_assistant_config: &HttpCallConfig) -> Self {
+        Self { token: home_assistant_config.token.clone(), base_url: home_assistant_config.base_url.clone() }
     }
 
     pub fn switch_device(&self, device_name: &str, switch_on: bool) -> Result<(), AppError> {

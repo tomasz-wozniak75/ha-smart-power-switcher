@@ -1,0 +1,10 @@
+application_port: 3000
+tariff_type: w12
+home_assistant_config:
+    base_url: "http://home-assistant.mesh:8123"
+    token: "" # please override this value by env variable on the command line or by .env files
+power_consumers:
+  - device_id: "switch.audi_charger_breaker_switch"
+    name: "Audi charger"
+  - device_id: "switch.smart_plug_socket_1"
+    name: "One phase switch"

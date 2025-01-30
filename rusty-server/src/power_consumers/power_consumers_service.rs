@@ -3,6 +3,7 @@ use std::{collections::HashMap, sync::Arc};
 use crate::{
     model::{AppError, PowerConsumerModel},
     price_list_providers::{TariffSelectorPriceList, TimePeriodPriceListService},
+    settings::PowerConsumerConfig,
 };
 use chrono::{DateTime, TimeDelta, Utc};
 
@@ -14,33 +15,32 @@ use super::{power_consumer::PowerConsumer, SwitchActionsScheduler};
 /// by selecting required power consumer and delegating request to it. Scheduling is done by PowerConsumer  
 ///
 pub struct PowerConsumersService {
-    time_period_price_list_service: Arc<TimePeriodPriceListService>,
     switch_actions_scheduler: Option<Arc<SwitchActionsScheduler>>,
     power_consumers: HashMap<String, PowerConsumer>,
 }
 
 impl PowerConsumersService {
-    pub fn new(tariff_selector_price_list: Arc<TariffSelectorPriceList>) -> Self {
-        let mut this = Self {
-            time_period_price_list_service: Arc::new(TimePeriodPriceListService::new(tariff_selector_price_list)),
+    pub fn new(
+        power_consumers_config: &[PowerConsumerConfig],
+        tariff_selector_price_list: Arc<TariffSelectorPriceList>,
+    ) -> Self {
+        let time_period_price_list_service = Arc::new(TimePeriodPriceListService::new(tariff_selector_price_list));
+        Self {
             switch_actions_scheduler: None,
-            power_consumers: HashMap::new(),
-        };
-
-        let audi_charger_id = "switch.audi_charger_breaker_switch".to_owned();
-        let audi_power_consumer =
-            PowerConsumer::new(audi_charger_id, "Audi charger".to_owned(), this.time_period_price_list_service.clone());
-        this.power_consumers.insert(audi_power_consumer.id().to_owned(), audi_power_consumer);
-
-        let one_phase_switch_id = "switch.smart_plug_socket_1".to_owned();
-        let one_phase_switch = PowerConsumer::new(
-            one_phase_switch_id,
-            "One phase switch".to_owned(),
-            this.time_period_price_list_service.clone(),
-        );
-        this.power_consumers.insert(one_phase_switch.id().to_owned(), one_phase_switch);
-
-        this
+            power_consumers: power_consumers_config
+                .iter()
+                .map(|config| {
+                    (
+                        config.device_id.to_owned(),
+                        PowerConsumer::new(
+                            config.device_id.to_owned(),
+                            config.name.to_owned(),
+                            time_period_price_list_service.clone(),
+                        ),
+                    )
+                })
+                .collect(),
+        }
     }
 
     pub fn switch_actions_scheduler(&self) -> Option<&Arc<SwitchActionsScheduler>> {

@@ -7,9 +7,11 @@ use axum::{
 
 use rusty_server::{
     cancel_consumption_plan, get_power_consumers, get_price_list,
-    power_consumers::{PowerConsumersService, SwitchActionsScheduler},
-    price_list_providers::{TariffSelectorPriceList, TariffTypes},
-    schedule_consumption_plan, AppState, SharedState,
+    power_consumers::{HomeAssistantService, PowerConsumersService, SwitchActionsScheduler},
+    price_list_providers::TariffSelectorPriceList,
+    schedule_consumption_plan,
+    settings::Settings,
+    AppState, SharedState,
 };
 use tokio::sync::RwLock;
 
@@ -17,7 +19,8 @@ use tokio::sync::RwLock;
 async fn main() {
     tracing_subscriber::fmt().with_max_level(tracing::Level::DEBUG).init();
 
-    let state = create_shared_state().await;
+    let settings = Settings::new().unwrap();
+    let state = create_shared_state(&settings).await;
 
     let app = Router::new()
         .route("/pricelist/{date}", get(get_price_list))
@@ -27,18 +30,21 @@ async fn main() {
         .with_state(state);
 
     // run our app with hyper, listening globally on port 3000
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
+    let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", &settings.application_port)).await.unwrap();
     axum::serve(listener, app).await.unwrap();
 }
 
-async fn create_shared_state() -> SharedState {
-    let var_name = SwitchActionsScheduler::new();
-    let mut switch_actions_scheduler = var_name;
-    let tariff_selector_price_list = Arc::new(TariffSelectorPriceList::new(TariffTypes::W12));
+async fn create_shared_state(settings: &Settings) -> SharedState {
+    let home_assistant_service = Arc::new(HomeAssistantService::new(&settings.home_assistant_config));
+    let mut switch_actions_scheduler = SwitchActionsScheduler::new(home_assistant_service.clone());
+    let tariff_selector_price_list = Arc::new(TariffSelectorPriceList::new(settings.tariff_type.clone()));
 
     let state = Arc::new(RwLock::new(AppState {
         single_day_price_list: tariff_selector_price_list.clone(),
-        power_consumers_service: PowerConsumersService::new(tariff_selector_price_list.clone()),
+        power_consumers_service: PowerConsumersService::new(
+            &settings.power_consumers,
+            tariff_selector_price_list.clone(),
+        ),
     }));
 
     switch_actions_scheduler.set_state(Some(state.clone()));
