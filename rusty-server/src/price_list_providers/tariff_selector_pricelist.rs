@@ -1,9 +1,12 @@
 use chrono::{DateTime, Utc};
+use serde::Deserialize;
 
 use crate::model::PriceListItem;
 
 use super::{SingleDayPriceList, W12PriceListProvider};
 
+#[derive(Debug, Deserialize, Clone)]
+#[serde(rename_all = "lowercase")]
 pub enum TariffTypes {
     W12,
     DayAheadMarket,
@@ -22,10 +25,7 @@ pub struct TariffSelectorPriceList {
 
 impl TariffSelectorPriceList {
     pub fn new(current_tariff: TariffTypes) -> Self {
-        Self {
-            current_tariff,
-            w12_price_list_provider: W12PriceListProvider {},
-        }
+        Self { current_tariff, w12_price_list_provider: W12PriceListProvider {} }
     }
 }
 
