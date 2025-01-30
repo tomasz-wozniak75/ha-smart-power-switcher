@@ -12,8 +12,13 @@
   "cSpell.words": [
     "chrono",
     "Datelike",
+    "dotenv",
     "Timelike",
     "Tuya"
   ],
-  "rust-analyzer.check.command": "clippy" // set as "true" to run 'prettier' last not first
+  "rust-analyzer.check.command": "clippy",
+  "lldb.displayFormat": "auto",
+  "lldb.showDisassembly": "auto",
+  "lldb.dereferencePointers": true,
+  "lldb.consoleMode": "evaluate" // set as "true" to run 'prettier' last not first
 }
