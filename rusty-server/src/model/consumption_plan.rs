@@ -76,6 +76,7 @@ impl SwitchAction {
 #[derive(Serialize, Debug, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ConsumptionPlanItem {
+    #[serde(rename(serialize = "pricelistItem"))] //temporary name, this needs to be fixed on the FE
     price_list_item: PriceListItem,
     #[serde(serialize_with = "crate::model::serialize_time_delta")]
     duration: TimeDelta,
@@ -154,7 +155,7 @@ pub struct PowerConsumerModel<'a> {
     name: String,
     #[serde(with = "chrono::serde::ts_milliseconds_option")]
     default_finish_at: Option<DateTime<Utc>>,
-    #[serde(serialize_with = "crate::model::serialize_time_delta")]
+    #[serde(serialize_with = "crate::model::serialize_time_delta_as_mins")]
     default_consumption_duration: TimeDelta,
     charging_status_url: Option<String>,
     consumption_plan: Option<&'a ConsumptionPlan>,

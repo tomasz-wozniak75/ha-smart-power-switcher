@@ -12,7 +12,7 @@ GET {{server_address}}/pricelist/{{$localDatetime 'DD-MM-YYYY'}}
 
 ###
 // Returns list of configured power consumers, power consumer represents single Tuya switch
-GET {{server_address}}/power-consumer
+GET {{server_address}}/power-consumer/
 
 ###
 // Create consumption plan for selected switch, 
