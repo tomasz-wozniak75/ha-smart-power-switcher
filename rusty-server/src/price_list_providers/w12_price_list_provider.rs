@@ -1,5 +1,5 @@
 use chrono::{
-    DateTime, Datelike, TimeDelta, Utc,
+    DateTime, Datelike, Local, TimeDelta, Utc,
     Weekday::{Sat, Sun},
 };
 
@@ -30,8 +30,9 @@ impl W12PriceListProvider {
 impl SingleDayPriceList for W12PriceListProvider {
     fn get_price_list(&self, for_day: &DateTime<Utc>) -> Vec<PriceListItem> {
         let for_day = cut_off_time_from_date(for_day);
+        let local_date = for_day.with_timezone(&Local);
 
-        if for_day.weekday() == Sat || for_day.weekday() == Sun {
+        if local_date.weekday() == Sat || local_date.weekday() == Sun {
             (0..24)
                 .map(|h| PriceListItem::new(for_day + ONE_HOUR * h, ONE_HOUR, OFF_PEAK_PRICE, PriceCategory::Min))
                 .collect()

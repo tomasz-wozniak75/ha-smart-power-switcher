@@ -13,6 +13,9 @@
     "chrono",
     "Datelike",
     "dotenv",
+    "dotenvy",
+    "reqwest",
+    "serde",
     "Timelike",
     "Tuya"
   ],

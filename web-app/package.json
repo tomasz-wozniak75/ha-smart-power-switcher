@@ -2,7 +2,7 @@
   "name": "smart-power-consumer-web-app",
   "version": "0.1.0",
   "private": true,
-  "proxy": "http://localhost:3000",
+  "proxy": "http://127.0.0.1:3000",
   "devDependencies": {
     "@babel/preset-env": "^7.25.4",
     "@babel/preset-typescript": "^7.24.7",
