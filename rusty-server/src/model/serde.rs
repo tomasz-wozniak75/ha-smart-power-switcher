@@ -10,6 +10,13 @@ where
     serializer.serialize_i64(time_delta.num_milliseconds())
 }
 
+pub fn serialize_time_delta_as_mins<S>(time_delta: &TimeDelta, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    serializer.serialize_i64(time_delta.num_minutes())
+}
+
 pub fn deserialize_time_delta<'de, D>(deserializer: D) -> Result<TimeDelta, D::Error>
 where
     D: Deserializer<'de>,

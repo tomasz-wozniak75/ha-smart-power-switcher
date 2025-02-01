@@ -26,7 +26,7 @@ impl AppError {
         Self::UserError { message: message.to_owned(), code: StatusCode::NOT_FOUND }
     }
 
-    pub fn new_system_error(message: &str) -> Self {
+    pub fn system_error(message: &str) -> Self {
         Self::SystemError { message: message.to_owned(), code: StatusCode::INTERNAL_SERVER_ERROR }
     }
 

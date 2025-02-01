@@ -58,6 +58,7 @@ pub async fn schedule_consumption_plan(
         .await
         .power_consumers_service
         .schedule_consumption_plan(power_consumer_id, consumption_duration, &finish_at)
+        .await
         .map(|pcm| (StatusCode::OK, Json(pcm)))
         .map_err(|e| (e.code(), Json(e)))
         .into_response()
@@ -72,6 +73,7 @@ pub async fn cancel_consumption_plan(
         .await
         .power_consumers_service
         .cancel_consumption_plan(power_consumer_id)
+        .await
         .map(|pcm| (StatusCode::OK, Json(pcm)))
         .map_err(|e| (e.code(), Json(e)))
         .into_response()

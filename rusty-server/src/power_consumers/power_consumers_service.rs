@@ -7,7 +7,7 @@ use crate::{
 };
 use chrono::{DateTime, TimeDelta, Utc};
 
-use super::{power_consumer::PowerConsumer, SwitchActionsScheduler};
+use super::{power_consumer::PowerConsumer, HomeAssistantService, SwitchActionsScheduler};
 
 /// PowerConsumersService has a map of PowerConsumers
 /// Each PowerConsumer represents single Tuya switch.
@@ -23,6 +23,7 @@ impl PowerConsumersService {
     pub fn new(
         power_consumers_config: &[PowerConsumerConfig],
         tariff_selector_price_list: Arc<TariffSelectorPriceList>,
+        home_assistant_service: Arc<HomeAssistantService>,
     ) -> Self {
         let time_period_price_list_service = Arc::new(TimePeriodPriceListService::new(tariff_selector_price_list));
         Self {
@@ -36,6 +37,7 @@ impl PowerConsumersService {
                             config.device_id.to_owned(),
                             config.name.to_owned(),
                             time_period_price_list_service.clone(),
+                            home_assistant_service.clone(),
                         ),
                     )
                 })
@@ -59,7 +61,7 @@ impl PowerConsumersService {
         self.power_consumers.values().map(|v| v.to_power_consumer_model()).collect()
     }
 
-    pub fn schedule_consumption_plan(
+    pub async fn schedule_consumption_plan(
         &mut self,
         power_consumer_id: String,
         consumption_duration: TimeDelta,
@@ -68,12 +70,14 @@ impl PowerConsumersService {
         let switch_actions_scheduler = self.switch_actions_scheduler.as_ref().unwrap().clone();
         let power_consumer =
             self.power_consumers.get_mut(&power_consumer_id).ok_or(AppError::not_found("Power consumer not found"))?;
-        power_consumer.schedule_consumption_plan(switch_actions_scheduler, consumption_duration, &Utc::now(), finish_at)
+        power_consumer
+            .schedule_consumption_plan(switch_actions_scheduler, consumption_duration, &Utc::now(), finish_at)
+            .await
     }
 
-    pub fn cancel_consumption_plan(&mut self, power_consumer_id: String) -> Result<PowerConsumerModel, AppError> {
+    pub async fn cancel_consumption_plan(&mut self, power_consumer_id: String) -> Result<PowerConsumerModel, AppError> {
         let power_consumer =
             self.power_consumers.get_mut(&power_consumer_id).ok_or(AppError::not_found("Power consumer not found"))?;
-        Ok(power_consumer.cancel_consumption_plan(Utc::now()))
+        Ok(power_consumer.cancel_consumption_plan(Utc::now()).await)
     }
 }

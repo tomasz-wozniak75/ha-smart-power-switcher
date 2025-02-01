@@ -45,7 +45,7 @@ impl SwitchActionsScheduler {
         }
     }
 
-    fn execute_switch_action(
+    async fn execute_switch_action(
         home_assistant_service: &HomeAssistantService,
         power_consumer_id: &str,
         switch_action: &mut SwitchAction,
@@ -56,6 +56,7 @@ impl SwitchActionsScheduler {
             switch_action.set_state(Executed);
             let _ = home_assistant_service
                 .switch_device(power_consumer_id, switch_action.switch_on())
+                .await
                 .map(|()| {
                     switch_action.set_result(Some("OK".to_owned()));
                     println!("Switch action executed at {}", Local::now().format("%Y %m %d %H:%M:%S"));
@@ -82,14 +83,14 @@ impl SwitchActionsScheduler {
         if let Some(power_consumer) = power_consumers_service.get_power_consumer_mut(&power_consumer_id) {
             if let Some(consumption_plan) = power_consumer.consumption_plan_mut() {
                 if let Some(switch_action) = consumption_plan.get_switch_action_by_id_mut(&switch_action_id) {
-                    Self::execute_switch_action(&home_assistant_service, &power_consumer_id, switch_action);
+                    Self::execute_switch_action(&home_assistant_service, &power_consumer_id, switch_action).await;
                     Self::switch_consumption_plan_state(consumption_plan);
                 }
             }
         }
     }
 
-    pub fn schedule_switch_actions(
+    pub async fn schedule_switch_actions(
         &self,
         ha_device_name: &String,
         consumption_plan: &mut ConsumptionPlan,
@@ -103,7 +104,7 @@ impl SwitchActionsScheduler {
             if *switch_action.at() < scheduling_threshold {
                 switch_action.set_at(*now);
                 switch_executed_without_scheduling = true;
-                Self::execute_switch_action(&self.home_assistant_service, &power_consumer_id, switch_action);
+                Self::execute_switch_action(&self.home_assistant_service, &power_consumer_id, switch_action).await;
             } else {
                 let sleep_for = (*switch_action.at() - Utc::now()).num_milliseconds() as u64;
                 tokio::spawn(Self::spawn_scheduled_task_for_switch_action(
