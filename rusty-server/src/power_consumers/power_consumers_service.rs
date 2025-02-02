@@ -2,7 +2,7 @@ use std::{collections::HashMap, sync::Arc};
 
 use crate::{
     model::{AppError, PowerConsumerModel},
-    price_list_providers::{TariffSelectorPriceList, TimePeriodPriceListService},
+    price_list_providers::{TariffSelector, TimePeriodPriceListService},
     settings::PowerConsumerConfig,
 };
 use chrono::{DateTime, TimeDelta, Utc};
@@ -22,7 +22,7 @@ pub struct PowerConsumersService {
 impl PowerConsumersService {
     pub fn new(
         power_consumers_config: &[PowerConsumerConfig],
-        tariff_selector_price_list: Arc<TariffSelectorPriceList>,
+        tariff_selector_price_list: Arc<TariffSelector>,
         home_assistant_service: Arc<HomeAssistantService>,
     ) -> Self {
         let time_period_price_list_service = Arc::new(TimePeriodPriceListService::new(tariff_selector_price_list));

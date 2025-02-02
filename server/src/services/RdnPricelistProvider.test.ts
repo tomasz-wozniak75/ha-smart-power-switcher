@@ -1,20 +1,6 @@
 import { expect, test, jest} from '@jest/globals';
 import { RdnPricelistProvider } from "./RdnPricelistProvider";
 
-test("should check date handling", () => {
-    const cuurentTimestamp = new Date (2023, 11, 31).getTime()
-    console.log("now: " + cuurentTimestamp);
-
-    const now = new Date(cuurentTimestamp)
-    console.log("now: " + now);
-    console.log("now ISO: " + now.toISOString());
-    console.log("now get time: " + now.getTime());
-    console.log("now get hours: " + now.getHours());
-    console.log("now get day: " + now.getDate());
-    console.log("now get month: " + now.getMonth());
-  });
-
-
 
   test("check getRdnUrl", async () => {
     const rdnPricelistProvider = new  RdnPricelistProvider()
