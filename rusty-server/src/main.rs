@@ -10,7 +10,7 @@ use tower_http::trace::TraceLayer;
 use rusty_server::{
     cancel_consumption_plan, get_power_consumers, get_price_list,
     power_consumers::{HomeAssistantService, PowerConsumersService, SwitchActionsScheduler},
-    price_list_providers::TariffSelectorPriceList,
+    price_list_providers::TariffSelector,
     schedule_consumption_plan,
     settings::Settings,
     AppState, SharedState,
@@ -44,7 +44,7 @@ fn create_routes(state: SharedState) -> Router {
 async fn create_shared_state(settings: &Settings) -> SharedState {
     let home_assistant_service = Arc::new(HomeAssistantService::new(&settings.home_assistant_config));
     let mut switch_actions_scheduler = SwitchActionsScheduler::new(home_assistant_service.clone());
-    let tariff_selector_price_list = Arc::new(TariffSelectorPriceList::new(settings.tariff_type.clone()));
+    let tariff_selector_price_list = Arc::new(TariffSelector::new(settings.tariff_type.clone()));
 
     let state = Arc::new(RwLock::new(AppState {
         single_day_price_list: tariff_selector_price_list.clone(),

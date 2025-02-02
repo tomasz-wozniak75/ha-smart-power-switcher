@@ -1,9 +1,11 @@
+use std::sync::Arc;
+
 use chrono::{
     DateTime, Datelike, Local, TimeDelta, Utc,
     Weekday::{Sat, Sun},
 };
 
-use crate::model::{Currency, PriceCategory, PriceListItem};
+use crate::model::{AppError, Currency, PriceCategory, PriceListItem};
 
 use super::{commons::cut_off_time_from_date, SingleDayPriceList};
 
@@ -14,7 +16,6 @@ const ONE_HOUR: TimeDelta = TimeDelta::hours(1);
 ///W12 is a tariff with off peak hours where price is low,
 /// it is between 2pm - 6 am and 1pm-3pm, weekends are in off peek prices
 /// In peek hours have double price. This tariff is provided mainly for testing
-#[derive(Clone)]
 pub struct W12PriceListProvider {}
 
 impl W12PriceListProvider {
@@ -28,11 +29,11 @@ impl W12PriceListProvider {
 }
 
 impl SingleDayPriceList for W12PriceListProvider {
-    fn get_price_list(&self, for_day: &DateTime<Utc>) -> Vec<PriceListItem> {
+    fn get_price_list(&self, for_day: &DateTime<Utc>) -> Result<Arc<Vec<PriceListItem>>, AppError> {
         let for_day = cut_off_time_from_date(for_day);
         let local_date = for_day.with_timezone(&Local);
 
-        if local_date.weekday() == Sat || local_date.weekday() == Sun {
+        Ok(Arc::new(if local_date.weekday() == Sat || local_date.weekday() == Sun {
             (0..24)
                 .map(|h| PriceListItem::new(for_day + ONE_HOUR * h, ONE_HOUR, OFF_PEAK_PRICE, PriceCategory::Min))
                 .collect()
@@ -43,7 +44,7 @@ impl SingleDayPriceList for W12PriceListProvider {
                     PriceListItem::new(for_day + ONE_HOUR * h, ONE_HOUR, price, category)
                 })
                 .collect()
-        }
+        }))
     }
 }
 
@@ -60,7 +61,7 @@ mod tests {
         println!("now: {}", now);
         let for_day = cut_off_time_from_date(&now);
         println!("for_day: {}", for_day);
-        let price_list = price_list_provider.get_price_list(&for_day);
+        let price_list = price_list_provider.get_price_list(&for_day).unwrap();
         assert_eq!(price_list.len(), 24);
         assert_eq!(price_list[0].starts_at(), &for_day);
     }

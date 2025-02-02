@@ -7,10 +7,14 @@ struct EntityRef {
     entity_id: String,
 }
 
+/// Api to HomeAssistant application to change switch state
+///
+/// It uses reqwest async calls
 pub struct HomeAssistantService {
     token: String,
     base_url: String,
 }
+
 impl HomeAssistantService {
     pub fn new(home_assistant_config: &HttpCallConfig) -> Self {
         Self { token: home_assistant_config.token.clone(), base_url: home_assistant_config.base_url.clone() }
