@@ -9,6 +9,9 @@ use crate::{
 
 use super::home_assistant_service::HomeAssistantService;
 
+/// SwitchActionsScheduler is responsible for executing switch actions at required time
+/// by spawning tokio delayed tasks
+///
 pub struct SwitchActionsScheduler {
     state: Option<SharedState>,
     home_assistant_service: Arc<HomeAssistantService>,

@@ -1,5 +1,5 @@
 application_port: 3000
-tariff_type: w12
+tariff_type: DayAheadMarket  #  possible values:  W12, DayAheadMarket,
 home_assistant_config:
     base_url: "http://home-assistant.mesh:8123"
     token: "" # please override this value by env variable `app.home_assistant_config.token` on the command line or by .env files
