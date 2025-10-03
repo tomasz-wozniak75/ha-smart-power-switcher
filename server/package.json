@@ -53,5 +53,8 @@
     "sourcemap": true,
     "clean": true,
     "skipNodeModulesBundle": false
+  },
+  "dependencies": {
+    "xlsx": "^0.18.5"
   }
 }
