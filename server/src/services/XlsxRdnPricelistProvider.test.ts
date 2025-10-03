@@ -1,11 +1,6 @@
 import { expect, test, jest} from '@jest/globals';
 import { XlsxRdnPricelistProvider } from "./XlsxRdnPricelistProvider.ts";
 
-
-  test("check getRdnUrl", async () => {
-    
-  });
-
   test("check price list fetching", async () => {
     const rdnPricelistProvider = new  XlsxRdnPricelistProvider()
 

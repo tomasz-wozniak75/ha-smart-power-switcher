@@ -2,7 +2,7 @@ import { CurrencyUtils, DateTimeUtils } from "smart-power-consumer-api";
 import { NotFoundError } from "./NotFoundError.ts";
 import * as XLSX from 'xlsx';
 import { PricelistItem } from "smart-power-consumer-api";
-import { curly } from "node-libcurl";
+
 
 
 
@@ -54,8 +54,14 @@ export class XlsxRdnPricelistProvider {
     async fetchPriceList(requestedDate: number): Promise<number[]> {
         const pricelistArray: number[] = [];
         const url = this.getRdnUrl(requestedDate)
-        const { statusCode, data, headers} = await curly.get(url)
-        if ( statusCode === 200) {
+        const response = await fetch(url, {
+            method: "GET",
+            headers: {
+                'User-Agent': 'curl/8.7.1',
+            },
+       })
+        if (response.ok) {
+            const data = await response.arrayBuffer()
             const workbook = XLSX.read(data, {type: "array"});
             const sheet = workbook.Sheets[workbook.SheetNames[1]];
             const jsonData = XLSX.utils.sheet_to_json(sheet);

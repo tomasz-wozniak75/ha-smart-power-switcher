@@ -1,8 +1,10 @@
 deployment_pack=$1
 
-echo "Cleaning deployment package $deployment_pack"
-rm $deployment_pack
-touch $deployment_pack.installed
+if test $deployment_pack; then
+    echo "Cleaning deployment package $deployment_pack"
+    rm $deployment_pack
+    touch $deployment_pack.installed
+fi
 
 cd ../public
 if test -f "../smart-energy.pid"; then
