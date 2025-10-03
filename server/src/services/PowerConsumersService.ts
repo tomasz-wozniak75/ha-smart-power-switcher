@@ -1,8 +1,8 @@
 import { PowerConsumerModel } from "smart-power-consumer-api";
-import { NotFoundError } from "./NotFoundError";
-import { PowerConsumer } from "./PowerConsumer";
-import { TimePeriodPricelistService } from "./TimePeriodPricelistService";
-import { HomeAsistantService } from "./HomeAsistantService";
+import { NotFoundError } from "./NotFoundError.ts";
+import { PowerConsumer } from "./PowerConsumer.ts";
+import { TimePeriodPricelistService } from "./TimePeriodPricelistService.ts";
+import { HomeAssistantService } from "./HomeAssistantService.ts";
 
 export class PowerConsumersService {
 
@@ -13,16 +13,16 @@ export class PowerConsumersService {
     constructor(timePeriodPricelist: TimePeriodPricelistService) {
         this.timePeriodPricelistService = timePeriodPricelist;
 
-        const homeAsistantService = new HomeAsistantService(process.env.HA_TOKEN || null, process.env.HA_URL || null);
+        const homeAssistantService = new HomeAssistantService(process.env.HA_TOKEN || null, process.env.HA_URL || null);
 
         const audiChagerId = "switch.audi_charger_breaker_switch";
         this.powerConsumers[audiChagerId] = new PowerConsumer(
-            audiChagerId, "Audi charger", this.timePeriodPricelistService, homeAsistantService, process.env.audiTtrackerConsumptionPlanUrl, process.env.chargingStatusUrl
+            audiChagerId, "Audi charger", this.timePeriodPricelistService, homeAssistantService, process.env.audiTtrackerConsumptionPlanUrl, process.env.chargingStatusUrl
         );
 
 
         const onePhaseSwitchId = "switch.smart_plug_socket_1";
-        this.powerConsumers[onePhaseSwitchId] = new PowerConsumer(onePhaseSwitchId, "One phase switch", this.timePeriodPricelistService, homeAsistantService);
+        this.powerConsumers[onePhaseSwitchId] = new PowerConsumer(onePhaseSwitchId, "One phase switch", this.timePeriodPricelistService, homeAssistantService);
     }
 
     public getPowerConsumer(powerConsumerId: string): PowerConsumer {

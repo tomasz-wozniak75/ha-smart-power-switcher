@@ -1,5 +1,5 @@
 import { CurrencyUtils, DateTimeUtils } from "smart-power-consumer-api";
-import { NotFoundError } from "./NotFoundError";
+import { NotFoundError } from "./NotFoundError.ts";
 import { PricelistItem } from "smart-power-consumer-api";
 import puppeteer from "puppeteer";
 
