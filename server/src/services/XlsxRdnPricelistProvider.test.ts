@@ -4,7 +4,7 @@ import { XlsxRdnPricelistProvider } from "./XlsxRdnPricelistProvider.ts";
   test("check price list fetching", async () => {
     const rdnPricelistProvider = new  XlsxRdnPricelistProvider()
 
-    await expect(rdnPricelistProvider.fetchPriceList(Date.now())).resolves.not.toBeNull()
+    await expect(rdnPricelistProvider.fetchPriceList(new Date(2025, 9, 18).getTime())).resolves.not.toBeNull()
   });
 
   test("price list vaidation should work - past", async () => {

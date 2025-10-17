@@ -1,6 +1,7 @@
 node_modules
 dist
 server/deployment-packages
+server/backup-price-list-dir
 
 .pnp
 .pnp.js

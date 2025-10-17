@@ -42,6 +42,13 @@ export class XlsxRdnPricelistProvider {
         return `https://tge.pl/pub/TGE/A_SDAC%20${date.getFullYear()}/RDN/Raport_RDN_dzie_dostawy_delivery_day_${formattedDate}.xlsx`
     }
 
+    getBackupUrl(requestedDate: number): string {
+        const date = new Date(requestedDate)
+        const formattedDate = `${date.getFullYear()}_${DateTimeUtils.padTo2Digits(date.getMonth() + 1)}_${DateTimeUtils.padTo2Digits(date.getDate())}`
+        
+        return `http://smart-energy.mesh:8080/backup-price-lists/${formattedDate}.xlsx`
+    }
+
     validatePriceListDate(requestedDate: number): void {
         const expectedDate = DateTimeUtils.formatDate(requestedDate);
                 
@@ -52,7 +59,6 @@ export class XlsxRdnPricelistProvider {
     }
    
     async fetchPriceList(requestedDate: number): Promise<number[]> {
-        const pricelistArray: number[] = [];
         const url = this.getRdnUrl(requestedDate)
         const response = await fetch(url, {
             method: "GET",
@@ -60,23 +66,34 @@ export class XlsxRdnPricelistProvider {
                 'User-Agent': 'curl/8.7.1',
             },
        })
-        if (response.ok) {
-            const data = await response.arrayBuffer()
-            const workbook = XLSX.read(data, {type: "array"});
-            const sheet = workbook.Sheets[workbook.SheetNames[1]];
-            const jsonData = XLSX.utils.sheet_to_json(sheet);
-
-            const rowShift = 3;
-            for(let r=rowShift;  r < rowShift + 24; r++ ){
-                const price = Math.trunc(jsonData[r]["__EMPTY_2"] * 100);
-                pricelistArray.push(price)
-            }
-            return pricelistArray
-
+        if (response.ok && response.headers.get("Content-Type") === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet") {
+            return await this.parsePriceList(response);
         } else {
+            const backupUrl = this.getBackupUrl(requestedDate)
+            const response = await fetch(backupUrl, {
+                method: "GET",
+             })
+             if (response.ok) {
+                return await this.parsePriceList(response);
+             } 
             this.validatePriceListDate(requestedDate);
-            return pricelistArray;
+            return [];
         }
+    }
+
+    async parsePriceList(response: Response): Promise<number[]> {
+        const pricelistArray: number[] = [];
+        const data = await response.arrayBuffer()
+        const workbook = XLSX.read(data, {type: "array"});
+        const sheet = workbook.Sheets[workbook.SheetNames[1]];
+        const jsonData = XLSX.utils.sheet_to_json(sheet);
+
+        const rowShift = 3;
+        for(let r=rowShift;  r < rowShift + 24; r++ ){
+            const price = Math.trunc(jsonData[r]["__EMPTY_2"] * 100);
+            pricelistArray.push(price)
+        }
+        return pricelistArray
     }
     
 
