@@ -35,11 +35,11 @@ export class XlsxRdnPricelistProvider {
         return priceslist;
     }
 
-    getRdnUrl(requestedDate: number): string {
+    getRdnUrl(requestedDate: number, postfix: string): string {
         const date = new Date(requestedDate)
         const formattedDate = `${date.getFullYear()}_${DateTimeUtils.padTo2Digits(date.getMonth() + 1)}_${DateTimeUtils.padTo2Digits(date.getDate())}`
         
-        return `https://tge.pl/pub/TGE/A_SDAC%20${date.getFullYear()}/RDN/Raport_RDN_dzie_dostawy_delivery_day_${formattedDate}.xlsx`
+        return `https://tge.pl/pub/TGE/A_SDAC%20${date.getFullYear()}/RDN/Raport_RDN_dzie_dostawy_delivery_day_${formattedDate}${postfix}.xlsx`
     }
 
     getBackupUrl(requestedDate: number): string {
@@ -59,16 +59,25 @@ export class XlsxRdnPricelistProvider {
     }
    
     async fetchPriceList(requestedDate: number): Promise<number[]> {
-        const url = this.getRdnUrl(requestedDate)
-        const response = await fetch(url, {
-            method: "GET",
-            headers: {
-                'User-Agent': 'curl/8.7.1',
-            },
-       })
-        if (response.ok && response.headers.get("Content-Type") === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet") {
-            return await this.parsePriceList(response);
-        } else {
+        const possiblePostfixes = ["", "_1", "_2", "ost"]
+        let fetchSuccess = false
+
+        for(const postfix of possiblePostfixes) {
+            const url = this.getRdnUrl(requestedDate, postfix)
+            const response = await fetch(url, {
+                method: "GET",
+                headers: {
+                    'User-Agent': 'curl/8.7.1',
+                },
+            })
+    
+            if (response.ok && response.headers.get("Content-Type") === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet") {
+                fetchSuccess = true
+                return await this.parsePriceList(response);
+            } 
+        }
+
+        if (!fetchSuccess)         {
             const backupUrl = this.getBackupUrl(requestedDate)
             const response = await fetch(backupUrl, {
                 method: "GET",
@@ -79,6 +88,7 @@ export class XlsxRdnPricelistProvider {
             this.validatePriceListDate(requestedDate);
             return [];
         }
+        return []
     }
 
     async parsePriceList(response: Response): Promise<number[]> {
