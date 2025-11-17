@@ -39,11 +39,11 @@ import { RdnPricelistProvider } from "./RdnPricelistProvider";
   test("getPriceList should fetch price list for the first time, second time it should use cache", async () => {
     const rdnPricelistProvider = new  RdnPricelistProvider()
 
-    await expect(rdnPricelistProvider.getPriceList(new Date(2024, 8, 18).getTime())).resolves.not.toBeNull()
+    await expect(rdnPricelistProvider.getPriceList(new Date(2025, 10, 18).getTime())).resolves.not.toBeNull()
 
     jest.spyOn(rdnPricelistProvider, "fetchPriceList").mockImplementationOnce(() => { throw new Error("Should not be called")})
 
-    await expect(rdnPricelistProvider.getPriceList(new Date(2024, 8, 18).getTime())).resolves.not.toBeNull()
+    await expect(rdnPricelistProvider.getPriceList(new Date(2025, 10, 18).getTime())).resolves.not.toBeNull()
 
   });
 

@@ -13,13 +13,13 @@ import { JobControler } from './audi-tracker/controlers/JobControler';
 import { LocationTrackerService } from './audi-tracker/services/LocationTrackerService';
 import { ChargingTrackerService } from './audi-tracker/services/ChargingTrackerService';
 import { ChargingTrackerControler } from './audi-tracker/controlers/ChargingTrackerControler';
-import { XlsxRdnPricelistProvider } from './services/XlsxRdnPricelistProvider';
+import { RdnPricelistProvider } from './services/RdnPricelistProvider';
 
 
 const webServer = express();
 webServer.use(bodyParser.json());
 
-const singleDayPricelistService = new TariffSelectorPricelist( new XlsxRdnPricelistProvider());;
+const singleDayPricelistService = new TariffSelectorPricelist( new RdnPricelistProvider());;
 const pricelistCtrl = new PricelistCtrl(singleDayPricelistService);
 const powerConsumersCtrl = new PowerConsumersCtrl(new PowerConsumersService(new TimePeriodPricelistService(singleDayPricelistService)));
 

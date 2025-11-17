@@ -60,22 +60,29 @@ export class RdnPricelistProvider {
           });
         
           const page = await browser.newPage();
-          await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3419.0 Safari/537.36');
-          await page.goto(this.getRdnUrl(requestedDate), { waitUntil: "domcontentloaded"});
+          await page.setUserAgent('curl/8.7.1');
+          let response = await page.goto(this.getRdnUrl(requestedDate), { waitUntil: "domcontentloaded"});
+
+          if (!response?.ok) {
+            return []
+          }
     
           
           const parsingResult = await page.evaluate(() => {
                 const result = { "contractDateText": null, pricelistArray: null};
                 result['contractDateText'] = document.getElementsByClassName("kontrakt-date")?.item(0)?.innerText;
-                if (result['contractDateText'] && document.getElementById("footable_kontrakty_godzinowe")) {
+                const table = document.getElementsByClassName("table-rdb").item(1) as HTMLTableElement
+                if (result['contractDateText'] && table) {
                     const pricelistArray: number[] = [];
-                    const table = document.getElementById("footable_kontrakty_godzinowe") as HTMLTableElement
                     const rows: HTMLCollectionOf<HTMLTableRowElement> = table.rows
-                    for(let r=2;  r < 2 + 24; r++ ){
+                    for(let r=2;  r < rows.length; r=r+5 ){
                         const row = rows.item(r)
-                        const priceText = row?.cells.item(1)?.innerText as string
+                        const priceText = row?.cells.item(7)?.innerText as string
                         const price = Math.trunc(Number(priceText.replace(",", ".")) * 100);
                         pricelistArray.push(price);
+                        if (pricelistArray.length == 24) {
+                            break;
+                        }
                         result['pricelistArray'] = pricelistArray;
                 }
                 }
