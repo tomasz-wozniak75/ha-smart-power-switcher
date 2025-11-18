@@ -75,14 +75,18 @@ export class RdnPricelistProvider {
                 if (result['contractDateText'] && table) {
                     const pricelistArray: number[] = [];
                     const rows: HTMLCollectionOf<HTMLTableRowElement> = table.rows
-                    for(let r=2;  r < rows.length; r=r+5 ){
+                    for(let r=2;  r < rows.length; r++ ){
                         const row = rows.item(r)
+                        const startingTime = row?.cells.item(0)?.innerText as string
+                        if (!startingTime.includes("_H")) {
+                            continue;
+                        }
                         const priceText = row?.cells.item(7)?.innerText as string
                         if (priceText === "-") {
                            result['contractDateText'] = ""
                            return result
                         }
-                        const price = Math.trunc(Number(priceText.replace(",", ".")) * 100);
+                        const price = Math.trunc(Number(priceText.replace(",", ".").replace(" ", "")) * 100);
                         pricelistArray.push(price);
                         if (pricelistArray.length == 24) {
                             break;
