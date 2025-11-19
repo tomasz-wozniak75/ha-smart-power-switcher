@@ -5,7 +5,11 @@ import { SingleDayPricelist } from "./SingleDayPricelist";
 
 export class W12PricelistProvider implements SingleDayPricelist {
 
-    getPriceList(forDay: number): Promise<PricelistItem[]> {
+    public async getPriceListWithGivenItemDuration(forDay: number, withItemDuration: number): Promise<PricelistItem[]> {
+        return await this.getPriceList(forDay);
+    }
+
+    public async getPriceList(forDay: number): Promise<PricelistItem[]> {
         const requestedDate = new Date(DateTimeUtils.cutOffTime(forDay));
         
         const offPeakPrice = 80000;

@@ -14,4 +14,8 @@ export class TariffSelectorPricelist implements SingleDayPricelist {
         return this.singleDayPricelist.getPriceList(forDay);
     }
 
+    getPriceListWithGivenItemDuration(forDay: number, withItemDuration: number): Promise<PricelistItem[]> {
+        return this.singleDayPricelist.getPriceListWithGivenItemDuration(forDay, withItemDuration);
+    }
+
 }

@@ -32,9 +32,17 @@ export class PricelistCtrl extends BaseCtrl {
         }
 
         try {
-            const pricelist = await this.singleDayPricelistService.getPriceList(requestedDay.getTime());
-            res.status(200);
-            res.json(pricelist)
+            let priceListItemDuration = this.getRequestNumericParam(req.query, "priceListItemDuration", false) as number;
+            if (priceListItemDuration === null) {
+                const pricelist = await this.singleDayPricelistService.getPriceList(requestedDay.getTime());
+                res.status(200);
+                res.json(pricelist)
+            } else {
+                const pricelist = await this.singleDayPricelistService.getPriceListWithGivenItemDuration(requestedDay.getTime(), priceListItemDuration);
+                res.status(200);
+                res.json(pricelist)
+            }
+            
         }catch (error) {
             this.handleErrors(error, res);
         }

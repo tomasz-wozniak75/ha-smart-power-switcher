@@ -9,6 +9,10 @@ import { PricelistItem } from "smart-power-consumer-api";
 export class XlsxRdnPricelistProvider {
     private priceListCache: { [forDay: number]: PricelistItem[]; } = {};
 
+    public async getPriceListWithGivenItemDuration(forDay: number, withItemDuration: number): Promise<PricelistItem[]> {
+        return await this.getPriceList(forDay);
+    }
+
     public async getPriceList(forDay: number): Promise<PricelistItem[]> {
         const requestedDate = DateTimeUtils.cutOffTime(forDay);
 

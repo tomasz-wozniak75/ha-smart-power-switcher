@@ -5,20 +5,45 @@ import puppeteer from "puppeteer";
 
 
 export class RdnPricelistProvider {
+    private hour = 60 * 60 * 1000
+    private fifteenMinutes = 15 * 60 * 1000
+    private currentItemDuration: number = this.hour;
     private priceListCache: { [forDay: number]: PricelistItem[]; } = {};
+    private quarterBasedPriceListCache: { [forDay: number]: PricelistItem[]; } = {};
+
+    public async getPriceListWithGivenItemDuration(forDay: number, withItemDuration: number): Promise<PricelistItem[]> {
+        if (withItemDuration === this.fifteenMinutes) {
+            this.currentItemDuration = this.fifteenMinutes;
+        } else {
+            this.currentItemDuration = this.hour;
+        }
+        return await this.getPriceList(forDay);
+    }
 
     public async getPriceList(forDay: number): Promise<PricelistItem[]> {
         const requestedDate = DateTimeUtils.cutOffTime(forDay);
+        let durationType = "_H"
+        let periodDuration = this.hour;
+        let currentPriceListCache: { [forDay: number]: PricelistItem[]; } = this.priceListCache;
 
-        if (this.priceListCache[requestedDate]) {
-            return this.priceListCache[requestedDate];
+        if (this.currentItemDuration === this.fifteenMinutes) {
+            durationType = "_Q"
+            periodDuration = this.fifteenMinutes;
+            currentPriceListCache = this.quarterBasedPriceListCache;
         }
+
+        if(currentPriceListCache[requestedDate]) {
+            return currentPriceListCache[requestedDate];
+        }
+
         const minimalPrice = 500;
         const transferCost = 9000;
-        const priceses = await this.fetchPriceList(requestedDate);
+
+
+        const priceses = await this.fetchPriceList(requestedDate, durationType);
         const priceslist = priceses
             .map((price) => (price <= 5 ? minimalPrice : price) + transferCost)
-            .map((price, index) => ({ startsAt: new Date(requestedDate).setHours(index), duration: 60 * 60 * 1000, price: price, category: "medium" } as PricelistItem))
+            .map((price, index) => ({ startsAt: requestedDate+index*periodDuration, duration: periodDuration, price: price, category: "medium" } as PricelistItem))
             .map((pricelistItem) => {
                 if(CurrencyUtils.getPriceAsNumber(pricelistItem.price) <= 0.2) {
                     pricelistItem.category = "min"
@@ -29,7 +54,8 @@ export class RdnPricelistProvider {
                 return pricelistItem;
             }
             );
-        this.priceListCache[requestedDate] = priceslist;
+        currentPriceListCache[requestedDate] = priceslist;
+        priceslist.forEach( item => console.log(DateTimeUtils.getTime(item.startsAt)))
         return priceslist;
     }
 
@@ -50,7 +76,7 @@ export class RdnPricelistProvider {
         }
     }
    
-    async fetchPriceList(requestedDate: number): Promise<number[]> {
+    async fetchPriceList(requestedDate: number, durationType: string): Promise<number[]> {
         
         const browser = await puppeteer.launch({
             ...(process.env.PUPPETEER_BROWSER_VAR ? {executablePath: process.env.PUPPETEER_BROWSER_VAR}: {}),
@@ -68,7 +94,7 @@ export class RdnPricelistProvider {
           }
     
           
-          const parsingResult = await page.evaluate(() => {
+          const parsingResult = await page.evaluate((durationType) => {
                 const result = { contractDateText: "", pricelistArray: []};
                 result['contractDateText'] = document.getElementsByClassName("kontrakt-date")?.item(0)?.innerText;
                 const table = document.getElementsByClassName("table-rdb").item(1) as HTMLTableElement
@@ -78,7 +104,7 @@ export class RdnPricelistProvider {
                     for(let r=2;  r < rows.length; r++ ){
                         const row = rows.item(r)
                         const startingTime = row?.cells.item(0)?.innerText as string
-                        if (!startingTime.includes("_H")) {
+                        if (!startingTime.includes(durationType)) {
                             continue;
                         }
                         const priceText = row?.cells.item(7)?.innerText as string
@@ -88,14 +114,11 @@ export class RdnPricelistProvider {
                         }
                         const price = Math.trunc(Number(priceText.replace(",", ".").replace(" ", "")) * 100);
                         pricelistArray.push(price);
-                        if (pricelistArray.length == 24) {
-                            break;
-                        }
                     }
                 result['pricelistArray'] = pricelistArray;
                 }
                 return result;
-            }
+            }, durationType
         );
     
         await browser.close();
