@@ -13,15 +13,24 @@ export const PriceListTable = () => {
   const [fetchingError, setFetchingError] = useState<string[]>(null);
   const [hidePastItems, setHidePastItems] = useState<boolean>(false);
   const [sortedByTime, setSortedByTime] = useState<boolean>(true);
-  const [isLoading, setLoading] = useState<boolean>(false)
+  const [isLoading, setLoading] = useState<boolean>(false);
+  const [priceListItemDuration, setPriceListItemDuration] = useState<number>(undefined);
+  const hour = 60*60*1000;
+  const quarter = 15*60*1000;
+
 
   useEffect(() => {
     const fetchPriceList = async () => {
         setLoading(true);
-        const response = await fetch(`/pricelist/${DateTimeUtils.formatDate(date)}`)
+
+        const response = await fetch(`/pricelist/${DateTimeUtils.formatDate(date)}${priceListItemDuration !== undefined? "?priceListItemDuration="+priceListItemDuration : ""}`)
         const responseJSON = await response.json();
         setLoading(false);
         if (response.ok) {
+          const newPriceListItemDuration = 24*hour / responseJSON.length
+          if (newPriceListItemDuration !== priceListItemDuration) {
+            setPriceListItemDuration(newPriceListItemDuration);
+          }
           return responseJSON;
         } else {
           throw new Error(responseJSON.message)
@@ -33,7 +42,7 @@ export const PriceListTable = () => {
       .catch((error) => {setFetchingError(error.message);});
     setHidePastItems(today === date);
     setSortedByTime(true);
-  }, [date]);
+  }, [date, priceListItemDuration]);
 
   const filterPricelistItem = (pricelistItem: PricelistItem) => today === date && hidePastItems ? (pricelistItem.startsAt + pricelistItem.duration) > Date.now() : true
 
@@ -122,6 +131,14 @@ export const PriceListTable = () => {
               <input name="button-decrease-date" type='button' value={"<< day"}  onClick={(e) => setDate(DateTimeUtils.addDays(date, -1))}/>                    
               <input name="button-now" type='button' value={"Today"}  onClick={(e) => setTodayAction()} disabled={date === today} />                    
               <input name="button-increase-date" type='button' value={"day >>"}  onClick={(e) => setDate(DateTimeUtils.addDays(date, 1))}/> 
+              <label>
+                <input name="one-hour-item-duration" type="radio" value="60 mins" checked={priceListItemDuration === hour} onChange={(e) => setPriceListItemDuration(hour)}/> 
+                60 mins
+              </label>
+                            <label>
+                <input name="quarter-item-duration" type="radio" value="15 mins" checked={priceListItemDuration === quarter} onChange={(e) => setPriceListItemDuration(quarter)}/> 
+                15 mins
+              </label>
           </div>
         </div>
         {renderPricelisttable()}
