@@ -18,7 +18,7 @@ import { RdnPricelistProvider } from "./RdnPricelistProvider";
   test("check price list fetching", async () => {
     const rdnPricelistProvider = new  RdnPricelistProvider()
 
-    await expect(rdnPricelistProvider.fetchPriceList(Date.now())).resolves.not.toBeNull()
+    await expect(rdnPricelistProvider.fetchPriceList(new Date(2025, 11, 4).getTime(), "_H")).resolves.not.toBeNull()
   });
 
   test("price list vaidation should work - past", async () => {

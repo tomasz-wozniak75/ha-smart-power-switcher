@@ -61,13 +61,13 @@ export class RdnPricelistProvider {
 
     getRdnUrl(requestedDate: number): string {
         const dayBefore = new Date(DateTimeUtils.addDays(requestedDate, -1));
-        return `https://tge.pl/energia-elektryczna-rdn?dateShow=${DateTimeUtils.formatDate(dayBefore.getTime())}&dateAction=prev`
+        return `https://tge.pl/energia-elektryczna-rdn?dateShow=${DateTimeUtils.formatDate(dayBefore.getTime())}&dateAction=prev&type=0`
     }
 
     validatePriceListDate(requestedDate: number, contractDateText: string): void {
         const expectedDate = DateTimeUtils.formatDate(requestedDate);
                 
-        if ( `Kontrakty godzinowe dla dostawy w dniu ${expectedDate}` !== contractDateText) {
+        if ( `Kontrakty dla dostawy w dniu ${expectedDate}` !== contractDateText) {
             
             const today = DateTimeUtils.cutOffTime(Date.now())
             const messagePostfix = requestedDate > today ? ", for tomorrow pricelist is published at 2pm!" : ", pricelists are published for last 2 months!";
@@ -87,43 +87,51 @@ export class RdnPricelistProvider {
         
           const page = await browser.newPage();
           await page.setUserAgent('curl/8.7.1');
-          let response = await page.goto(this.getRdnUrl(requestedDate), { waitUntil: "domcontentloaded"});
-
+          const url = this.getRdnUrl(requestedDate);
+          let response = await page.goto(url, { waitUntil: "domcontentloaded"});
+          
           if (!response?.ok) {
             return []
           }
-    
-          
-          const parsingResult = await page.evaluate((durationType) => {
-                const result = { contractDateText: "", pricelistArray: []};
-                result['contractDateText'] = document.getElementsByClassName("kontrakt-date")?.item(0)?.innerText;
-                const table = document.getElementsByClassName("table-rdb").item(1) as HTMLTableElement
-                if (result['contractDateText'] && table) {
-                    const pricelistArray: number[] = [];
-                    const rows: HTMLCollectionOf<HTMLTableRowElement> = table.rows
-                    for(let r=2;  r < rows.length; r++ ){
-                        const row = rows.item(r)
-                        const startingTime = row?.cells.item(0)?.innerText as string
-                        if (!startingTime.includes(durationType)) {
-                            continue;
-                        }
-                        const priceText = row?.cells.item(7)?.innerText as string
-                        if (priceText === "-") {
-                           result['contractDateText'] = ""
-                           return result
-                        }
-                        const price = Math.trunc(Number(priceText.replace(",", ".").replace(" ", "")) * 100);
-                        pricelistArray.push(price);
+          await page.waitForSelector(".table-rdb");
+
+          const bodyHandle = await page.evaluateHandle(() => {
+            return document.body;
+          });
+
+          let contractDateText = await bodyHandle.$eval(".kontrakt-date", node => node.innerText);
+         
+          const table = await page.evaluateHandle(() => {
+            return document.getElementsByClassName("table-rdb").item(1);
+          });
+
+          const pricelistArray = await table.$$eval('tr', (rows, durationType)  => {
+                const pricelistArray: number[] = [];
+                for(let r=2;  r < rows.length; r++ ){
+                    const row = rows[r];
+                    const startingTime = row?.cells.item(0)?.innerText as string
+                    if (!startingTime.includes(durationType)) {
+                        continue;
                     }
-                result['pricelistArray'] = pricelistArray;
+                    const priceText = row?.cells.item(7)?.innerText as string
+                    if (priceText === "-") {
+                        return []
+                    }
+                    const price = Math.trunc(Number(priceText.replace(",", ".").replace(" ", "")) * 100);
+                    pricelistArray.push(price);
                 }
-                return result;
+                return pricelistArray;
             }, durationType
-        );
-    
+          );
+
+        if (pricelistArray.length === 0) {
+            contractDateText = "";
+        }  
+
+          
         await browser.close();
-        this.validatePriceListDate(requestedDate, parsingResult['contractDateText']);
-        return parsingResult['pricelistArray'];
+        this.validatePriceListDate(requestedDate, contractDateText);
+        return pricelistArray;
     }
 
 }
