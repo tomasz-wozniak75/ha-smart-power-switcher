@@ -16,8 +16,9 @@ export class DateTimeUtils {
         return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
     }
 
-    public static addDays(date: number, days: number): number {  
-        return date + days * 24 * 60 * 60 * 1000;
+    public static addDays(dateInMs: number, days: number): number {  
+        const date = new Date(dateInMs);
+        return date.setDate(date.getDate() + days);
     }
 
 
